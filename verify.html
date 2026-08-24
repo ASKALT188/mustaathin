@@ -19,7 +19,7 @@
             background: white;
             border-radius: 40px;
             padding: 3rem 2.5rem;
-            max-width: 500px;
+            max-width: 550px;
             width: 100%;
             text-align: center;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
@@ -62,6 +62,20 @@
         .verify-status-large.not-permitted {
             background: #fce8e8;
             color: #b13e3e;
+        }
+        .verify-time {
+            color: #0a263b;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #f6faff;
+            border-radius: 16px;
+            border: 1px solid #e3ebf5;
+        }
+        .verify-time i {
+            color: #1e7b64;
+            margin-right: 0.5rem;
         }
         .verify-timestamp {
             color: #6f8da6;
@@ -106,6 +120,9 @@
                 font-size: 1.2rem;
                 padding: 0.4rem 1.8rem;
             }
+            .verify-time {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -134,6 +151,37 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentName = urlParams.get('student');
 
+        // ===== حساب المدة =====
+        function getTimeSince(lastPermittedAt) {
+            if (!lastPermittedAt) return null;
+            
+            const now = new Date();
+            const then = new Date(lastPermittedAt);
+            const diffMs = now - then;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHours = Math.floor(diffMin / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffDays > 0) return `${diffDays} يوم ${diffHours % 24} ساعة`;
+            if (diffHours > 0) return `${diffHours} ساعة ${diffMin % 60} دقيقة`;
+            if (diffMin > 0) return `${diffMin} دقيقة ${diffSec % 60} ثانية`;
+            return `${diffSec} ثانية`;
+        }
+
+        // ===== تحديث عداد الوقت =====
+        let timeInterval = null;
+
+        function updateTimer(lastPermittedAt) {
+            const timeEl = document.getElementById('timeDisplay');
+            if (!timeEl || !lastPermittedAt) return;
+            
+            const timeStr = getTimeSince(lastPermittedAt);
+            if (timeStr) {
+                timeEl.innerHTML = `<i class="fas fa-clock"></i> مستأذن منذ ${timeStr}`;
+            }
+        }
+
         async function loadStudentStatus() {
             const content = document.getElementById('verificationContent');
             
@@ -153,7 +201,7 @@
                 console.log('🔍 Fetching student:', studentName);
                 const { data, error } = await supabaseClient
                     .from('students')
-                    .select('name, permitted')
+                    .select('name, permitted, last_permitted_at')
                     .eq('name', studentName)
                     .single();
 
@@ -177,24 +225,52 @@
                 const statusText = status ? 'Permitted' : 'Not Permitted';
                 const statusClass = status ? 'permitted' : 'not-permitted';
                 const statusIcon = status ? '🟢' : '🔴';
+                const lastPermittedAt = data.last_permitted_at;
+
+                // عرض الوقت إذا كان مستأذن
+                let timeHtml = '';
+                if (status && lastPermittedAt) {
+                    const timeStr = getTimeSince(lastPermittedAt);
+                    timeHtml = `
+                        <div class="verify-time" id="timeDisplay">
+                            <i class="fas fa-clock"></i> مستأذن منذ ${timeStr}
+                        </div>
+                    `;
+                } else if (status) {
+                    timeHtml = `
+                        <div class="verify-time" id="timeDisplay">
+                            <i class="fas fa-clock"></i> مستأذن الآن
+                        </div>
+                    `;
+                }
 
                 content.innerHTML = `
                     <div class="verify-student-name">${data.name}</div>
                     <div class="verify-status-large ${statusClass}">${statusIcon} ${statusText}</div>
+                    ${timeHtml}
                     <div class="verify-timestamp">
-                        <i class="fas fa-clock"></i> Status as of now
+                        <i class="fas fa-check-circle"></i> تم التحديث بواسطة: عبد الحكيم
                     </div>
                     <div class="refresh-indicator">
-                        <i class="fas fa-sync-alt fa-fw"></i> Auto-refreshes every 10s
+                        <i class="fas fa-sync-alt fa-fw"></i> يتم التحديث تلقائياً كل 10 ثوانٍ
                     </div>
                 `;
 
-                // Auto-refresh status every 10 seconds
+                // بدء عداد الوقت إذا كان مستأذن
+                if (status && lastPermittedAt) {
+                    // تحديث العداد كل ثانية
+                    if (timeInterval) clearInterval(timeInterval);
+                    timeInterval = setInterval(() => {
+                        updateTimer(lastPermittedAt);
+                    }, 1000);
+                }
+
+                // تحديث الحالة كل 10 ثوانٍ
                 let refreshInterval = setInterval(async () => {
                     try {
                         const { data: refreshData, error: refreshError } = await supabaseClient
                             .from('students')
-                            .select('permitted')
+                            .select('permitted, last_permitted_at')
                             .eq('name', studentName)
                             .single();
 
@@ -203,11 +279,38 @@
                             const newText = newStatus ? 'Permitted' : 'Not Permitted';
                             const newClass = newStatus ? 'permitted' : 'not-permitted';
                             const newIcon = newStatus ? '🟢' : '🔴';
+                            const newLastPermittedAt = refreshData.last_permitted_at;
                             
                             const statusEl = content.querySelector('.verify-status-large');
                             if (statusEl) {
                                 statusEl.className = `verify-status-large ${newClass}`;
                                 statusEl.innerHTML = `${newIcon} ${newText}`;
+                            }
+
+                            // تحديث عداد الوقت
+                            const timeEl = document.getElementById('timeDisplay');
+                            if (newStatus && newLastPermittedAt) {
+                                if (!timeEl) {
+                                    // إضافة عنصر الوقت إذا لم يكن موجوداً
+                                    const timeHtml2 = `
+                                        <div class="verify-time" id="timeDisplay">
+                                            <i class="fas fa-clock"></i> مستأذن منذ ${getTimeSince(newLastPermittedAt)}
+                                        </div>
+                                    `;
+                                    // إدراج بعد status
+                                    statusEl.parentNode.insertAdjacentHTML('afterend', timeHtml2);
+                                } else {
+                                    const timeStr = getTimeSince(newLastPermittedAt);
+                                    timeEl.innerHTML = `<i class="fas fa-clock"></i> مستأذن منذ ${timeStr}`;
+                                }
+                                // تحديث العداد
+                                if (timeInterval) clearInterval(timeInterval);
+                                timeInterval = setInterval(() => {
+                                    updateTimer(newLastPermittedAt);
+                                }, 1000);
+                            } else if (!newStatus && timeEl) {
+                                timeEl.remove();
+                                if (timeInterval) clearInterval(timeInterval);
                             }
                         }
                     } catch (e) {
@@ -215,9 +318,10 @@
                     }
                 }, 10000);
 
-                // Cleanup interval on page unload
+                // Cleanup intervals on page unload
                 window.addEventListener('beforeunload', () => {
                     clearInterval(refreshInterval);
+                    if (timeInterval) clearInterval(timeInterval);
                 });
 
             } catch (error) {
