@@ -1,6 +1,6 @@
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmmptw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_pub1shable_NV8m1fyVZq29VKBdGhQnsw_euvyz...';
+const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== المتغيرات العامة =====
