@@ -125,11 +125,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ===== تكوين Supabase =====
-        const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmmptw.supabase.co';
+        // ===== Supabase Configuration =====
+        const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Get student name from URL
         const urlParams = new URLSearchParams(window.location.search);
         const studentName = urlParams.get('student');
 
@@ -149,13 +150,15 @@
             }
 
             try {
-                const { data, error } = await supabase
+                console.log('🔍 Fetching student:', studentName);
+                const { data, error } = await supabaseClient
                     .from('students')
                     .select('name, permitted')
                     .eq('name', studentName)
                     .single();
 
                 if (error || !data) {
+                    console.error('❌ Student not found:', error);
                     content.innerHTML = `
                         <div class="error-message">
                             <i class="fas fa-exclamation-triangle"></i> Student not found
@@ -167,6 +170,8 @@
                     `;
                     return;
                 }
+
+                console.log('✅ Student found:', data);
 
                 const status = data.permitted;
                 const statusText = status ? 'Permitted' : 'Not Permitted';
@@ -184,9 +189,10 @@
                     </div>
                 `;
 
+                // Auto-refresh status every 10 seconds
                 let refreshInterval = setInterval(async () => {
                     try {
-                        const { data: refreshData, error: refreshError } = await supabase
+                        const { data: refreshData, error: refreshError } = await supabaseClient
                             .from('students')
                             .select('permitted')
                             .eq('name', studentName)
@@ -204,14 +210,18 @@
                                 statusEl.innerHTML = `${newIcon} ${newText}`;
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        // Silent refresh
+                    }
                 }, 10000);
 
+                // Cleanup interval on page unload
                 window.addEventListener('beforeunload', () => {
                     clearInterval(refreshInterval);
                 });
 
             } catch (error) {
+                console.error('❌ Connection error:', error);
                 content.innerHTML = `
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i> Connection error
@@ -223,6 +233,7 @@
             }
         }
 
+        // Load student status
         loadStudentStatus();
     </script>
 </body>
