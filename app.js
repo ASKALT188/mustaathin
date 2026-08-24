@@ -1,7 +1,7 @@
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmmptw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== المتغيرات العامة =====
 let selectedStudent = 'Haider';
@@ -33,15 +33,22 @@ function showToast(message, type = 'success') {
 // ===== جلب الطلاب =====
 async function fetchStudents() {
     try {
-        const { data, error } = await supabase
+        console.log('🔍 Fetching students from Supabase...');
+        const { data, error } = await supabaseClient
             .from('students')
             .select('*')
             .order('name');
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
+        
+        console.log('✅ Students loaded:', data);
         allStudents = data;
         return data;
     } catch (error) {
+        console.error('❌ Fetch error:', error);
         showToast('Error loading students: ' + error.message, 'error');
         return [];
     }
@@ -50,7 +57,7 @@ async function fetchStudents() {
 // ===== جلب السجل =====
 async function fetchHistory() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('history')
             .select('*')
             .order('id', { ascending: false })
@@ -66,7 +73,7 @@ async function fetchHistory() {
 // ===== جلب حالة طالب =====
 async function fetchStudentStatus(name) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('students')
             .select('name, permitted')
             .eq('name', name)
@@ -85,7 +92,7 @@ async function updateStudentStatus(name, status) {
     isProcessing = true;
 
     try {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseClient
             .from('students')
             .update({ permitted: status })
             .eq('name', name);
@@ -103,7 +110,7 @@ async function updateStudentStatus(name, status) {
             hour12: false
         });
 
-        const { error: historyError } = await supabase
+        const { error: historyError } = await supabaseClient
             .from('history')
             .insert([{
                 student_name: name,
@@ -145,6 +152,11 @@ async function loadAllData() {
 
 // ===== عرض الطلاب =====
 function renderStudents(students, filter = '') {
+    if (!students || students.length === 0) {
+        studentListEl.innerHTML = `<div class="loading-message">No students found. Please check database.</div>`;
+        return;
+    }
+
     const filtered = students.filter(s =>
         s.name.toLowerCase().includes(filter.toLowerCase())
     );
@@ -278,7 +290,7 @@ window.filterStudents = function() {
 
 // ===== الإشتراك في التغييرات =====
 function subscribeToChanges() {
-    supabase
+    supabaseClient
         .channel('students_changes')
         .on(
             'postgres_changes',
@@ -301,7 +313,7 @@ function subscribeToChanges() {
         )
         .subscribe();
 
-    supabase
+    supabaseClient
         .channel('history_changes')
         .on(
             'postgres_changes',
@@ -320,6 +332,9 @@ function subscribeToChanges() {
 
 // ===== التهيئة =====
 async function init() {
+    console.log('🚀 Musta\'athin initializing...');
+    console.log('🔑 Using Supabase URL:', SUPABASE_URL);
+    
     await loadAllData();
     
     if (allStudents.length > 0) {
@@ -329,8 +344,9 @@ async function init() {
     
     subscribeToChanges();
     
-    console.log('🚀 Musta\'athin initialized with Supabase');
+    console.log('✅ Musta\'athin initialized');
     console.log('📊 Students:', allStudents.length);
 }
 
+// بدء التطبيق
 init();
