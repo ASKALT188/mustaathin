@@ -6,7 +6,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // ===== المتغيرات العامة =====
 let selectedStudent = 'Haider';
 let isProcessing = false;
-const currentTeacher = 'Ms. Fatima';
+const currentTeacher = 'عبد الحكيم'; // تم التغيير هنا
 let allStudents = [];
 
 // DOM refs
@@ -75,7 +75,7 @@ async function fetchStudentStatus(name) {
     try {
         const { data, error } = await supabaseClient
             .from('students')
-            .select('name, permitted')
+            .select('name, permitted, last_permitted_at')
             .eq('name', name)
             .single();
 
@@ -92,15 +92,8 @@ async function updateStudentStatus(name, status) {
     isProcessing = true;
 
     try {
-        const { error: updateError } = await supabaseClient
-            .from('students')
-            .update({ permitted: status })
-            .eq('name', name);
-
-        if (updateError) throw updateError;
-
-        const statusText = status ? 'Permitted' : 'Not Permitted';
-        const timestamp = new Date().toLocaleString('en-US', {
+        const now = new Date();
+        const timestamp = now.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -109,6 +102,21 @@ async function updateStudentStatus(name, status) {
             second: '2-digit',
             hour12: false
         });
+
+        // تحديث حالة الطالب مع وقت الإذن
+        const updateData = { permitted: status };
+        if (status === true) {
+            updateData.last_permitted_at = now.toISOString();
+        }
+
+        const { error: updateError } = await supabaseClient
+            .from('students')
+            .update(updateData)
+            .eq('name', name);
+
+        if (updateError) throw updateError;
+
+        const statusText = status ? 'Permitted' : 'Not Permitted';
 
         const { error: historyError } = await supabaseClient
             .from('history')
@@ -128,7 +136,7 @@ async function updateStudentStatus(name, status) {
         if (selectedStudent === name) {
             const studentData = await fetchStudentStatus(name);
             if (studentData) {
-                updateQrAndVerification(name, studentData.permitted);
+                updateQrAndVerification(name, studentData.permitted, studentData.last_permitted_at);
             }
         }
 
@@ -245,19 +253,37 @@ function selectStudent(student) {
     selectedStudent = student;
     const studentData = allStudents.find(s => s.name === student);
     if (studentData) {
-        updateQrAndVerification(student, studentData.permitted);
+        updateQrAndVerification(student, studentData.permitted, studentData.last_permitted_at);
     } else {
         fetchStudentStatus(student).then(data => {
             if (data) {
-                updateQrAndVerification(student, data.permitted);
+                updateQrAndVerification(student, data.permitted, data.last_permitted_at);
             }
         });
     }
     renderStudents(allStudents, searchInput.value);
 }
 
+// ===== حساب المدة منذ الإذن =====
+function getTimeSince(lastPermittedAt) {
+    if (!lastPermittedAt) return 'Never';
+    
+    const now = new Date();
+    const then = new Date(lastPermittedAt);
+    const diffMs = now - then;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays}d ${diffHours % 24}h ago`;
+    if (diffHours > 0) return `${diffHours}h ${diffMin % 60}m ago`;
+    if (diffMin > 0) return `${diffMin}m ${diffSec % 60}s ago`;
+    return `${diffSec}s ago`;
+}
+
 // ===== تحديث QR =====
-function updateQrAndVerification(student, status) {
+function updateQrAndVerification(student, status, lastPermittedAt) {
     qrStudentName.textContent = student;
     verifyName.textContent = student;
 
@@ -276,7 +302,8 @@ function updateQrAndVerification(student, status) {
 
     if (status) {
         verifyStatusBadge.className = 'verify-status permitted';
-        verifyStatusBadge.innerHTML = '🟢 Permitted';
+        const timeSince = getTimeSince(lastPermittedAt);
+        verifyStatusBadge.innerHTML = `🟢 Permitted · ${timeSince}`;
     } else {
         verifyStatusBadge.className = 'verify-status not-permitted';
         verifyStatusBadge.innerHTML = '🔴 Not Permitted';
@@ -307,7 +334,7 @@ function subscribeToChanges() {
                 }
                 renderStudents(allStudents, searchInput.value);
                 if (selectedStudent === updatedStudent.name) {
-                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted);
+                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
                 }
             }
         )
@@ -333,6 +360,7 @@ function subscribeToChanges() {
 // ===== التهيئة =====
 async function init() {
     console.log('🚀 Musta\'athin initializing...');
+    console.log('👨‍🏫 Teacher:', currentTeacher);
     console.log('🔑 Using Supabase URL:', SUPABASE_URL);
     
     await loadAllData();
