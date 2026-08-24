@@ -6,7 +6,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // ===== المتغيرات العامة =====
 let selectedStudent = 'Haider';
 let isProcessing = false;
-const currentTeacher = 'عبد الحكيم'; // تم التغيير هنا
+const currentTeacher = 'عبد الحكيم';
 let allStudents = [];
 
 // DOM refs
@@ -92,8 +92,11 @@ async function updateStudentStatus(name, status) {
     isProcessing = true;
 
     try {
+        // الحصول على الوقت بالتوقيت المحلي (السعودية +3)
         const now = new Date();
-        const timestamp = now.toLocaleString('en-US', {
+        const localTime = new Date(now.getTime() + (3 * 3600000)); // إضافة 3 ساعات
+        
+        const timestamp = localTime.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -103,10 +106,10 @@ async function updateStudentStatus(name, status) {
             hour12: false
         });
 
-        // تحديث حالة الطالب مع وقت الإذن
+        // تحديث حالة الطالب مع وقت الإذن (بالتوقيت المحلي)
         const updateData = { permitted: status };
         if (status === true) {
-            updateData.last_permitted_at = now.toISOString();
+            updateData.last_permitted_at = localTime.toISOString();
         }
 
         const { error: updateError } = await supabaseClient
@@ -264,22 +267,26 @@ function selectStudent(student) {
     renderStudents(allStudents, searchInput.value);
 }
 
-// ===== حساب المدة منذ الإذن =====
+// ===== حساب المدة منذ الإذن (توقيت السعودية) =====
 function getTimeSince(lastPermittedAt) {
-    if (!lastPermittedAt) return 'Never';
+    if (!lastPermittedAt) return null;
     
     const now = new Date();
+    // إضافة 3 ساعات للتوقيت السعودي
+    const localNow = new Date(now.getTime() + (3 * 3600000));
     const then = new Date(lastPermittedAt);
-    const diffMs = now - then;
+    const localThen = new Date(then.getTime() + (3 * 3600000));
+    
+    const diffMs = localNow - localThen;
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
     const diffHours = Math.floor(diffMin / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffDays > 0) return `${diffDays}d ${diffHours % 24}h ago`;
-    if (diffHours > 0) return `${diffHours}h ${diffMin % 60}m ago`;
-    if (diffMin > 0) return `${diffMin}m ${diffSec % 60}s ago`;
-    return `${diffSec}s ago`;
+    if (diffDays > 0) return `${diffDays} يوم ${diffHours % 24} ساعة`;
+    if (diffHours > 0) return `${diffHours} ساعة ${diffMin % 60} دقيقة`;
+    if (diffMin > 0) return `${diffMin} دقيقة ${diffSec % 60} ثانية`;
+    return `${diffSec} ثانية`;
 }
 
 // ===== تحديث QR =====
