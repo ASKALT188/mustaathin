@@ -151,13 +151,17 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentName = urlParams.get('student');
 
-        // ===== حساب المدة =====
+        // ===== حساب المدة (توقيت السعودية) =====
         function getTimeSince(lastPermittedAt) {
             if (!lastPermittedAt) return null;
             
             const now = new Date();
+            // إضافة 3 ساعات للتوقيت السعودي
+            const localNow = new Date(now.getTime() + (3 * 3600000));
             const then = new Date(lastPermittedAt);
-            const diffMs = now - then;
+            const localThen = new Date(then.getTime() + (3 * 3600000));
+            
+            const diffMs = localNow - localThen;
             const diffSec = Math.floor(diffMs / 1000);
             const diffMin = Math.floor(diffSec / 60);
             const diffHours = Math.floor(diffMin / 60);
@@ -258,7 +262,6 @@
 
                 // بدء عداد الوقت إذا كان مستأذن
                 if (status && lastPermittedAt) {
-                    // تحديث العداد كل ثانية
                     if (timeInterval) clearInterval(timeInterval);
                     timeInterval = setInterval(() => {
                         updateTimer(lastPermittedAt);
@@ -287,23 +290,19 @@
                                 statusEl.innerHTML = `${newIcon} ${newText}`;
                             }
 
-                            // تحديث عداد الوقت
                             const timeEl = document.getElementById('timeDisplay');
                             if (newStatus && newLastPermittedAt) {
                                 if (!timeEl) {
-                                    // إضافة عنصر الوقت إذا لم يكن موجوداً
                                     const timeHtml2 = `
                                         <div class="verify-time" id="timeDisplay">
                                             <i class="fas fa-clock"></i> مستأذن منذ ${getTimeSince(newLastPermittedAt)}
                                         </div>
                                     `;
-                                    // إدراج بعد status
                                     statusEl.parentNode.insertAdjacentHTML('afterend', timeHtml2);
                                 } else {
                                     const timeStr = getTimeSince(newLastPermittedAt);
                                     timeEl.innerHTML = `<i class="fas fa-clock"></i> مستأذن منذ ${timeStr}`;
                                 }
-                                // تحديث العداد
                                 if (timeInterval) clearInterval(timeInterval);
                                 timeInterval = setInterval(() => {
                                     updateTimer(newLastPermittedAt);
@@ -313,12 +312,9 @@
                                 if (timeInterval) clearInterval(timeInterval);
                             }
                         }
-                    } catch (e) {
-                        // Silent refresh
-                    }
+                    } catch (e) {}
                 }, 10000);
 
-                // Cleanup intervals on page unload
                 window.addEventListener('beforeunload', () => {
                     clearInterval(refreshInterval);
                     if (timeInterval) clearInterval(timeInterval);
@@ -337,7 +333,6 @@
             }
         }
 
-        // Load student status
         loadStudentStatus();
     </script>
 </body>
