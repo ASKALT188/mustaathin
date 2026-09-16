@@ -136,7 +136,6 @@
             }
         }
 
-        // دالة حساب الوقت المنقضي بدقة تصاعدية
         function getTimeSince(lastPermittedAt) {
             if (!lastPermittedAt) return null;
             
@@ -146,7 +145,6 @@
             const nowTime = Date.now();
             let diffMs = nowTime - thenTime;
 
-            // حماية إذا كان الوقت في الداتابيس محفوظاً سابقاً بفارق ساعات زائد
             if (diffMs < 0) {
                 if (diffMs > -10800000) {
                     diffMs = Math.abs(diffMs + 10800000);
@@ -157,17 +155,32 @@
 
             const totalSec = Math.floor(diffMs / 1000);
             const days = Math.floor(totalSec / 86400);
-            const hours = Math.floor((totalSec % 86400) / 3600);
-            const minutes = Math.floor((totalSec % 3600) / 60);
-            const seconds = totalSec % 60;
+            const hours = Math.floor(totalSec / 3600);
+            const minutes = Math.floor(totalSec / 60);
 
-            const parts = [];
-            if (days > 0) parts.push(`${days} يوم`);
-            if (hours > 0) parts.push(`${hours} ساعة`);
-            if (minutes > 0) parts.push(`${minutes} دقيقة`);
-            if (seconds > 0 || parts.length === 0) parts.push(`${seconds} ثانية`);
-
-            return parts.join(' و ');
+            if (days > 0) {
+                if (days === 1) return 'يوم واحد';
+                if (days === 2) return 'يومين';
+                if (days >= 3 && days <= 10) return `${days} أيام`;
+                return `${days} يوماً`;
+            }
+            if (hours > 0) {
+                if (hours === 1) return 'ساعة واحدة';
+                if (hours === 2) return 'ساعتين';
+                if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
+                return `${hours} ساعة`;
+            }
+            if (minutes > 0) {
+                if (minutes === 1) return 'دقيقة واحدة';
+                if (minutes === 2) return 'دقيقتين';
+                if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
+                return `${minutes} دقيقة`;
+            }
+            
+            if (totalSec === 1) return 'ثانية واحدة';
+            if (totalSec === 2) return 'ثانيتين';
+            if (totalSec >= 3 && totalSec <= 10) return `${totalSec} ثوانٍ`;
+            return `${totalSec} ثانية`;
         }
 
         let timeInterval = null;
