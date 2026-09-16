@@ -3,300 +3,191 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>التحقق من الطالب · Musta'athin</title>
+    <title>لوحة تحكم بأحضار الجهاز الخاصة في ثانوية هوازن</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        .verify-page {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #ffffff;
-            padding: 1.5rem;
+        .login-overlay {
+            position: fixed; inset: 0; background: #ffffff;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; padding: 1.5rem;
         }
-        .verify-card {
-            background: white;
-            border-radius: 40px;
-            padding: 3rem 2.5rem;
-            max-width: 550px;
-            width: 100%;
-            text-align: center;
+        .login-box {
+            background: white; border-radius: 32px; padding: 2.5rem 2rem;
+            max-width: 420px; width: 100%; text-align: center;
             border: 2px solid #ede4ff;
-            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.08);
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.12);
+            animation: popIn 0.4s ease;
         }
-        .verify-card .school-icon {
-            font-size: 2.5rem;
-            color: #7c3aed;
-            margin-bottom: 0.5rem;
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
-        .verify-card h2 {
-            color: #4c1d95;
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
+        .login-box .lock-icon { font-size: 3rem; color: #7c3aed; margin-bottom: 1rem; }
+        .login-box h2 { color: #4c1d95; font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .login-box .subtitle { color: #8b7db8; font-size: 0.85rem; margin-bottom: 1.8rem; }
+        .login-box input[type="password"] {
+            width: 100%; padding: 0.9rem 1.2rem;
+            border: 2px solid #ede4ff; border-radius: 16px;
+            font-size: 1rem; outline: none; text-align: center;
+            letter-spacing: 2px; transition: border 0.2s;
+            font-family: inherit; color: #2a1e4a;
         }
-        .verify-student-name {
-            font-size: 2.4rem;
-            font-weight: 700;
-            color: #3b1e6b;
-            margin: 1rem 0 0.5rem;
-            word-break: break-word;
+        .login-box input[type="password"]:focus { border-color: #7c3aed; }
+        .login-box button {
+            width: 100%; margin-top: 1rem; padding: 0.9rem;
+            background: #7c3aed; color: white; border: none;
+            border-radius: 16px; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: background 0.2s; font-family: inherit;
         }
-        .verify-status-large {
-            display: inline-block;
-            padding: 0.6rem 2.5rem;
-            border-radius: 60px;
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin: 1rem 0 0.5rem;
+        .login-box button:hover { background: #6d28d9; }
+        .login-error { color: #b13e3e; font-size: 0.85rem; margin-top: 0.8rem; min-height: 1.2rem; }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(76, 29, 149, 0.35);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; padding: 1.5rem; backdrop-filter: blur(6px);
         }
-        .verify-status-large.permitted {
-            background: #d3f0e5;
-            color: #006b4e;
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white; border-radius: 28px; padding: 2rem 1.8rem;
+            max-width: 440px; width: 100%; border: 2px solid #ede4ff;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
+            animation: popIn 0.3s ease;
         }
-        .verify-status-large.not-permitted {
-            background: #fce8e8;
-            color: #b13e3e;
+        .modal-box h3 {
+            color: #4c1d95; font-size: 1.2rem; font-weight: 700;
+            margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
         }
-        .verify-time {
-            color: #3b1e6b;
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background: #f7f3ff;
-            border-radius: 16px;
-            border: 2px solid #ede4ff;
+        .modal-box h3 i { color: #7c3aed; }
+        .modal-box .modal-sub { color: #8b7db8; font-size: 0.8rem; margin-bottom: 1.5rem; }
+        .modal-box input[type="text"] {
+            width: 100%; padding: 0.85rem 1.2rem;
+            border: 2px solid #ede4ff; border-radius: 16px;
+            font-size: 1rem; outline: none; transition: border 0.2s;
+            font-family: inherit; color: #2a1e4a;
         }
-        .verify-time i { color: #7c3aed; margin-left: 0.5rem; }
-        .verify-timestamp {
-            color: #8b7db8;
-            font-size: 0.8rem;
-            margin-top: 1.5rem;
+        .modal-box input[type="text"]:focus { border-color: #7c3aed; }
+        .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; }
+        .modal-actions button {
+            flex: 1; padding: 0.8rem; border: none; border-radius: 16px;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: all 0.15s;
         }
-        .refresh-indicator {
-            color: #a78bfa;
-            font-size: 0.7rem;
-            margin-top: 0.5rem;
-            opacity: 0.8;
+        .modal-actions .btn-save { background: #7c3aed; color: white; }
+        .modal-actions .btn-save:hover { background: #6d28d9; }
+        .modal-actions .btn-cancel-modal {
+            background: #f7f3ff; color: #5b21b6; border: 2px solid #ede4ff;
         }
-        .loading-spinner {
-            font-size: 2rem;
-            color: #7c3aed;
-            animation: spin 1s linear infinite;
+        .modal-actions .btn-cancel-modal:hover { background: #ede4ff; }
+        .add-btn {
+            background: #7c3aed !important; color: white !important;
+            border-color: #7c3aed !important;
+            padding: 0.45rem 1.2rem !important; font-size: 0.8rem !important;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .error-message {
-            color: #b13e3e;
-            font-size: 1rem;
-            padding: 1rem;
-            background: #fce8e8;
-            border-radius: 16px;
-        }
-        @media (max-width: 500px) {
-            .verify-card { padding: 2rem 1.5rem; }
-            .verify-student-name { font-size: 1.8rem; }
-            .verify-status-large { font-size: 1.2rem; padding: 0.4rem 1.8rem; }
-            .verify-time { font-size: 0.9rem; }
-        }
+        .add-btn:hover { background: #6d28d9 !important; }
     </style>
 </head>
 <body>
-    <div class="verify-page">
-        <div class="verify-card" id="verifyCard">
-            <div class="school-icon"><i class="fas fa-graduation-cap"></i></div>
-            <h2>Hawazen High School</h2>
 
-            <div id="verificationContent">
-                <div class="loading-spinner"><i class="fas fa-spinner"></i></div>
-                <p style="margin-top: 1rem; color: #8b7db8;">جاري تحميل حالة الطالب...</p>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <div class="lock-icon"><i class="fas fa-lock"></i></div>
+            <h2>لوحة تحكم</h2>
+            <div class="subtitle">لوحة تحكم المعلم · Hawazen High School</div>
+            <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" autocomplete="off" />
+            <button onclick="checkPassword()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-user-plus"></i> إضافة طالب جديد</h3>
+            <div class="modal-sub">سيتم إنشاء باركود QR تلقائياً للطالب</div>
+            <input type="text" id="newStudentName" placeholder="اسم الطالب الكامل" autocomplete="off" />
+            <div class="modal-actions">
+                <button class="btn-save" onclick="addNewStudent()"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn-cancel-modal" onclick="closeAddModal()">إلغاء</button>
             </div>
         </div>
     </div>
 
+    <div class="app-container">
+        <header class="school-header">
+            <h1><i class="fas fa-graduation-cap"></i>لوحة التحكم</h1>
+            <div class="header-actions">
+                <button class="btn add-btn" id="btnDownloadAll">
+                    <i class="fas fa-file-pdf"></i> <span class="btn-text">تحميل كافة الباركودات (PDF)</span>
+                </button>
+                <button class="btn add-btn" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
+                </button>
+                <button class="btn btn-qr" onclick="logout()" title="تسجيل الخروج">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+                <div class="badge-school"><i class="fas fa-school"></i> Hawazen High School</div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chalkboard-teacher"></i> لوحة المعلم</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="ابحث عن طالب..." oninput="filterStudents()" />
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+
+                <div class="student-list" id="studentList">
+                    <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الطلاب...</div>
+                </div>
+
+                <div class="history-log">
+                    <h4><i class="fas fa-clock-rotate-left"></i> آخر العمليات</h4>
+                    <div id="historyLogContainer">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-qrcode"></i> باركود الطالب</h2>
+                    <span style="font-size:0.7rem; color:#8b7db8;">دائم · لا يتغير</span>
+                </div>
+                <div class="qr-preview">
+                    <div id="qrcode-container"></div>
+                    <div class="qr-label" id="qrStudentName">اختر طالباً</div>
+                    <div class="qr-sub">امسح للتحقق من الحالة</div>
+                    <button class="btn btn-qr-download" id="btnDownloadSingle">
+                        <i class="fas fa-file-pdf"></i> تحميل باركود الطالب (PDF)
+                    </button>
+                </div>
+
+                <div class="verification-panel">
+                    <h3><i class="fas fa-shield-alt"></i> التحقق المباشر</h3>
+                    <div class="verify-student" id="verificationDisplay">
+                        <span class="student-badge" id="verifyName">اختر طالباً</span>
+                        <span class="verify-status" id="verifyStatusBadge">—</span>
+                    </div>
+                    <div class="verify-hint">
+                        <i class="fas fa-camera"></i> الباركود يوجّه لصفحة تحقق مخفية
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            <span>الاصدار : <strong id="appVersion">v1.0.6</strong></span>
+        </footer>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        const urlParams = new URLSearchParams(window.location.search);
-        let rawStudent = urlParams.get('student');
-        let studentName = null;
-
-        if (rawStudent) {
-            try {
-                studentName = decodeURIComponent(rawStudent.trim());
-            } catch (e) {
-                studentName = rawStudent.trim();
-            }
-        }
-
-        function getTimeSince(lastPermittedAt) {
-            if (!lastPermittedAt) return null;
-            
-            const thenTime = new Date(lastPermittedAt).getTime();
-            if (isNaN(thenTime)) return null;
-
-            const nowTime = Date.now();
-            let diffMs = nowTime - thenTime;
-
-            if (diffMs < 0) {
-                if (diffMs > -10800000) {
-                    diffMs = Math.abs(diffMs + 10800000);
-                } else {
-                    diffMs = 0;
-                }
-            }
-
-            const totalSec = Math.floor(diffMs / 1000);
-            const days = Math.floor(totalSec / 86400);
-            const hours = Math.floor(totalSec / 3600);
-            const minutes = Math.floor(totalSec / 60);
-
-            if (days > 0) {
-                if (days === 1) return 'يوم واحد';
-                if (days === 2) return 'يومين';
-                if (days >= 3 && days <= 10) return `${days} أيام`;
-                return `${days} يوماً`;
-            }
-            if (hours > 0) {
-                if (hours === 1) return 'ساعة واحدة';
-                if (hours === 2) return 'ساعتين';
-                if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
-                return `${hours} ساعة`;
-            }
-            if (minutes > 0) {
-                if (minutes === 1) return 'دقيقة واحدة';
-                if (minutes === 2) return 'دقيقتين';
-                if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
-                return `${minutes} دقيقة`;
-            }
-            
-            if (totalSec === 1) return 'ثانية واحدة';
-            if (totalSec === 2) return 'ثانيتين';
-            if (totalSec >= 3 && totalSec <= 10) return `${totalSec} ثوانٍ`;
-            return `${totalSec} ثانية`;
-        }
-
-        let timeInterval = null;
-
-        function updateTimer(lastPermittedAt) {
-            const timeEl = document.getElementById('timeDisplay');
-            if (!timeEl || !lastPermittedAt) return;
-            const timeStr = getTimeSince(lastPermittedAt);
-            if (timeStr) {
-                timeEl.innerHTML = `<i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}`;
-            }
-        }
-
-        async function loadStudentStatus() {
-            const content = document.getElementById('verificationContent');
-
-            if (!studentName) {
-                content.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i> باركود غير صالح
-                    </div>
-                    <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.9rem;">
-                        لم يتم العثور على اسم الطالب في الرابط.
-                    </p>
-                `;
-                return;
-            }
-
-            try {
-                const { data, error } = await supabaseClient
-                    .from('students')
-                    .select('name, permitted, last_permitted_at')
-                    .eq('name', studentName)
-                    .single();
-
-                if (error || !data) {
-                    content.innerHTML = `
-                        <div class="error-message">
-                            <i class="fas fa-exclamation-triangle"></i> الطالب غير موجود
-                        </div>
-                        <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.9rem;">
-                            الباركود لا يتوافق مع أي طالب مسجل (${studentName}).
-                        </p>
-                    `;
-                    return;
-                }
-
-                renderStatus(data);
-
-                const refreshInterval = setInterval(async () => {
-                    try {
-                        const { data: refreshData, error: refreshError } = await supabaseClient
-                            .from('students')
-                            .select('name, permitted, last_permitted_at')
-                            .eq('name', studentName)
-                            .single();
-
-                        if (!refreshError && refreshData) {
-                            renderStatus(refreshData);
-                        }
-                    } catch (e) {}
-                }, 5000);
-
-                window.addEventListener('beforeunload', () => {
-                    clearInterval(refreshInterval);
-                    if (timeInterval) clearInterval(timeInterval);
-                });
-
-            } catch (error) {
-                content.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i> خطأ في الاتصال
-                    </div>
-                `;
-            }
-        }
-
-        function renderStatus(data) {
-            const content = document.getElementById('verificationContent');
-            const status = data.permitted;
-            const statusText = status ? 'مسموح' : 'غير مسموح';
-            const statusClass = status ? 'permitted' : 'not-permitted';
-            const statusIcon = status ? '🟢' : '🔴';
-            const lastPermittedAt = data.last_permitted_at;
-
-            let timeHtml = '';
-            if (status && lastPermittedAt) {
-                const timeStr = getTimeSince(lastPermittedAt);
-                timeHtml = `
-                    <div class="verify-time" id="timeDisplay">
-                        <i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}
-                    </div>
-                `;
-            }
-
-            content.innerHTML = `
-                <div class="verify-student-name">${data.name}</div>
-                <div class="verify-status-large ${statusClass}">${statusIcon} ${statusText}</div>
-                ${timeHtml}
-                <div class="verify-timestamp">
-                    <i class="fas fa-check-circle"></i> تم التحديث بواسطة: محمد ماهر او عبدالله العوض
-                </div>
-                <div class="refresh-indicator">
-                    <i class="fas fa-sync-alt fa-fw"></i> يتم التحديث تلقائياً
-                </div>
-            `;
-
-            if (status && lastPermittedAt) {
-                if (timeInterval) clearInterval(timeInterval);
-                timeInterval = setInterval(() => updateTimer(lastPermittedAt), 1000);
-            } else {
-                if (timeInterval) clearInterval(timeInterval);
-            }
-        }
-
-        loadStudentStatus();
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
