@@ -1,5 +1,5 @@
 // ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.6';
+const APP_VERSION = 'v1.0.9';
 
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
@@ -18,13 +18,13 @@ let liveTimerInterval = null;
 
 // DOM refs
 const studentListEl = document.getElementById('studentList');
-const historyContainer = document.getElementById('historyLogContainer');
 const qrContainer = document.getElementById('qrcode-container');
 const qrStudentName = document.getElementById('qrStudentName');
 const verifyName = document.getElementById('verifyName');
 const verifyStatusBadge = document.getElementById('verifyStatusBadge');
 const searchInput = document.getElementById('searchInput');
 const toastContainer = document.getElementById('toastContainer');
+const modalHistoryContainer = document.getElementById('modalHistoryContainer');
 
 // ===== التحقق من كلمة المرور =====
 function checkPassword() {
@@ -72,6 +72,22 @@ function closeAddModal() {
 document.getElementById('newStudentName').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addNewStudent();
 });
+
+// ===== نافذة سجل العمليات (مربوطة بـ window عالمياً) =====
+window.openHistoryModal = function() {
+    const modal = document.getElementById('historyModal');
+    if (modal) {
+        modal.classList.add('active');
+        loadHistory();
+    }
+};
+
+window.closeHistoryModal = function() {
+    const modal = document.getElementById('historyModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+};
 
 // ===== إضافة طالب جديد =====
 async function addNewStudent() {
@@ -139,6 +155,7 @@ async function deleteStudent(name) {
         }
 
         await loadAllData();
+        loadHistory();
 
     } catch (error) {
         console.error('Delete error:', error);
@@ -174,8 +191,11 @@ async function fetchStudents() {
     }
 }
 
-// ===== جلب السجل =====
-async function fetchHistory() {
+// ===== جلب وعرض السجل داخل المودال =====
+async function loadHistory() {
+    const container = document.getElementById('modalHistoryContainer');
+    if (!container) return;
+
     try {
         const { data, error } = await supabaseClient
             .from('history')
@@ -184,9 +204,36 @@ async function fetchHistory() {
             .limit(50);
 
         if (error) throw error;
-        return data;
-    } catch (error) {
-        return [];
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات مسجلة بعد</div>`;
+            return;
+        }
+
+        let html = '';
+        data.forEach(entry => {
+            const isPermitted = entry.status === 'Permitted';
+            const statusBadgeClass = isPermitted ? 'permitted' : 'not-permitted';
+            const statusText = isPermitted ? 'مسموح' : 'غير مسموح';
+            const statusIcon = isPermitted ? '🟢' : '🔴';
+
+            html += `
+                <div class="log-entry-popup">
+                    <div class="st-info">
+                        <i class="fas fa-user-graduate" style="color:#7c3aed;"></i>
+                        <span>${entry.student_name}</span>
+                        <span class="status-badge ${statusBadgeClass}">${statusIcon} ${statusText}</span>
+                    </div>
+                    <div class="meta-info">
+                        <span><i class="fas fa-clock"></i> ${entry.timestamp}</span>
+                        <span class="teacher-tag">${entry.teacher}</span>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="loading-message" style="color:#b13e3e;">تعذر جلب السجل</div>`;
     }
 }
 
@@ -249,6 +296,7 @@ async function updateStudentStatus(name, status) {
         showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
 
         await loadAllData();
+        loadHistory();
 
         if (selectedStudent === name) {
             const studentData = await fetchStudentStatus(name);
@@ -264,12 +312,10 @@ async function updateStudentStatus(name, status) {
     }
 }
 
-// ===== تحميل جميع البيانات =====
+// ===== تحميل البيانات =====
 async function loadAllData() {
     const students = await fetchStudents();
-    const history = await fetchHistory();
     renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : students);
-    renderHistory(history);
 }
 
 // ===== عرض الطلاب =====
@@ -341,26 +387,6 @@ function renderStudents(students) {
     });
 }
 
-// ===== عرض السجل =====
-function renderHistory(history) {
-    if (!history || history.length === 0) {
-        historyContainer.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات بعد</div>`;
-        return;
-    }
-
-    let html = '';
-    history.slice(0, 10).forEach(entry => {
-        const icon = entry.status === 'Permitted' ? '🟢' : '🔴';
-        html += `
-            <div class="log-entry">
-                <span><strong>${entry.student_name}</strong> ${icon} ${entry.status === 'Permitted' ? 'مسموح' : 'غير مسموح'}</span>
-                <span class="log-time">${entry.timestamp} · <span class="teacher-tag">${entry.teacher}</span></span>
-            </div>
-        `;
-    });
-    historyContainer.innerHTML = html;
-}
-
 // ===== اختيار طالب =====
 function selectStudent(student) {
     if (isProcessing) return;
@@ -376,7 +402,7 @@ function selectStudent(student) {
     renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
 }
 
-// ===== حساب المدة بوحدة واحدة فقط مع مراعاة قواعد اللغة العربية =====
+// ===== حساب المدة بوحدة واحدة =====
 function getTimeSince(lastPermittedAt) {
     if (!lastPermittedAt) return null;
 
@@ -634,10 +660,12 @@ async function downloadAllStudentsQRPdf() {
     }
 }
 
-// ربط الأزرار
-function attachDownloadEvents() {
+// ربط الأزرار بشكل مباشر في الـ DOM
+function attachEvents() {
     const singleBtn = document.getElementById('btnDownloadSingle');
     const allBtn = document.getElementById('btnDownloadAll');
+    const historyBtn = document.getElementById('btnOpenHistory');
+    const closeHistoryBtn = document.getElementById('btnCloseHistoryModal');
 
     if (singleBtn) {
         singleBtn.onclick = (e) => {
@@ -650,6 +678,20 @@ function attachDownloadEvents() {
         allBtn.onclick = (e) => {
             e.preventDefault();
             downloadAllStudentsQRPdf();
+        };
+    }
+
+    if (historyBtn) {
+        historyBtn.onclick = (e) => {
+            e.preventDefault();
+            window.openHistoryModal();
+        };
+    }
+
+    if (closeHistoryBtn) {
+        closeHistoryBtn.onclick = (e) => {
+            e.preventDefault();
+            window.closeHistoryModal();
         };
     }
 }
@@ -687,12 +729,11 @@ function subscribeToChanges() {
         .subscribe();
 
     supabaseClient
-        .channel('history_changes')
+        .channel('history_realtime')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'history' },
-            async () => {
-                const history = await fetchHistory();
-                renderHistory(history);
+            () => {
+                loadHistory();
             }
         )
         .subscribe();
@@ -704,7 +745,7 @@ async function init() {
     const verEl = document.getElementById('appVersion');
     if (verEl) verEl.textContent = APP_VERSION;
 
-    attachDownloadEvents();
+    attachEvents();
     await loadAllData();
 
     if (allStudents.length > 0) {
@@ -722,7 +763,8 @@ async function init() {
     console.log('✅ Ready. Students:', allStudents.length);
 }
 
-attachDownloadEvents();
+// ربط أولي ومباشر
+attachEvents();
 
 // ===== بدء التطبيق =====
 if (sessionStorage.getItem('mustaathin_auth') === 'true') {
