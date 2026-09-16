@@ -1,5 +1,5 @@
 // ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.4';
+const APP_VERSION = 'v1.0.6';
 
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
@@ -206,7 +206,7 @@ async function fetchStudentStatus(name) {
     }
 }
 
-// ===== تحديث حالة طالب (حفظ UTC قياسي بدون إزاحة مزدوجة) =====
+// ===== تحديث حالة طالب =====
 async function updateStudentStatus(name, status) {
     if (isProcessing) return;
     isProcessing = true;
@@ -216,7 +216,6 @@ async function updateStudentStatus(name, status) {
         const updateData = { permitted: status };
 
         if (status === true) {
-            // حفظ التوقيت العالمي القياسي ISO
             updateData.last_permitted_at = now.toISOString();
         }
 
@@ -227,7 +226,6 @@ async function updateStudentStatus(name, status) {
 
         if (updateError) throw updateError;
 
-        // تنسيق وقت السجل بتوقيت المملكة العربية السعودية
         const displayTimestamp = now.toLocaleString('ar-SA', {
             timeZone: 'Asia/Riyadh',
             month: 'short', day: 'numeric',
@@ -270,28 +268,19 @@ async function updateStudentStatus(name, status) {
 async function loadAllData() {
     const students = await fetchStudents();
     const history = await fetchHistory();
-    renderStudents(students, searchInput.value);
+    renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : students);
     renderHistory(history);
 }
 
 // ===== عرض الطلاب =====
-function renderStudents(students, filter = '') {
+function renderStudents(students) {
     if (!students || students.length === 0) {
-        studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
-        return;
-    }
-
-    const filtered = students.filter(s =>
-        s.name.toLowerCase().includes(filter.toLowerCase())
-    );
-
-    if (filtered.length === 0 && students.length > 0) {
-        studentListEl.innerHTML = `<div class="loading-message">لا يوجد نتائج لـ "${filter}"</div>`;
+        studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب.</div>`;
         return;
     }
 
     let html = '';
-    filtered.forEach(s => {
+    students.forEach(s => {
         const status = s.permitted === true;
 
         html += `
@@ -384,10 +373,10 @@ function selectStudent(student) {
             if (data) updateQrAndVerification(student, data.permitted, data.last_permitted_at);
         });
     }
-    renderStudents(allStudents, searchInput.value);
+    renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
 }
 
-// ===== حساب المدة بالثواني والدقائق والساعات والأيام تصاعدياً وبدقة =====
+// ===== حساب المدة بوحدة واحدة فقط مع مراعاة قواعد اللغة العربية =====
 function getTimeSince(lastPermittedAt) {
     if (!lastPermittedAt) return null;
 
@@ -397,7 +386,6 @@ function getTimeSince(lastPermittedAt) {
     const nowTime = Date.now();
     let diffMs = nowTime - thenTime;
 
-    // تصحيح أي قيم قديمة كانت محفوظة بزيادة 3 ساعات
     if (diffMs < 0) {
         if (diffMs > -10800000) {
             diffMs = Math.abs(diffMs + 10800000);
@@ -408,26 +396,41 @@ function getTimeSince(lastPermittedAt) {
 
     const totalSec = Math.floor(diffMs / 1000);
     const days = Math.floor(totalSec / 86400);
-    const hours = Math.floor((totalSec % 86400) / 3600);
-    const minutes = Math.floor((totalSec % 3600) / 60);
-    const seconds = totalSec % 60;
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor(totalSec / 60);
 
-    const parts = [];
-    if (days > 0) parts.push(`${days} يوم`);
-    if (hours > 0) parts.push(`${hours} ساعة`);
-    if (minutes > 0) parts.push(`${minutes} دقيقة`);
-    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} ثانية`);
-
-    return parts.join(' و ');
+    if (days > 0) {
+        if (days === 1) return 'يوم واحد';
+        if (days === 2) return 'يومين';
+        if (days >= 3 && days <= 10) return `${days} أيام`;
+        return `${days} يوماً`;
+    }
+    if (hours > 0) {
+        if (hours === 1) return 'ساعة واحدة';
+        if (hours === 2) return 'ساعتين';
+        if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
+        return `${hours} ساعة`;
+    }
+    if (minutes > 0) {
+        if (minutes === 1) return 'دقيقة واحدة';
+        if (minutes === 2) return 'دقيقتين';
+        if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
+        return `${minutes} دقيقة`;
+    }
+    
+    if (totalSec === 1) return 'ثانية واحدة';
+    if (totalSec === 2) return 'ثانيتين';
+    if (totalSec >= 3 && totalSec <= 10) return `${totalSec} ثوانٍ`;
+    return `${totalSec} ثانية`;
 }
 
-// ===== رابط صفحة التحقق الدقيق الموحد =====
+// ===== رابط صفحة التحقق =====
 function getStudentVerifyUrl(studentName) {
     const base = window.location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
     return `${base}verify.html?student=${encodeURIComponent(studentName)}`;
 }
 
-// ===== تحديث QR والتحقق مع عداد حي يتجدد كل ثانية =====
+// ===== تحديث QR والتحقق =====
 function updateQrAndVerification(student, status, lastPermittedAt) {
     qrStudentName.textContent = student;
     verifyName.textContent = student;
@@ -462,7 +465,9 @@ function updateQrAndVerification(student, status, lastPermittedAt) {
 
 // ===== فلترة الطلاب =====
 window.filterStudents = function() {
-    renderStudents(allStudents, searchInput.value);
+    const val = searchInput.value.toLowerCase();
+    const filtered = allStudents.filter(s => s.name.toLowerCase().includes(val));
+    renderStudents(filtered);
 };
 
 // ============================================
@@ -660,7 +665,7 @@ function subscribeToChanges() {
                     const deletedName = payload.old?.name;
                     if (deletedName) {
                         allStudents = allStudents.filter(s => s.name !== deletedName);
-                        renderStudents(allStudents, searchInput.value);
+                        renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
                     }
                     return;
                 }
@@ -673,7 +678,7 @@ function subscribeToChanges() {
                 } else if (payload.eventType === 'INSERT') {
                     allStudents.push(updatedStudent);
                 }
-                renderStudents(allStudents, searchInput.value);
+                renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
                 if (selectedStudent === updatedStudent.name) {
                     updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
                 }
