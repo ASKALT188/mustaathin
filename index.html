@@ -206,6 +206,25 @@
         </div>
     </div>
 
+    <!-- نافذة تأكيد الحذف -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box confirm-box">
+            <div class="confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="confirm-title" id="confirmTitle">تأكيد الحذف</h3>
+            <div class="confirm-message" id="confirmMessage">هل أنت متأكد؟</div>
+            <div class="modal-actions confirm-actions">
+                <button class="btn-confirm-yes" id="confirmYesBtn" onclick="confirmYes()">
+                    <i class="fas fa-check"></i> نعم
+                </button>
+                <button class="btn-confirm-no" onclick="confirmNo()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== القائمة الجانبية ===== -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -257,50 +276,17 @@
                     </button>
                 </div>
 
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-list"></i> القائمة</h2>
-                            <div class="search-box">
-                                <input type="text" id="searchInput" placeholder="ابحث..." oninput="filterStudents()" />
-                                <button><i class="fas fa-search"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="student-list" id="studentList">
-                            <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-list"></i> القائمة</h2>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="ابحث..." oninput="filterStudents()" />
+                            <button><i class="fas fa-search"></i></button>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-qrcode"></i> الباركود</h2>
-                            <span class="card-hint">دائم</span>
-                        </div>
-                        <div class="qr-preview">
-                            <div id="qrcode-container">
-                                <div class="qr-empty">
-                                    <i class="fas fa-hand-pointer"></i>
-                                    <p>اضغط على اسم الطالب</p>
-                                </div>
-                            </div>
-                            <div class="qr-label" id="qrStudentName">لم يتم اختيار طالب</div>
-                            <div class="qr-sub" id="qrSub">اضغط على اسم الطالب لعرض الباركود</div>
-                            <button class="btn-download-qr" id="downloadQrBtn" onclick="downloadQr()" disabled>
-                                <i class="fas fa-download"></i> تحميل الباركود
-                            </button>
-                        </div>
-
-                        <div class="verification-panel">
-                            <h3><i class="fas fa-shield-alt"></i> التحقق المباشر</h3>
-                            <div class="verify-student">
-                                <span class="student-badge" id="verifyName">—</span>
-                                <span class="verify-status" id="verifyStatusBadge">—</span>
-                            </div>
-                            <div class="verify-hint">
-                                <i class="fas fa-camera"></i> الباركود يوجّه لصفحة تحقق
-                            </div>
-                        </div>
+                    <div class="student-list" id="studentList">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                     </div>
                 </div>
             </div>
