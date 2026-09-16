@@ -8,11 +8,125 @@
 body {
     background: #ffffff;
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 0.8rem;
     color: #2a1e4a;
     -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================
+   ===== القائمة الجانبية =====
+   ============================================ */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 260px;
+    height: 100vh;
+    background: white;
+    border-left: 2px solid #ede4ff;
+    box-shadow: -4px 0 20px rgba(124, 58, 237, 0.06);
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1.2rem;
+    border-bottom: 2px solid #f3ecff;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4c1d95;
+}
+.sidebar-header i {
+    color: #7c3aed;
+    font-size: 1.3rem;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.85rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b5b95;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    text-align: right;
+    width: 100%;
+}
+.sidebar-item i {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+    color: #a78bfa;
+    transition: color 0.2s;
+}
+.sidebar-item:hover {
+    background: #f7f3ff;
+    color: #5b21b6;
+}
+.sidebar-item:hover i {
+    color: #7c3aed;
+}
+.sidebar-item.active {
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+.sidebar-item.active i {
+    color: white;
+}
+
+.sidebar-footer {
+    padding: 0.7rem;
+    border-top: 2px solid #f3ecff;
+}
+
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: #fce8e8;
+    color: #b13e3e;
+    border: 2px solid #f5d0d0;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+.sidebar-logout:hover {
+    background: #f5d6d6;
+}
+
+/* ============================================
+   ===== المحتوى الرئيسي =====
+   ============================================ */
+.main-content {
+    margin-right: 260px;
+    min-height: 100vh;
+    padding: 1.2rem;
 }
 
 .app-container {
@@ -21,35 +135,27 @@ body {
 }
 
 /* ============================================
-   ===== Header =====
+   ===== Page Title =====
    ============================================ */
-.school-header {
+.page-title {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
     gap: 0.6rem;
-    background: white;
-    padding: 0.7rem 1.2rem;
-    border-radius: 2.5rem;
-    border: 2px solid #ede4ff;
-    box-shadow: 0 6px 24px rgba(124, 58, 237, 0.06);
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
 }
-
-.school-header h1 {
-    font-weight: 700;
+.page-title h1 {
     font-size: 1.3rem;
+    font-weight: 700;
     color: #4c1d95;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-.school-header h1 i {
-    color: #7c3aed;
-}
+.page-title h1 i { color: #7c3aed; }
 
-.header-actions {
+.title-actions {
     display: flex;
     gap: 0.4rem;
     align-items: center;
@@ -57,58 +163,14 @@ body {
 }
 
 /* ============================================
-   ===== Tabs Nav =====
+   ===== Pages =====
    ============================================ */
-.tabs-nav {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    background: #f7f3ff;
-    padding: 0.35rem;
-    border-radius: 40px;
-    border: 2px solid #ede4ff;
-    width: fit-content;
-    max-width: 100%;
-}
-
-.tab-btn {
-    background: transparent;
-    border: none;
-    padding: 0.6rem 1.4rem;
-    border-radius: 40px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #6b5b95;
-    cursor: pointer;
-    transition: all 0.25s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-family: inherit;
-    white-space: nowrap;
-}
-.tab-btn:hover {
-    color: #5b21b6;
-}
-.tab-btn.active {
-    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-}
-.tab-btn i {
-    font-size: 0.85rem;
-}
-
-/* ============================================
-   ===== Tab Content =====
-   ============================================ */
-.tab-content {
+.page-section {
     display: none;
     animation: fadeIn 0.3s ease;
 }
-.tab-content.active {
-    display: block;
-}
+.page-section.active { display: block; }
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -121,13 +183,6 @@ body {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
     gap: 1.2rem;
-}
-
-@media (max-width: 900px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
 }
 
 .card {
@@ -146,7 +201,6 @@ body {
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
-
 .card-header h2 {
     font-size: 1.05rem;
     font-weight: 700;
@@ -155,14 +209,8 @@ body {
     align-items: center;
     gap: 0.4rem;
 }
-.card-header h2 i {
-    color: #7c3aed;
-}
-
-.card-hint {
-    font-size: 0.7rem;
-    color: #8b7db8;
-}
+.card-header h2 i { color: #7c3aed; }
+.card-hint { font-size: 0.7rem; color: #8b7db8; }
 
 /* ============================================
    ===== Search Box =====
@@ -179,9 +227,7 @@ body {
     min-width: 130px;
     max-width: 200px;
 }
-.search-box:focus-within {
-    border-color: #a78bfa;
-}
+.search-box:focus-within { border-color: #a78bfa; }
 .search-box input {
     border: none;
     background: transparent;
@@ -220,68 +266,129 @@ body {
 .student-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.5rem;
     background: #fbf9ff;
-    padding: 0.7rem 0.9rem;
-    border-radius: 60px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 50px;
     border: 2px solid #f3ecff;
-    flex-wrap: wrap;
-    gap: 0.4rem 0.6rem;
-    transition: background 0.12s, border 0.12s;
+    transition: all 0.15s;
 }
 .student-item:hover {
     background: #f7f3ff;
     border-color: #d8c7ff;
 }
-.student-item .student-name {
+.student-item.selected {
+    background: linear-gradient(135deg, #f3ecff 0%, #e9dfff 100%);
+    border-color: #a78bfa;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.15);
+}
+
+.student-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+}
+
+.student-name-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0.35rem 0.5rem;
+    text-align: right;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #3b1e6b;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.9rem;
-    flex: 1;
-    min-width: 100px;
+    border-radius: 30px;
+    transition: all 0.15s;
+    min-width: 0;
 }
-.student-item .student-name i {
-    color: #a78bfa;
-    font-size: 0.85rem;
-}
-
-/* ============================================
-   ===== Status Badge =====
-   ============================================ */
-.status-badge {
-    padding: 0.15rem 1.1rem;
-    border-radius: 40px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    background: #f3ecff;
+.student-name-btn:hover {
+    background: rgba(124, 58, 237, 0.08);
     color: #5b21b6;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
+}
+.student-name-btn i {
+    color: #a78bfa;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+.student-name-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
-.status-badge.permitted {
-    background: #d3f0e5;
-    color: #006b4e;
+
+/* ============================================
+   ===== iOS Toggle =====
+   ============================================ */
+.status-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
 }
-.status-badge.not-permitted {
-    background: #fce8e8;
-    color: #b13e3e;
+.status-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: right;
+}
+.status-text.off { color: #b13e3e; }
+.status-text.on { color: #22c55e; }
+
+.ios-toggle {
+    position: relative;
+    width: 46px;
+    height: 28px;
+    border-radius: 30px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: #e5e5ea;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    outline: none;
+}
+.ios-toggle:hover { opacity: 0.9; }
+.ios-toggle:active .ios-toggle-thumb { width: 32px; }
+.ios-toggle.on { background: #22c55e; }
+
+.ios-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        0 1px 1px rgba(0, 0, 0, 0.16);
+    transition: 
+        left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.2s ease;
+}
+.ios-toggle.on .ios-toggle-thumb {
+    left: calc(100% - 26px);
 }
 
 /* ============================================
-   ===== Action Buttons =====
+   ===== Buttons =====
    ============================================ */
-.actions {
-    display: flex;
-    gap: 0.3rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
 .btn {
     border: none;
     background: transparent;
@@ -298,6 +405,7 @@ body {
     white-space: nowrap;
     min-height: 2.2rem;
     font-family: inherit;
+    text-decoration: none;
 }
 .btn:disabled {
     opacity: 0.4;
@@ -311,105 +419,32 @@ body {
     font-size: 0.75rem;
     padding: 0.35rem 0.7rem;
 }
-.btn-qr:hover {
-    background: #d8c7ff;
-}
-.btn-qr.active {
-    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
-    color: white;
-    border-color: #7c3aed;
-}
+.btn-qr:hover { background: #d8c7ff; }
 
 .btn-delete {
     background: #fce8e8;
     color: #b13e3e;
     border-color: #f5d0d0;
     font-size: 0.75rem;
-    padding: 0.35rem 0.7rem;
+    padding: 0.35rem 0.6rem;
 }
 .btn-delete:hover {
     background: #f5d6d6;
     transform: scale(1.05);
 }
 
-.btn-logout {
-    background: #ede4ff;
-    color: #5b21b6;
-    border: 1px solid #d8c7ff;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.85rem;
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
-    justify-content: center;
+.add-btn {
+    background: #7c3aed !important;
+    color: white !important;
+    border-color: #7c3aed !important;
+    padding: 0.45rem 1.2rem !important;
+    font-size: 0.8rem !important;
 }
-.btn-logout:hover {
-    background: #d8c7ff;
-}
+.add-btn:hover { background: #6d28d9 !important; }
 
 .btn-sm {
     padding: 0.35rem 0.7rem;
     font-size: 0.7rem;
-}
-
-/* ============================================
-   ===== iOS Toggle =====
-   ============================================ */
-.status-cell {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 0.3rem;
-}
-
-.status-text {
-    font-size: 0.72rem;
-    font-weight: 700;
-    white-space: nowrap;
-    min-width: 68px;
-    text-align: right;
-    transition: color 0.25s;
-}
-.status-text.off { color: #b13e3e; }
-.status-text.on { color: #22c55e; }
-
-.ios-toggle {
-    position: relative;
-    width: 51px;
-    height: 31px;
-    border-radius: 30px;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    background: #e5e5ea;
-    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
-    outline: none;
-    font-family: inherit;
-}
-.ios-toggle:hover { opacity: 0.9; }
-.ios-toggle:active .ios-toggle-thumb { width: 34px; }
-.ios-toggle.on { background: #22c55e; }
-
-.ios-toggle-thumb {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 27px;
-    height: 27px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 
-        0 3px 8px rgba(0, 0, 0, 0.15),
-        0 1px 1px rgba(0, 0, 0, 0.16),
-        0 3px 1px rgba(0, 0, 0, 0.1);
-    transition: 
-        left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        width 0.2s ease;
-}
-
-.ios-toggle.on .ios-toggle-thumb {
-    left: calc(100% - 29px);
 }
 
 /* ============================================
@@ -429,6 +464,11 @@ body {
     padding: 0.5rem;
     border-radius: 22px;
     box-shadow: 0 4px 14px rgba(124, 58, 237, 0.08);
+    min-width: 140px;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 #qrcode-container img,
 #qrcode-container canvas {
@@ -437,11 +477,32 @@ body {
     height: 140px;
     object-fit: contain;
 }
+
+.qr-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    color: #a78bfa;
+    text-align: center;
+}
+.qr-empty i {
+    font-size: 2.5rem;
+    opacity: 0.6;
+}
+.qr-empty p {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
 .qr-label {
     margin-top: 0.6rem;
     font-weight: 700;
     color: #4c1d95;
     font-size: 1rem;
+    text-align: center;
 }
 .qr-sub {
     color: #8b7db8;
@@ -467,12 +528,17 @@ body {
     transition: all 0.2s;
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
-.btn-download-qr:hover {
+.btn-download-qr:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
 }
-.btn-download-qr:active {
-    transform: translateY(0);
+.btn-download-qr:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: #e5e5ea;
+    color: #8b7db8;
 }
 
 /* ============================================
@@ -503,15 +569,14 @@ body {
 }
 .verify-student .student-badge {
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #3b1e6b;
 }
 .verify-status {
     font-weight: 700;
     padding: 0.15rem 1.2rem;
     border-radius: 60px;
-    font-size: 0.9rem;
-    transition: all 0.15s;
+    font-size: 0.85rem;
 }
 .verify-status.permitted {
     background: #d3f0e5;
@@ -529,24 +594,15 @@ body {
 }
 
 /* ============================================
-   ===== Logs Tab (السجلات) =====
+   ===== Logs =====
    ============================================ */
-.logs-card {
-    padding: 1.5rem 1.2rem;
-}
-
-.logs-actions {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
+.logs-card { padding: 1.2rem 1rem; }
 
 .logs-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-height: 70vh;
+    max-height: 75vh;
     overflow-y: auto;
     padding-right: 0.2rem;
     -webkit-overflow-scrolling: touch;
@@ -562,7 +618,7 @@ body {
     border: 2px solid #f3ecff;
     gap: 0.8rem;
     flex-wrap: wrap;
-    transition: background 0.15s;
+    transition: all 0.15s;
 }
 .log-item:hover {
     background: #f7f3ff;
@@ -602,7 +658,6 @@ body {
     gap: 0.15rem;
     min-width: 0;
 }
-
 .log-student {
     font-weight: 700;
     font-size: 0.9rem;
@@ -611,11 +666,7 @@ body {
     align-items: center;
     gap: 0.35rem;
 }
-.log-student i {
-    color: #a78bfa;
-    font-size: 0.75rem;
-}
-
+.log-student i { color: #a78bfa; font-size: 0.75rem; }
 .log-teacher {
     font-size: 0.72rem;
     color: #8b7db8;
@@ -623,10 +674,7 @@ body {
     align-items: center;
     gap: 0.35rem;
 }
-.log-teacher i {
-    color: #a78bfa;
-    font-size: 0.7rem;
-}
+.log-teacher i { color: #a78bfa; font-size: 0.7rem; }
 
 .log-item-left {
     display: flex;
@@ -647,9 +695,25 @@ body {
     border: 1px solid #ede4ff;
     white-space: nowrap;
 }
-.log-time-big i {
-    color: #a78bfa;
+.log-time-big i { color: #a78bfa; font-size: 0.7rem; }
+
+.status-badge {
+    padding: 0.15rem 1.1rem;
+    border-radius: 40px;
     font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+.status-badge.permitted {
+    background: #d3f0e5;
+    color: #006b4e;
+}
+.status-badge.not-permitted {
+    background: #fce8e8;
+    color: #b13e3e;
 }
 
 .empty-history {
@@ -664,6 +728,114 @@ body {
     font-size: 0.9rem;
     padding: 0.5rem 0;
     text-align: center;
+}
+
+/* ============================================
+   ===== Download List =====
+   ============================================ */
+.download-info {
+    background: #f7f3ff;
+    border: 2px solid #ede4ff;
+    border-radius: 16px;
+    padding: 0.8rem 1rem;
+    font-size: 0.82rem;
+    color: #5b21b6;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.download-info i { color: #7c3aed; }
+
+.download-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.download-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.65rem 0.9rem;
+    background: #fbf9ff;
+    border: 2px solid #f3ecff;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+}
+.download-item:hover {
+    background: #f7f3ff;
+    border-color: #d8c7ff;
+}
+.download-item.checked {
+    background: linear-gradient(135deg, #f3ecff 0%, #e9dfff 100%);
+    border-color: #a78bfa;
+}
+
+.download-item input[type="checkbox"] { display: none; }
+
+.download-check {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 2px solid #d8c7ff;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    color: white;
+    font-size: 0.75rem;
+}
+.download-check i {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+}
+.download-item.checked .download-check {
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    border-color: #7c3aed;
+}
+.download-item.checked .download-check i {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.download-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2);
+}
+
+.download-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #3b1e6b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+.download-name i {
+    color: #a78bfa;
+    font-size: 0.8rem;
 }
 
 /* ============================================
@@ -704,174 +876,195 @@ body {
 }
 
 /* ============================================
-   ===== Responsive — Mobile =====
+   ===== Login =====
    ============================================ */
+.login-overlay {
+    position: fixed; inset: 0; background: #ffffff;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999; padding: 1.5rem;
+}
+.login-box {
+    background: white; border-radius: 32px; padding: 2.5rem 2rem;
+    max-width: 420px; width: 100%; text-align: center;
+    border: 2px solid #ede4ff;
+    box-shadow: 0 20px 60px rgba(124, 58, 237, 0.12);
+    animation: popIn 0.4s ease;
+}
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+.login-box .lock-icon { font-size: 3rem; color: #7c3aed; margin-bottom: 1rem; }
+.login-box h2 { color: #4c1d95; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem; }
+.login-box .subtitle { color: #8b7db8; font-size: 0.85rem; margin-bottom: 1.8rem; }
+.login-box input[type="password"] {
+    width: 100%; padding: 0.9rem 1.2rem;
+    border: 2px solid #ede4ff; border-radius: 16px;
+    font-size: 1rem; outline: none; text-align: center;
+    letter-spacing: 2px; transition: border 0.2s;
+    font-family: inherit; color: #2a1e4a;
+}
+.login-box input[type="password"]:focus { border-color: #7c3aed; }
+.login-box button {
+    width: 100%; margin-top: 1rem; padding: 0.9rem;
+    background: #7c3aed; color: white; border: none;
+    border-radius: 16px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s; font-family: inherit;
+}
+.login-box button:hover { background: #6d28d9; }
+.login-error { color: #b13e3e; font-size: 0.85rem; margin-top: 0.8rem; min-height: 1.2rem; }
+
+/* ============================================
+   ===== Modal =====
+   ============================================ */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(76, 29, 149, 0.35);
+    display: none; justify-content: center; align-items: center;
+    z-index: 1000; padding: 1.5rem; backdrop-filter: blur(6px);
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+    background: white; border-radius: 28px; padding: 2rem 1.8rem;
+    max-width: 440px; width: 100%; border: 2px solid #ede4ff;
+    box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
+    animation: popIn 0.3s ease;
+}
+.modal-box h3 {
+    color: #4c1d95; font-size: 1.2rem; font-weight: 700;
+    margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.modal-box h3 i { color: #7c3aed; }
+.modal-box .modal-sub { color: #8b7db8; font-size: 0.8rem; margin-bottom: 1.5rem; }
+.modal-box input[type="text"] {
+    width: 100%; padding: 0.85rem 1.2rem;
+    border: 2px solid #ede4ff; border-radius: 16px;
+    font-size: 1rem; outline: none; transition: border 0.2s;
+    font-family: inherit; color: #2a1e4a;
+}
+.modal-box input[type="text"]:focus { border-color: #7c3aed; }
+.modal-actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; }
+.modal-actions button {
+    flex: 1; padding: 0.8rem; border: none; border-radius: 16px;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+}
+.modal-actions .btn-save { background: #7c3aed; color: white; }
+.modal-actions .btn-save:hover { background: #6d28d9; }
+.modal-actions .btn-cancel-modal {
+    background: #f7f3ff; color: #5b21b6; border: 2px solid #ede4ff;
+}
+.modal-actions .btn-cancel-modal:hover { background: #ede4ff; }
+
+/* ============================================
+   ===== Menu Toggle (Mobile) =====
+   ============================================ */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    z-index: 300;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(76, 29, 149, 0.4);
+    backdrop-filter: blur(3px);
+    z-index: 150;
+}
+.sidebar-backdrop.open { display: block; }
+
+/* ============================================
+   ===== Responsive =====
+   ============================================ */
+@media (max-width: 900px) {
+    .sidebar {
+        transform: translateX(100%);
+        width: 280px;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-right: 0;
+        padding: 1rem;
+        padding-top: 4.5rem;
+    }
+
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .page-title h1 { font-size: 1.1rem; }
+}
+
 @media (max-width: 600px) {
-    body { padding: 0.5rem; }
-
-    .school-header {
-        padding: 0.55rem 0.8rem;
-        border-radius: 2rem;
-        gap: 0.5rem;
+    .student-item {
+        padding: 0.45rem 0.7rem;
+        gap: 0.4rem;
     }
-    .school-header h1 { font-size: 1.05rem; }
-    .school-header h1 i { font-size: 1rem; }
-
-    .header-actions { gap: 0.3rem; }
-
-    .add-btn {
-        padding: 0.4rem 0.8rem !important;
-        font-size: 0.72rem !important;
-    }
-    .add-btn .btn-text { display: none; }
-    .add-btn i { font-size: 0.85rem; }
-
-    .btn-download-all {
-        padding: 0.4rem 0.8rem !important;
-        font-size: 0.72rem !important;
-    }
-    .btn-download-all .btn-text { display: none; }
-    .btn-download-all i { font-size: 0.85rem; }
-
-    .btn-logout {
-        width: 34px;
-        height: 34px;
-        padding: 0.35rem;
-        font-size: 0.75rem;
-    }
-
-    /* التبويبات على الجوال */
-    .tabs-nav {
-        width: 100%;
-        padding: 0.3rem;
-        gap: 0.3rem;
-    }
-    .tab-btn {
-        flex: 1;
-        padding: 0.55rem 0.8rem;
-        font-size: 0.78rem;
-        justify-content: center;
-    }
-    .tab-btn i { font-size: 0.8rem; }
-
-    .card {
-        padding: 1rem 0.8rem;
-        border-radius: 20px;
-    }
-
-    .card-header h2 { font-size: 0.95rem; }
-    .card-hint { display: none; }
-
-    .search-box { max-width: 130px; }
-    .search-box input {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.1rem;
-    }
-    .search-box button {
-        padding: 0.25rem 0.6rem;
+    .student-number {
+        width: 28px;
+        height: 28px;
         font-size: 0.7rem;
     }
-
-    .student-item {
-        padding: 0.55rem 0.7rem;
-        border-radius: 24px;
-        gap: 0.35rem 0.5rem;
-    }
-    .student-item .student-name {
-        font-size: 0.85rem;
-        min-width: 90px;
-        flex: 0 0 auto;
-    }
-    .student-item .student-name i { font-size: 0.75rem; }
-
-    .status-cell {
-        gap: 0.35rem;
-        margin: 0;
+    .student-name-btn {
+        font-size: 0.82rem;
+        padding: 0.3rem 0.4rem;
     }
     .status-text {
         font-size: 0.65rem;
-        min-width: 58px;
+        min-width: 55px;
     }
-    .ios-toggle { width: 46px; height: 28px; }
-    .ios-toggle-thumb { width: 24px; height: 24px; }
-    .ios-toggle.on .ios-toggle-thumb { left: calc(100% - 26px); }
-    .ios-toggle:active .ios-toggle-thumb { width: 30px; }
+    .ios-toggle {
+        width: 42px;
+        height: 26px;
+    }
+    .ios-toggle-thumb {
+        width: 22px;
+        height: 22px;
+    }
+    .ios-toggle.on .ios-toggle-thumb {
+        left: calc(100% - 24px);
+    }
+    .ios-toggle:active .ios-toggle-thumb { width: 28px; }
 
-    .actions { gap: 0.25rem; }
-    .btn-qr, .btn-delete {
-        padding: 0.35rem 0.55rem;
-        font-size: 0.7rem;
-        min-height: 1.9rem;
-    }
+    .btn-delete { padding: 0.3rem 0.5rem; }
 
     #qrcode-container img,
     #qrcode-container canvas {
         width: 130px;
         height: 130px;
     }
-    .qr-label { font-size: 0.9rem; }
+    #qrcode-container { min-width: 130px; min-height: 130px; }
 
-    .btn-download-qr {
-        padding: 0.5rem 1rem;
-        font-size: 0.75rem;
-    }
+    .title-actions .btn-text { display: none; }
+    .page-title .add-btn .btn-text { display: none; }
 
-    .verify-student .student-badge { font-size: 1rem; }
-    .verify-status {
-        font-size: 0.8rem;
-        padding: 0.1rem 1rem;
-    }
-
-    /* السجلات على الجوال */
-    .logs-card { padding: 1rem 0.8rem; }
-    .log-item {
-        padding: 0.65rem 0.8rem;
-        border-radius: 16px;
-    }
-    .log-icon {
-        width: 34px;
-        height: 34px;
-        font-size: 0.85rem;
-    }
+    .log-item { padding: 0.65rem 0.8rem; }
+    .log-icon { width: 34px; height: 34px; font-size: 0.85rem; }
     .log-student { font-size: 0.82rem; }
     .log-teacher { font-size: 0.68rem; }
     .log-time-big { font-size: 0.65rem; }
     .status-badge { font-size: 0.65rem; }
-
-    .toast {
-        font-size: 0.78rem;
-        padding: 0.55rem 1rem;
-    }
 }
 
-/* ============================================
-   ===== Responsive — Small Mobile =====
-   ============================================ */
 @media (max-width: 380px) {
-    .school-header h1 { font-size: 0.95rem; }
-    .student-item { padding: 0.5rem 0.6rem; }
-    .student-item .student-name {
-        font-size: 0.8rem;
-        min-width: 80px;
-    }
     .status-text { display: none; }
-    .ios-toggle { width: 42px; height: 26px; }
-    .ios-toggle-thumb { width: 22px; height: 22px; }
-    .ios-toggle.on .ios-toggle-thumb { left: calc(100% - 24px); }
-    .btn-qr, .btn-delete {
-        padding: 0.3rem 0.5rem;
-        font-size: 0.65rem;
-    }
-    .search-box { max-width: 100px; }
-
-    .tab-btn {
-        font-size: 0.7rem;
-        padding: 0.5rem 0.5rem;
-    }
-
-    .log-item-left { gap: 0.4rem; }
-    .log-time-big {
-        font-size: 0.6rem;
-        padding: 0.2rem 0.5rem;
-    }
+    .student-name-btn { font-size: 0.78rem; }
+    .student-number { width: 26px; height: 26px; font-size: 0.65rem; }
 }
