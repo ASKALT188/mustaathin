@@ -139,6 +139,13 @@ body {
 
 .title-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
+.page-actions {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 /* ============================================
    ===== Pages =====
    ============================================ */
@@ -346,6 +353,49 @@ body {
 .add-btn:hover { background: #6d28d9 !important; }
 
 .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.7rem; }
+
+/* أزرار السماح للكل */
+.btn-permit-all {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    color: white;
+    border: none;
+    padding: 0.45rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 40px;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+.btn-permit-all:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(34, 197, 94, 0.4);
+}
+
+.btn-cancel-all {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    color: white;
+    border: none;
+    padding: 0.45rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 40px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+.btn-cancel-all:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+}
 
 /* ============================================
    ===== Logs =====
@@ -982,7 +1032,7 @@ body {
 .sidebar-backdrop.open { display: block; }
 
 /* ============================================
-   ===== Responsive — Mobile =====
+   ===== Responsive =====
    ============================================ */
 @media (max-width: 900px) {
     .sidebar {
@@ -1010,7 +1060,13 @@ body {
     .status-badge { font-size: 0.62rem; padding: 0.2rem 0.6rem; }
 
     .title-actions .btn-text { display: none; }
-    .page-title .add-btn .btn-text { display: none; }
+    .page-actions .btn-text { display: none; }
+    .page-actions { gap: 0.3rem; }
+    .btn-permit-all,
+    .btn-cancel-all {
+        padding: 0.45rem 0.7rem;
+        font-size: 0.75rem;
+    }
 
     .log-item { padding: 0.65rem 0.8rem; }
     .log-icon { width: 34px; height: 34px; font-size: 0.85rem; }
