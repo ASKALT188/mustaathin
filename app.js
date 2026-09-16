@@ -744,7 +744,9 @@ function updateSelectedCount() {
     document.getElementById('selectedCount').textContent = selectedDownloadIds.size;
 }
 
-// ===== توليد الباركود كـ DataURL =====
+// ============================================
+// ===== توليد الباركود كصورة =====
+// ============================================
 function generateQrDataUrl(studentName, size = 400) {
     return new Promise((resolve) => {
         const tempDiv = document.createElement('div');
@@ -812,9 +814,10 @@ function generateQrDataUrlWithName(studentName, size = 400) {
             ctx.stroke();
 
             ctx.fillStyle = '#4c1d95';
-            ctx.font = `bold ${Math.floor(size * 0.09)}px 'Tajawal', 'Inter', sans-serif`;
+            ctx.font = `bold ${Math.floor(size * 0.1)}px 'Tajawal', 'Inter', sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.direction = 'rtl';
             ctx.fillText(studentName, finalCanvas.width / 2, size + padding + (nameHeight / 2) + 10);
 
             resolve(finalCanvas.toDataURL('image/png'));
@@ -822,7 +825,9 @@ function generateQrDataUrlWithName(studentName, size = 400) {
     });
 }
 
-// ===== تحميل المحدد: PDF داخل ZIP =====
+// ============================================
+// ===== تحميل المحدد: PDF داخل ZIP (PDFMake) =====
+// ============================================
 async function downloadSelectedQr() {
     if (selectedDownloadIds.size === 0) {
         showToast('اختر طالباً واحداً على الأقل', 'error');
@@ -834,71 +839,113 @@ async function downloadSelectedQr() {
     showToast(`جاري تجهيز الملف... (0/${selected.length})`, 'success');
 
     const zip = new JSZip();
-    const { jsPDF } = window.jspdf;
 
-    // إعدادات A4: 3 أعمدة × 4 صفوف = 12 باركود في الصفحة
-    const pageWidth = 210;
-    const pageHeight = 297;
+    // ✅ توليد صور الباركودات
+    const qrImages = [];
+    for (let i = 0; i < selected.length; i++) {
+        const student = selected[i];
+        const dataUrl = await generateQrDataUrl(student.name, 400);
+        if (dataUrl) {
+            qrImages.push({
+                name: student.name,
+                dataUrl: dataUrl
+            });
+        }
+        showToast(`جاري التجهيز... (${i + 1}/${selected.length})`, 'success');
+    }
+
+    // ✅ إعدادات الصفحة: 3 أعمدة × 4 صفوف
     const cols = 3;
     const rows = 4;
     const qrPerPage = cols * rows;
 
-    const marginX = 10;
-    const marginY = 15;
-    const cellWidth = (pageWidth - (marginX * 2)) / cols;
-    const cellHeight = (pageHeight - (marginY * 2)) / rows;
-    const qrSize = Math.min(cellWidth, cellHeight) * 0.7;
+    const pages = [];
 
-    const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-    });
+    for (let i = 0; i < qrImages.length; i += qrPerPage) {
+        const pageItems = qrImages.slice(i, i + qrPerPage);
+        const tableBody = [];
 
-    let itemIndexOnPage = 0;
-
-    for (let i = 0; i < selected.length; i++) {
-        const student = selected[i];
-
-        if (itemIndexOnPage === 0 && i > 0) {
-            pdf.addPage();
+        for (let r = 0; r < rows; r++) {
+            const tableRow = [];
+            for (let c = 0; c < cols; c++) {
+                const idx = r * cols + c;
+                if (idx < pageItems.length) {
+                    const item = pageItems[idx];
+                    tableRow.push({
+                        stack: [
+                            {
+                                image: item.dataUrl,
+                                width: 130,
+                                alignment: 'center'
+                            },
+                            {
+                                text: item.name,
+                                fontSize: 13,
+                                bold: true,
+                                color: '#4c1d95',
+                                alignment: 'center',
+                                margin: [0, 6, 0, 0]
+                            }
+                        ],
+                        alignment: 'center',
+                        margin: [5, 10, 5, 10]
+                    });
+                } else {
+                    tableRow.push({ text: '' });
+                }
+            }
+            tableBody.push(tableRow);
         }
 
-        const col = itemIndexOnPage % cols;
-        const row = Math.floor(itemIndexOnPage / cols);
-
-        const x = marginX + (col * cellWidth);
-        const y = marginY + (row * cellHeight);
-
-        const qrDataUrl = await generateQrDataUrl(student.name, 400);
-
-        if (qrDataUrl) {
-            const qrX = x + (cellWidth - qrSize) / 2;
-            const qrY = y + (cellHeight - qrSize) / 2 - 3;
-
-            pdf.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-
-            pdf.setFontSize(10);
-            pdf.setTextColor(76, 29, 149);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(student.name, x + cellWidth / 2, qrY + qrSize + 5, { align: 'center' });
-        }
-
-        itemIndexOnPage++;
-        if (itemIndexOnPage >= qrPerPage) {
-            itemIndexOnPage = 0;
-        }
-
-        if (i % 2 === 0 || i === selected.length - 1) {
-            showToast(`جاري تجهيز الملف... (${i + 1}/${selected.length})`, 'success');
-        }
+        pages.push({
+            table: {
+                widths: ['*', '*', '*'],
+                body: tableBody
+            },
+            layout: 'noBorders'
+        });
     }
 
-    // حفظ PDF في ZIP
-    const pdfBlob = pdf.output('blob');
+    // ✅ دمج الصفحات
+    const content = [];
+    pages.forEach((page, idx) => {
+        content.push(page);
+        if (idx < pages.length - 1) {
+            content.push({ text: '', pageBreak: 'after' });
+        }
+    });
+
+    // ✅ إعدادات PDF
+    const docDefinition = {
+        pageSize: 'A4',
+        pageMargins: [15, 25, 15, 25],
+        content: content,
+        defaultStyle: {
+            font: 'Tajawal'
+        }
+    };
+
+    // ✅ توليد PDF
+    let pdfBlob;
+    try {
+        pdfBlob = await new Promise((resolve, reject) => {
+            try {
+                pdfMake.createPdf(docDefinition).getBlob((blob) => {
+                    resolve(blob);
+                });
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (e) {
+        console.error('PDFMake error:', e);
+        showToast('خطأ في توليد PDF', 'error');
+        return;
+    }
+
     zip.file('باركودات_الطلاب.pdf', pdfBlob);
 
-    // إضافة مجلد الصور المنفصلة
+    // ✅ إضافة مجلد الصور المنفصلة
     const folder = zip.folder('صور_منفصلة');
     for (const student of selected) {
         const imgDataUrl = await generateQrDataUrlWithName(student.name, 400);
@@ -908,10 +955,10 @@ async function downloadSelectedQr() {
         }
     }
 
-    // توليد ZIP
-    const content = await zip.generateAsync({ type: 'blob' });
+    // ✅ توليد ZIP
+    const zipContent = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
+    link.href = URL.createObjectURL(zipContent);
     link.download = `باركودات_${selected.length}_طالب.zip`;
     link.click();
 
