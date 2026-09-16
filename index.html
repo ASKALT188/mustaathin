@@ -87,14 +87,6 @@
             padding: 0.45rem 1.2rem !important; font-size: 0.8rem !important;
         }
         .add-btn:hover { background: #6d28d9 !important; }
-        .btn-download-all {
-            background: #f7f3ff !important;
-            color: #5b21b6 !important;
-            border: 2px solid #ede4ff !important;
-            padding: 0.45rem 1.2rem !important;
-            font-size: 0.8rem !important;
-        }
-        .btn-download-all:hover { background: #ede4ff !important; }
     </style>
 </head>
 <body>
@@ -124,104 +116,153 @@
         </div>
     </div>
 
-    <div class="app-container">
-        <header class="school-header">
-            <h1><i class="fas fa-graduation-cap"></i> ثانوية هوزان</h1>
-            <div class="header-actions">
-                <button class="btn add-btn" onclick="openAddModal()">
-                    <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
-                </button>
-                <button class="btn btn-download-all" onclick="downloadAllQr()" title="تحميل كل الباركودات">
-                    <i class="fas fa-download"></i> <span class="btn-text">تحميل الكل</span>
-                </button>
-                <button class="btn btn-logout" onclick="logout()" title="تسجيل الخروج">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- ===== التبويبات ===== -->
-        <div class="tabs-nav">
-            <button class="tab-btn active" data-tab="students" onclick="switchTab('students')">
-                <i class="fas fa-users"></i> كشف الطلاب
-            </button>
-            <button class="tab-btn" data-tab="logs" onclick="switchTab('logs')">
-                <i class="fas fa-clipboard-list"></i> السجلات
-            </button>
+    <!-- ===== القائمة الجانبية ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-graduation-cap"></i>
+            <span>ثانوية هوزان</span>
         </div>
 
-        <!-- ===== تبويب كشف الطلاب ===== -->
-        <div class="tab-content active" id="tab-students">
-            <div class="dashboard-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-users"></i> كشف الطلاب</h2>
-                        <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="ابحث..." oninput="filterStudents()" />
-                            <button><i class="fas fa-search"></i></button>
+        <nav class="sidebar-nav">
+            <button class="sidebar-item active" id="navStudents" onclick="switchSection('students')">
+                <i class="fas fa-users"></i>
+                <span>كشف الطلاب</span>
+            </button>
+            <button class="sidebar-item" id="navLogs" onclick="switchSection('logs')">
+                <i class="fas fa-clipboard-list"></i>
+                <span>السجلات</span>
+            </button>
+            <button class="sidebar-item" id="navDownload" onclick="switchSection('download')">
+                <i class="fas fa-download"></i>
+                <span>تحميل الباركودات</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="sidebar-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- زر فتح القائمة على الجوال -->
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- خلفية معتمة للجوال -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+    <!-- ===== المحتوى الرئيسي ===== -->
+    <main class="main-content">
+        <div class="app-container">
+
+            <!-- ===== قسم كشف الطلاب ===== -->
+            <div class="page-section active" id="pageStudents">
+                <div class="page-title">
+                    <h1><i class="fas fa-users"></i> كشف الطلاب</h1>
+                    <button class="btn add-btn" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
+                    </button>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-list"></i> القائمة</h2>
+                            <div class="search-box">
+                                <input type="text" id="searchInput" placeholder="ابحث..." oninput="filterStudents()" />
+                                <button><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="student-list" id="studentList">
+                            <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                         </div>
                     </div>
 
-                    <div class="student-list" id="studentList">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-qrcode"></i> الباركود</h2>
+                            <span class="card-hint">دائم</span>
+                        </div>
+                        <div class="qr-preview">
+                            <div id="qrcode-container">
+                                <div class="qr-empty">
+                                    <i class="fas fa-hand-pointer"></i>
+                                    <p>اضغط على اسم الطالب</p>
+                                </div>
+                            </div>
+                            <div class="qr-label" id="qrStudentName">لم يتم اختيار طالب</div>
+                            <div class="qr-sub" id="qrSub">اختر طالباً من القائمة</div>
+                            <button class="btn-download-qr" id="downloadQrBtn" onclick="downloadQr()" disabled>
+                                <i class="fas fa-download"></i> تحميل الباركود
+                            </button>
+                        </div>
+
+                        <div class="verification-panel">
+                            <h3><i class="fas fa-shield-alt"></i> التحقق المباشر</h3>
+                            <div class="verify-student">
+                                <span class="student-badge" id="verifyName">—</span>
+                                <span class="verify-status" id="verifyStatusBadge">—</span>
+                            </div>
+                            <div class="verify-hint">
+                                <i class="fas fa-camera"></i> الباركود يوجّه لصفحة تحقق
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم السجلات ===== -->
+            <div class="page-section" id="pageLogs">
+                <div class="page-title">
+                    <h1><i class="fas fa-clipboard-list"></i> سجل العمليات</h1>
+                    <button class="btn btn-qr btn-sm" onclick="downloadLogs()">
+                        <i class="fas fa-file-csv"></i> <span class="btn-text">تحميل CSV</span>
+                    </button>
+                </div>
+
+                <div class="card logs-card">
+                    <div class="logs-list" id="logsList">
                         <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- ===== قسم تحميل الباركودات ===== -->
+            <div class="page-section" id="pageDownload">
+                <div class="page-title">
+                    <h1><i class="fas fa-download"></i> تحميل الباركودات</h1>
+                    <div class="title-actions">
+                        <button class="btn btn-qr btn-sm" onclick="selectAllStudents()">
+                            <i class="fas fa-check-double"></i> تحديد الكل
+                        </button>
+                        <button class="btn btn-qr btn-sm" onclick="deselectAllStudents()">
+                            <i class="fas fa-times"></i> إلغاء الكل
+                        </button>
+                        <button class="btn add-btn" onclick="downloadSelectedQr()">
+                            <i class="fas fa-download"></i>
+                            <span class="btn-text">تحميل (<span id="selectedCount">0</span>)</span>
+                        </button>
+                    </div>
+                </div>
 
                 <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-qrcode"></i> الباركود</h2>
-                        <span class="card-hint">دائم</span>
-                    </div>
-                    <div class="qr-preview">
-                        <div id="qrcode-container"></div>
-                        <div class="qr-label" id="qrStudentName">اختر طالباً</div>
-                        <div class="qr-sub">امسح الباركود للتحقق</div>
-                        <button class="btn-download-qr" onclick="downloadQr()">
-                            <i class="fas fa-download"></i> تحميل الباركود
-                        </button>
+                    <div class="download-info">
+                        <i class="fas fa-info-circle"></i>
+                        اختر الطلاب اللي تبغى تحمّل باركوداتهم، أو اضغط "تحديد الكل"
                     </div>
 
-                    <div class="verification-panel">
-                        <h3><i class="fas fa-shield-alt"></i> التحقق المباشر</h3>
-                        <div class="verify-student" id="verificationDisplay">
-                            <span class="student-badge" id="verifyName">اختر طالباً</span>
-                            <span class="verify-status" id="verifyStatusBadge">—</span>
-                        </div>
-                        <div class="verify-hint">
-                            <i class="fas fa-camera"></i> الباركود يوجّه لصفحة تحقق
-                        </div>
+                    <div class="download-list" id="downloadList">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ===== تبويب السجلات ===== -->
-        <div class="tab-content" id="tab-logs">
-            <div class="card logs-card">
-                <div class="card-header">
-                    <h2><i class="fas fa-clipboard-list"></i> سجل العمليات</h2>
-                    <div class="logs-actions">
-                        <button class="btn btn-qr btn-sm" onclick="filterLogs('all')" id="filterAll">
-                            <i class="fas fa-list"></i> الكل
-                        </button>
-                        <button class="btn btn-qr btn-sm" onclick="filterLogs('permitted')" id="filterPermitted">
-                            <i class="fas fa-check"></i> مسموح
-                        </button>
-                        <button class="btn btn-qr btn-sm" onclick="filterLogs('not-permitted')" id="filterNotPermitted">
-                            <i class="fas fa-times"></i> غير مسموح
-                        </button>
-                        <button class="btn btn-download-all" onclick="downloadLogs()" title="تحميل السجل">
-                            <i class="fas fa-file-csv"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="logs-list" id="logsList">
-                    <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري تحميل السجلات...</div>
-                </div>
-            </div>
         </div>
-    </div>
+    </main>
 
     <div class="toast-container" id="toastContainer"></div>
 
