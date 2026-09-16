@@ -401,7 +401,7 @@ function getTimeSince(lastPermittedAt) {
     return `${diffSec} ثانية`;
 }
 
-// ===== تحديث QR =====
+// ===== تحديث QR في الواجهة =====
 function updateQrAndVerification(student, status, lastPermittedAt) {
     qrStudentName.textContent = student;
     verifyName.textContent = student;
@@ -434,64 +434,46 @@ window.filterStudents = function() {
     renderStudents(allStudents, searchInput.value);
 };
 
-// ============================================
-// ===== وظائف الطباعة والتحميل بتنسيق PDF =====
-// ============================================
+// =======================================================
+// ===== وظيفة تصدير / طباعة PDF الفورية (عبر iframe خفي) =====
+// =======================================================
 
-// استخراج صورة الباركود بدقة عالية
-function getStudentQRImage(name) {
-    return new Promise((resolve) => {
-        const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-        const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(name)}`;
-        const div = document.createElement('div');
-        div.style.position = 'absolute';
-        div.style.left = '-9999px';
-        document.body.appendChild(div);
-
-        new QRCode(div, {
-            text: qrData,
-            width: 250,
-            height: 250,
-            colorDark: '#4c1d95',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        setTimeout(() => {
-            const canvas = div.querySelector('canvas');
-            const img = div.querySelector('img');
-            let dataUrl = '';
-            if (canvas) {
-                dataUrl = canvas.toDataURL('image/png');
-            } else if (img && img.src) {
-                dataUrl = img.src;
-            }
-            document.body.removeChild(div);
-            resolve(dataUrl);
-        }, 100);
-    });
+// الحصول على رابط صورة الـ QR الفورية بنفس لون الموقع
+function getQRImageUrl(studentName) {
+    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+    const qrTargetUrl = `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=4c1d95&data=${encodeURIComponent(qrTargetUrl)}`;
 }
 
-// فتح نافذة المعاينة والطباعة لحفظ الـ PDF
-function openPrintWindow(cardsHtml, titleText) {
-    const printWin = window.open('', '_blank', 'width=900,height=750');
-    if (!printWin) {
-        showToast('يرجى السماح بالنوافذ المنبثقة (Pop-ups) للتحميل', 'error');
-        return;
-    }
+// دالة الطباعة وتصدير PDF دون نوافذ منبثقة (لا يمكن للمتصفح حظرها)
+function executePdfPrint(cardsHtml, documentTitle) {
+    // إزالة أي إطار طباعة سابق إن وجد
+    const oldFrame = document.getElementById('printPdfIframe');
+    if (oldFrame) oldFrame.remove();
 
-    printWin.document.open();
-    printWin.document.write(`
+    const iframe = document.createElement('iframe');
+    iframe.id = 'printPdfIframe';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
         <head>
             <meta charset="UTF-8">
-            <title>${titleText}</title>
+            <title>${documentTitle}</title>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700&display=swap">
             <style>
                 @page {
                     size: A4;
-                    margin: 1.2cm;
+                    margin: 1cm;
                 }
                 * {
                     box-sizing: border-box;
@@ -499,22 +481,25 @@ function openPrintWindow(cardsHtml, titleText) {
                 }
                 body {
                     margin: 0;
-                    padding: 10px;
-                    background: #fff;
+                    padding: 15px;
+                    background: #ffffff;
                     display: flex;
                     flex-wrap: wrap;
                     justify-content: center;
+                    align-items: flex-start;
                     gap: 20px;
                 }
                 .pdf-card {
-                    width: 280px;
+                    width: 270px;
                     border: 2px solid #ede4ff;
                     border-radius: 24px;
                     padding: 20px 15px;
                     text-align: center;
                     background: #ffffff;
                     page-break-inside: avoid;
-                    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.05);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
                 .school-title {
                     font-size: 0.85rem;
@@ -525,13 +510,12 @@ function openPrintWindow(cardsHtml, titleText) {
                 .qr-box {
                     width: 170px;
                     height: 170px;
-                    margin: 0 auto;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     background: #fbf9ff;
                     border: 1.5px solid #f3ecff;
-                    border-radius: 16px;
+                    border-radius: 18px;
                     padding: 8px;
                 }
                 .qr-box img {
@@ -553,69 +537,70 @@ function openPrintWindow(cardsHtml, titleText) {
         </head>
         <body>
             ${cardsHtml}
-            <script>
-                window.onload = function() {
-                    window.focus();
-                    window.print();
-                    setTimeout(function() { window.close(); }, 500);
-                };
-            </script>
         </body>
         </html>
     `);
-    printWin.document.close();
+    doc.close();
+
+    // انتظار جاهزية تحميل الصور ثم فتح خيار الحفظ كـ PDF فوراً
+    iframe.onload = () => {
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }, 300);
+    };
 }
 
-// تحميل باركود الطالب الحالي المعروض بالصورة
-async function downloadCurrentStudentQRPdf() {
+// تحميل باركود الطالب الفردي
+window.downloadCurrentStudentQRPdf = function() {
     if (!selectedStudent) {
         showToast('يرجى اختيار طالب أولاً', 'error');
         return;
     }
 
-    showToast('جاري تجهيز الباركود بصيغة PDF...', 'success');
-    const qrDataUrl = await getStudentQRImage(selectedStudent);
+    showToast(`جاري تجهيز باركود ${selectedStudent}...`, 'success');
+    const qrUrl = getQRImageUrl(selectedStudent);
 
     const cardHtml = `
-        <div class="pdf-card" style="margin-top: 50px;">
+        <div class="pdf-card" style="margin-top: 40px;">
             <div class="school-title">ثانوية هوازن · Hawazen High School</div>
             <div class="qr-box">
-                <img src="${qrDataUrl}" alt="${selectedStudent}" />
+                <img src="${qrUrl}" alt="${selectedStudent}" />
             </div>
             <div class="st-name">${selectedStudent}</div>
             <div class="hint">امسح للتحقق من الحالة</div>
         </div>
     `;
 
-    openPrintWindow(cardHtml, `باركود_${selectedStudent}`);
-}
+    executePdfPrint(cardHtml, `باركود_${selectedStudent}`);
+};
 
-// تحميل جميع باركودات الطلاب من زر الهيدر
-async function downloadAllQRPdf() {
+// تحميل كافة الباركودات في ملف واحد من الهيدر
+window.downloadAllQRPdf = function() {
     if (!allStudents || allStudents.length === 0) {
         showToast('لا يوجد طلاب مسجلين للتحميل', 'error');
         return;
     }
 
-    showToast('جاري تجهيز باركودات جميع الطلاب...', 'success');
+    showToast('جاري تحضير ملف PDF لجميع الطلاب...', 'success');
     let cardsHtml = '';
 
-    for (const student of allStudents) {
-        const qrDataUrl = await getStudentQRImage(student.name);
+    allStudents.forEach(student => {
+        const qrUrl = getQRImageUrl(student.name);
         cardsHtml += `
             <div class="pdf-card">
                 <div class="school-title">ثانوية هوازن · Hawazen High School</div>
                 <div class="qr-box">
-                    <img src="${qrDataUrl}" alt="${student.name}" />
+                    <img src="${qrUrl}" alt="${student.name}" />
                 </div>
                 <div class="st-name">${student.name}</div>
                 <div class="hint">امسح للتحقق من الحالة</div>
             </div>
         `;
-    }
+    });
 
-    openPrintWindow(cardsHtml, 'باركودات_جميع_الطلاب');
-}
+    executePdfPrint(cardsHtml, 'باركودات_جميع_الطلاب');
+};
 
 // ===== الإشتراك في التغييرات =====
 function subscribeToChanges() {
