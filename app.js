@@ -1,3 +1,6 @@
+// ===== رقم الإصدار الحالي =====
+const APP_VERSION = 'v1.0.1';
+
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
@@ -438,7 +441,6 @@ window.filterStudents = function() {
 // ===== وظائف بناء وتوليد ملفات الـ PDF =====
 // ============================================
 
-// توليد بطاقة الطالب على Canvas لتحويلها مباشرة لملف PDF بدقة عالية
 function buildCardImage(studentName) {
     return new Promise((resolve) => {
         const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
@@ -459,7 +461,6 @@ function buildCardImage(studentName) {
             correctLevel: QRCode.CorrectLevel.H
         });
 
-        // منح المتصفح وقتاً لرسم الكود
         setTimeout(() => {
             const canvasEl = hiddenDiv.querySelector('canvas');
             const imgEl = hiddenDiv.querySelector('img');
@@ -470,7 +471,6 @@ function buildCardImage(studentName) {
                 card.height = 760;
                 const ctx = card.getContext('2d');
 
-                // خلفية بيضاء مع زوايا ناعمة وإطار
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, card.width, card.height);
 
@@ -478,33 +478,27 @@ function buildCardImage(studentName) {
                 ctx.lineWidth = 8;
                 ctx.strokeRect(10, 10, card.width - 20, card.height - 20);
 
-                // اسم المدرسة
                 ctx.font = 'bold 24px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#7c3aed';
                 ctx.textAlign = 'center';
                 ctx.fillText('ثانوية هوازن · Hawazen High School', 300, 70);
 
-                // إطار الباركود الداخلي
                 ctx.fillStyle = '#fbf9ff';
                 ctx.fillRect(150, 110, 300, 300);
                 ctx.strokeStyle = '#f3ecff';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(150, 110, 300, 300);
 
-                // رسم الباركود
                 ctx.drawImage(qrSource, 170, 130, 260, 260);
 
-                // اسم الطالب
                 ctx.font = 'bold 36px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#4c1d95';
                 ctx.fillText(studentName, 300, 480);
 
-                // التوجيه
                 ctx.font = '22px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#8b7db8';
                 ctx.fillText('امسح للتحقق من الحالة', 300, 540);
 
-                // خط فاصل
                 ctx.strokeStyle = '#ede4ff';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -535,7 +529,6 @@ function buildCardImage(studentName) {
     });
 }
 
-// تحميل PDF لباركود الطالب المعروض في الشاشة
 async function downloadSingleQRPdf() {
     if (!selectedStudent) {
         showToast('يرجى اختيار طالب أولاً', 'error');
@@ -554,7 +547,6 @@ async function downloadSingleQRPdf() {
             format: 'a4'
         });
 
-        // محاذاة في وسط ورقة A4
         pdf.addImage(cardImg, 'PNG', 45, 40, 120, 152);
         pdf.save(`باركود_${selectedStudent}.pdf`);
         showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
@@ -564,7 +556,6 @@ async function downloadSingleQRPdf() {
     }
 }
 
-// تحميل كافة باركودات الطلاب في مستند PDF واحد
 async function downloadAllStudentsQRPdf() {
     if (!allStudents || allStudents.length === 0) {
         showToast('لا يوجد طلاب مسجلين للتحميل', 'error');
@@ -580,7 +571,6 @@ async function downloadAllStudentsQRPdf() {
             format: 'a4'
         });
 
-        // تخطيط شبكة 2x2 في الصفحة (4 باركودات لكل صفحة A4)
         const colPositions = [15, 110];
         const rowPositions = [15, 150];
         const cardW = 85;
@@ -613,7 +603,6 @@ async function downloadAllStudentsQRPdf() {
     }
 }
 
-// ربط أزرار التحميل بشكل مباشر بعد تجهيز الصفحة
 function attachDownloadEvents() {
     const singleBtn = document.getElementById('btnDownloadSingle');
     const allBtn = document.getElementById('btnDownloadAll');
@@ -679,7 +668,10 @@ function subscribeToChanges() {
 
 // ===== التهيئة =====
 async function init() {
-    console.log('🚀 Musta\'athin initializing...');
+    console.log('🚀 Musta\'athin initializing... Version:', APP_VERSION);
+    const verEl = document.getElementById('appVersion');
+    if (verEl) verEl.textContent = APP_VERSION;
+
     attachDownloadEvents();
     await loadAllData();
 
@@ -697,7 +689,6 @@ async function init() {
     console.log('✅ Ready. Students:', allStudents.length);
 }
 
-// تشغيل ربط الأزرار مسبقاً لحمايتها
 attachDownloadEvents();
 
 // ===== بدء التطبيق =====
