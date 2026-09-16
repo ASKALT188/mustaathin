@@ -614,4 +614,60 @@ function subscribeToChanges() {
                     const deletedName = payload.old?.name;
                     if (deletedName) {
                         allStudents = allStudents.filter(s => s.name !== deletedName);
-                        renderStudents(allStudents, searchInput.value
+                        renderStudents(allStudents, searchInput.value);
+                    }
+                    return;
+                }
+
+                const updatedStudent = payload.new;
+                if (!updatedStudent) return;
+                const index = allStudents.findIndex(s => s.name === updatedStudent.name);
+                if (index !== -1) {
+                    allStudents[index] = updatedStudent;
+                } else if (payload.eventType === 'INSERT') {
+                    allStudents.push(updatedStudent);
+                }
+                renderStudents(allStudents, searchInput.value);
+                if (selectedStudent === updatedStudent.name) {
+                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
+                }
+            }
+        )
+        .subscribe();
+
+    supabaseClient
+        .channel('history_changes')
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'history' },
+            async () => {
+                await fetchHistory();
+                renderLogs();
+            }
+        )
+        .subscribe();
+}
+
+// ===== التهيئة =====
+async function init() {
+    console.log('🚀 ثانوية هوزان - جاري التحميل...');
+    await loadAllData();
+
+    if (allStudents.length > 0) {
+        selectStudent(allStudents[0].name);
+    } else {
+        qrContainer.innerHTML = '';
+        qrStudentName.textContent = 'اختر طالباً';
+        verifyName.textContent = 'اختر طالباً';
+        verifyStatusBadge.className = 'verify-status';
+        verifyStatusBadge.innerHTML = '—';
+    }
+
+    subscribeToChanges();
+    console.log('✅ جاهز. عدد الطلاب:', allStudents.length);
+}
+
+// ===== بدء التطبيق =====
+if (sessionStorage.getItem('mustaathin_auth') === 'true') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    init();
+}
