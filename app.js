@@ -1,5 +1,5 @@
 // ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.9';
+const APP_VERSION = 'v1.1.0';
 
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
@@ -15,6 +15,7 @@ let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
 let liveTimerInterval = null;
+let editCurrentStatus = false;
 
 // DOM refs
 const studentListEl = document.getElementById('studentList');
@@ -73,7 +74,7 @@ document.getElementById('newStudentName').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addNewStudent();
 });
 
-// ===== نافذة سجل العمليات (مربوطة بـ window عالمياً) =====
+// ===== نافذة سجل العمليات =====
 window.openHistoryModal = function() {
     const modal = document.getElementById('historyModal');
     if (modal) {
@@ -86,6 +87,131 @@ window.closeHistoryModal = function() {
     const modal = document.getElementById('historyModal');
     if (modal) {
         modal.classList.remove('active');
+    }
+};
+
+// ============================================
+// ===== نافذة تعديل بيانات وحالة الطالب =====
+// ============================================
+
+window.openEditStudentModal = function(studentName) {
+    const student = allStudents.find(s => s.name === studentName);
+    if (!student) return;
+
+    selectStudent(studentName);
+
+    document.getElementById('editOriginalName').value = student.name;
+    document.getElementById('editStudentName').value = student.name;
+    editCurrentStatus = student.permitted === true;
+
+    updateEditModalStatusUI();
+    document.getElementById('editStudentModal').classList.add('active');
+};
+
+window.closeEditModal = function() {
+    document.getElementById('editStudentModal').classList.remove('active');
+};
+
+function updateEditModalStatusUI() {
+    const toggleBtn = document.getElementById('editStatusToggle');
+    const statusLabel = document.getElementById('editStatusLabel');
+    if (!toggleBtn || !statusLabel) return;
+
+    if (editCurrentStatus) {
+        toggleBtn.classList.add('on');
+        statusLabel.textContent = 'مسموح';
+        statusLabel.className = 'status-text on';
+    } else {
+        toggleBtn.classList.remove('on');
+        statusLabel.textContent = 'غير مسموح';
+        statusLabel.className = 'status-text off';
+    }
+}
+
+document.getElementById('editStatusToggle').addEventListener('click', () => {
+    editCurrentStatus = !editCurrentStatus;
+    updateEditModalStatusUI();
+});
+
+// حفظ تعديل الطالب (الاسم وحالة السماح)
+window.saveStudentEdit = async function() {
+    if (isProcessing) return;
+
+    const originalName = document.getElementById('editOriginalName').value.trim();
+    const newName = document.getElementById('editStudentName').value.trim();
+
+    if (!newName) {
+        showToast('يرجى إدخال اسم الطالب', 'error');
+        return;
+    }
+
+    if (newName.toLowerCase() !== originalName.toLowerCase()) {
+        if (allStudents.some(s => s.name.toLowerCase() === newName.toLowerCase())) {
+            showToast('اسم الطالب الجديد موجود بالفعل لطالب آخر', 'error');
+            return;
+        }
+    }
+
+    isProcessing = true;
+    try {
+        const student = allStudents.find(s => s.name === originalName);
+        const hasStatusChanged = student ? (student.permitted !== editCurrentStatus) : false;
+        const now = new Date();
+
+        const updatePayload = {
+            name: newName,
+            permitted: editCurrentStatus
+        };
+
+        if (editCurrentStatus && (!student || !student.permitted)) {
+            updatePayload.last_permitted_at = now.toISOString();
+        }
+
+        const { error: updateError } = await supabaseClient
+            .from('students')
+            .update(updatePayload)
+            .eq('name', originalName);
+
+        if (updateError) throw updateError;
+
+        // إذا تغير الاسم، نحدث سجل العمليات الخاص بالطالب
+        if (originalName !== newName) {
+            await supabaseClient
+                .from('history')
+                .update({ student_name: newName })
+                .eq('student_name', originalName);
+        }
+
+        // إذا تغيرت الحالة، نسجل عملية جديدة في السجل
+        if (hasStatusChanged) {
+            const displayTimestamp = now.toLocaleString('ar-SA', {
+                timeZone: 'Asia/Riyadh',
+                month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: true
+            });
+
+            await supabaseClient
+                .from('history')
+                .insert([{
+                    student_name: newName,
+                    status: editCurrentStatus ? 'Permitted' : 'Not Permitted',
+                    timestamp: displayTimestamp,
+                    teacher: currentTeacher
+                }]);
+        }
+
+        closeEditModal();
+        showToast(`✅ تم تحديث بيانات ${newName}`, 'success');
+
+        await loadAllData();
+        selectStudent(newName);
+
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ أثناء حفظ التعديل: ' + err.message, 'error');
+    } finally {
+        setTimeout(() => { isProcessing = false; }, 300);
     }
 };
 
@@ -127,7 +253,7 @@ async function addNewStudent() {
 
 // ===== حذف طالب =====
 async function deleteStudent(name) {
-    if (!confirm(`هل أنت متأكد من حذف "${name}"؟\n\nسيتم حذف الطالب وسجله نهائياً.`)) return;
+    if (!confirm(`هل أنت متأكد من حذف الطالب "${name}" نهائياً؟\n\nسيتم حذف الطالب وسجله بالكامل.`)) return;
 
     try {
         const { error: deleteError } = await supabaseClient
@@ -191,7 +317,7 @@ async function fetchStudents() {
     }
 }
 
-// ===== جلب وعرض السجل داخل المودال =====
+// ===== جلب السجل داخل المودال =====
 async function loadHistory() {
     const container = document.getElementById('modalHistoryContainer');
     if (!container) return;
@@ -253,72 +379,13 @@ async function fetchStudentStatus(name) {
     }
 }
 
-// ===== تحديث حالة طالب =====
-async function updateStudentStatus(name, status) {
-    if (isProcessing) return;
-    isProcessing = true;
-
-    try {
-        const now = new Date();
-        const updateData = { permitted: status };
-
-        if (status === true) {
-            updateData.last_permitted_at = now.toISOString();
-        }
-
-        const { error: updateError } = await supabaseClient
-            .from('students')
-            .update(updateData)
-            .eq('name', name);
-
-        if (updateError) throw updateError;
-
-        const displayTimestamp = now.toLocaleString('ar-SA', {
-            timeZone: 'Asia/Riyadh',
-            month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: true
-        });
-
-        const statusText = status ? 'Permitted' : 'Not Permitted';
-
-        const { error: historyError } = await supabaseClient
-            .from('history')
-            .insert([{
-                student_name: name,
-                status: statusText,
-                timestamp: displayTimestamp,
-                teacher: currentTeacher
-            }]);
-
-        if (historyError) throw historyError;
-
-        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
-
-        await loadAllData();
-        loadHistory();
-
-        if (selectedStudent === name) {
-            const studentData = await fetchStudentStatus(name);
-            if (studentData) {
-                updateQrAndVerification(name, studentData.permitted, studentData.last_permitted_at);
-            }
-        }
-
-    } catch (error) {
-        showToast('خطأ في التحديث: ' + error.message, 'error');
-    } finally {
-        setTimeout(() => { isProcessing = false; }, 300);
-    }
-}
-
 // ===== تحميل البيانات =====
 async function loadAllData() {
     const students = await fetchStudents();
     renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : students);
 }
 
-// ===== عرض الطلاب =====
+// ===== عرض قائمة الطلاب مع الضغط على الاسم للتعديل وزر الحذف الموسع =====
 function renderStudents(students) {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب.</div>`;
@@ -328,30 +395,21 @@ function renderStudents(students) {
     let html = '';
     students.forEach(s => {
         const status = s.permitted === true;
+        const pillText = status ? 'مسموح' : 'غير مسموح';
+        const pillClass = status ? 'permitted' : 'not-permitted';
 
         html += `
             <div class="student-item" data-student="${s.name}">
-                <span class="student-name"><i class="fas fa-user-graduate"></i> ${s.name}</span>
-
-                <div class="status-cell">
-                    <span class="status-text ${status ? 'on' : 'off'}">
-                        ${status ? 'مسموح' : 'غير مسموح'}
-                    </span>
-                    <button class="ios-toggle ${status ? 'on' : ''}" 
-                            data-action="toggle" 
-                            data-student="${s.name}"
-                            data-status="${status}"
-                            aria-label="Toggle status">
-                        <span class="ios-toggle-thumb"></span>
-                    </button>
+                <div class="student-name-clickable" data-student="${s.name}" title="اضغط لتعديل بيانات وحالة الطالب">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>${s.name}</span>
+                    <span class="student-pill ${pillClass}">${pillText}</span>
+                    <i class="fas fa-pen-to-square edit-indicator"></i>
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-qr btn-sm" data-action="viewqr" data-student="${s.name}">
-                        <i class="fas fa-qrcode"></i>
-                    </button>
-                    <button class="btn btn-delete btn-sm" data-action="delete" data-student="${s.name}">
-                        <i class="fas fa-trash"></i>
+                    <button class="btn btn-delete-wide" data-action="delete" data-student="${s.name}" title="حذف الطالب">
+                        <i class="fas fa-trash"></i> <span>حذف</span>
                     </button>
                 </div>
             </div>
@@ -359,26 +417,22 @@ function renderStudents(students) {
     });
     studentListEl.innerHTML = html;
 
-    document.querySelectorAll('.student-item .btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+    // ربط الضغط على اسم الطالب لفتح التعديل والمعاينة
+    document.querySelectorAll('.student-name-clickable').forEach(el => {
+        el.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (isProcessing) return;
-            const action = this.dataset.action;
             const student = this.dataset.student;
-            if (!student) return;
-
-            if (action === 'viewqr') selectStudent(student);
-            else if (action === 'delete') deleteStudent(student);
+            if (student) window.openEditStudentModal(student);
         });
     });
 
-    document.querySelectorAll('.ios-toggle').forEach(btn => {
+    // ربط زر الحذف الموسع
+    document.querySelectorAll('.btn-delete-wide').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (isProcessing) return;
             const student = this.dataset.student;
-            const currentStatus = this.dataset.status === 'true';
-            updateStudentStatus(student, !currentStatus);
+            if (student) deleteStudent(student);
         });
     });
 
@@ -387,7 +441,7 @@ function renderStudents(students) {
     });
 }
 
-// ===== اختيار طالب =====
+// ===== اختيار طالب للمعاينة =====
 function selectStudent(student) {
     if (isProcessing) return;
     selectedStudent = student;
@@ -660,7 +714,7 @@ async function downloadAllStudentsQRPdf() {
     }
 }
 
-// ربط الأزرار بشكل مباشر في الـ DOM
+// ربط الأزرار
 function attachEvents() {
     const singleBtn = document.getElementById('btnDownloadSingle');
     const allBtn = document.getElementById('btnDownloadAll');
@@ -763,7 +817,6 @@ async function init() {
     console.log('✅ Ready. Students:', allStudents.length);
 }
 
-// ربط أولي ومباشر
 attachEvents();
 
 // ===== بدء التطبيق =====
