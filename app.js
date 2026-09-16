@@ -7,7 +7,6 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 const DASHBOARD_PASSWORD = 'nigga1234';
 
 // ===== المتغيرات =====
-let selectedStudent = '';
 let openedStudent = '';
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
@@ -15,18 +14,34 @@ let allStudents = [];
 let allHistory = [];
 let selectedDownloadIds = new Set();
 
+// ===== نافذة التأكيد =====
+let confirmCallback = null;
+
+function showConfirm(message, title = 'تأكيد الحذف', onConfirm = null) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    confirmCallback = onConfirm;
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function confirmYes() {
+    document.getElementById('confirmModal').classList.remove('active');
+    const cb = confirmCallback;
+    confirmCallback = null;
+    if (typeof cb === 'function') cb();
+}
+
+function confirmNo() {
+    document.getElementById('confirmModal').classList.remove('active');
+    confirmCallback = null;
+}
+
 // DOM refs
 const studentListEl = document.getElementById('studentList');
 const logsListEl = document.getElementById('logsList');
 const downloadListEl = document.getElementById('downloadList');
-const qrContainer = document.getElementById('qrcode-container');
-const qrStudentName = document.getElementById('qrStudentName');
-const qrSub = document.getElementById('qrSub');
-const verifyName = document.getElementById('verifyName');
-const verifyStatusBadge = document.getElementById('verifyStatusBadge');
 const searchInput = document.getElementById('searchInput');
 const toastContainer = document.getElementById('toastContainer');
-const downloadQrBtn = document.getElementById('downloadQrBtn');
 
 // ============================================
 // ===== التنقل بين الأقسام =====
@@ -94,10 +109,15 @@ document.getElementById('passwordInput').addEventListener('keypress', (e) => {
 
 // ===== تسجيل الخروج =====
 function logout() {
-    if (!confirm('هل تريد تسجيل الخروج؟')) return;
-    sessionStorage.removeItem('mustaathin_auth');
-    sessionStorage.removeItem('currentSection');
-    location.reload();
+    showConfirm(
+        'هل تريد تسجيل الخروج من الحساب؟',
+        'تأكيد الخروج',
+        () => {
+            sessionStorage.removeItem('mustaathin_auth');
+            sessionStorage.removeItem('currentSection');
+            location.reload();
+        }
+    );
 }
 
 // ===== نافذة إضافة طالب =====
@@ -160,11 +180,9 @@ function openStudentOptions(name) {
 
     document.getElementById('optionsStudentName').textContent = name;
 
-    // إظهار الواجهة الرئيسية وإخفاء QR
     document.getElementById('optionsMainView').style.display = 'block';
     document.getElementById('optionsQrView').style.display = 'none';
 
-    // تحديث الأزرار حسب الحالة الحالية
     const permitBtn = document.getElementById('permitOptionBtn');
     const cancelBtn = document.getElementById('cancelOptionBtn');
 
@@ -187,7 +205,7 @@ function closeStudentOptions() {
     openedStudent = '';
 }
 
-// ===== تغيير حالة الطالب من النافذة =====
+// ===== تغيير حالة الطالب =====
 async function setStudentStatus(status) {
     if (!openedStudent) return;
     const name = openedStudent;
@@ -202,13 +220,9 @@ function showQrInsideModal() {
     const student = allStudents.find(s => s.name === openedStudent);
     if (!student) return;
 
-    // إخفاء الواجهة الرئيسية
     document.getElementById('optionsMainView').style.display = 'none';
-
-    // إظهار واجهة الباركود
     document.getElementById('optionsQrView').style.display = 'block';
 
-    // توليد الباركود
     const container = document.getElementById('modalQrContainer');
     container.innerHTML = '';
 
@@ -224,10 +238,8 @@ function showQrInsideModal() {
         correctLevel: QRCode.CorrectLevel.H
     });
 
-    // عرض الاسم
     document.getElementById('modalQrName').textContent = openedStudent;
 
-    // عرض الحالة
     const statusEl = document.getElementById('modalQrStatus');
     if (student.permitted) {
         statusEl.className = 'modal-qr-status permitted';
@@ -340,11 +352,6 @@ async function saveEditName() {
             .update({ student_name: newName })
             .eq('student_name', oldName);
 
-        if (selectedStudent === oldName) {
-            selectedStudent = newName;
-            clearQrDisplay();
-        }
-
         closeEditNameModal();
         showToast(`✅ تم تغيير الاسم إلى ${newName}`, 'success');
         await loadAllData();
@@ -356,34 +363,33 @@ async function saveEditName() {
 }
 
 // ===== حذف طالب =====
-async function deleteStudent(name) {
-    if (!confirm(`هل أنت متأكد من حذف "${name}"؟\n\nسيتم حذف الطالب وسجله نهائياً.`)) return;
+function deleteStudent(name) {
+    showConfirm(
+        `هل أنت متأكد من حذف "${name}"؟ سيتم حذف الطالب وسجله نهائياً.`,
+        'تأكيد حذف الطالب',
+        async () => {
+            try {
+                const { error: deleteError } = await supabaseClient
+                    .from('students')
+                    .delete()
+                    .eq('name', name);
 
-    try {
-        const { error: deleteError } = await supabaseClient
-            .from('students')
-            .delete()
-            .eq('name', name);
+                if (deleteError) throw deleteError;
 
-        if (deleteError) throw deleteError;
+                await supabaseClient
+                    .from('history')
+                    .delete()
+                    .eq('student_name', name);
 
-        await supabaseClient
-            .from('history')
-            .delete()
-            .eq('student_name', name);
+                showToast(`🗑️ تم حذف ${name}`, 'error');
+                await loadAllData();
 
-        showToast(`🗑️ تم حذف ${name}`, 'error');
-
-        if (selectedStudent === name) {
-            clearQrDisplay();
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast('خطأ في الحذف: ' + error.message, 'error');
+            }
         }
-
-        await loadAllData();
-
-    } catch (error) {
-        console.error('Delete error:', error);
-        showToast('خطأ في الحذف: ' + error.message, 'error');
-    }
+    );
 }
 
 // ===== Toast =====
@@ -431,22 +437,6 @@ async function fetchHistory() {
     }
 }
 
-// ===== جلب حالة طالب =====
-async function fetchStudentStatus(name) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('students')
-            .select('name, permitted, last_permitted_at')
-            .eq('name', name)
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        return null;
-    }
-}
-
 // ===== تحديث حالة طالب =====
 async function updateStudentStatus(name, status) {
     if (isProcessing) return;
@@ -491,13 +481,6 @@ async function updateStudentStatus(name, status) {
 
         await loadAllData();
 
-        if (selectedStudent === name) {
-            const studentData = await fetchStudentStatus(name);
-            if (studentData) {
-                updateQrAndVerification(name, studentData.permitted, studentData.last_permitted_at);
-            }
-        }
-
     } catch (error) {
         showToast('خطأ في التحديث: ' + error.message, 'error');
     } finally {
@@ -534,13 +517,12 @@ function renderStudents(students, filter = '') {
     filtered.forEach((s, index) => {
         const status = s.permitted === true;
         const num = index + 1;
-        const isSelected = selectedStudent === s.name;
         const safeName = s.name.replace(/'/g, "\\'");
         const statusClass = status ? 'permitted' : 'not-permitted';
         const statusText = status ? 'مسموح' : 'غير مسموح';
 
         html += `
-            <div class="student-item ${isSelected ? 'selected' : ''}">
+            <div class="student-item">
                 <span class="student-number">${num}</span>
 
                 <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
@@ -555,160 +537,6 @@ function renderStudents(students, filter = '') {
         `;
     });
     studentListEl.innerHTML = html;
-}
-
-// ===== اختيار طالب (لعرض الباركود) =====
-function selectStudent(student) {
-    if (isProcessing) return;
-    selectedStudent = student;
-    const studentData = allStudents.find(s => s.name === student);
-    if (studentData) {
-        updateQrAndVerification(student, studentData.permitted, studentData.last_permitted_at);
-    } else {
-        fetchStudentStatus(student).then(data => {
-            if (data) updateQrAndVerification(student, data.permitted, data.last_permitted_at);
-        });
-    }
-    renderStudents(allStudents, searchInput.value);
-}
-
-// ===== مسح عرض QR =====
-function clearQrDisplay() {
-    selectedStudent = '';
-    qrContainer.innerHTML = `
-        <div class="qr-empty">
-            <i class="fas fa-hand-pointer"></i>
-            <p>اضغط على اسم الطالب</p>
-        </div>
-    `;
-    qrStudentName.textContent = 'لم يتم اختيار طالب';
-    qrSub.textContent = 'اضغط على اسم الطالب لعرض الباركود';
-    verifyName.textContent = '—';
-    verifyStatusBadge.className = 'verify-status';
-    verifyStatusBadge.innerHTML = '—';
-    downloadQrBtn.disabled = true;
-}
-
-// ===== حساب المدة =====
-function getTimeSince(lastPermittedAt) {
-    if (!lastPermittedAt) return null;
-
-    const now = new Date();
-    const localNow = new Date(now.getTime() + (3 * 3600000));
-    const then = new Date(lastPermittedAt);
-    const localThen = new Date(then.getTime() + (3 * 3600000));
-
-    const diffMs = localNow - localThen;
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHours = Math.floor(diffMin / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `${diffDays} يوم ${diffHours % 24} ساعة`;
-    if (diffHours > 0) return `${diffHours} ساعة ${diffMin % 60} دقيقة`;
-    if (diffMin > 0) return `${diffMin} دقيقة ${diffSec % 60} ثانية`;
-    return `${diffSec} ثانية`;
-}
-
-// ===== توليد QR مع اسم الطالب تحت الباركود =====
-function generateQrWithName(container, studentName, size = 200) {
-    container.innerHTML = '';
-
-    const qrDiv = document.createElement('div');
-    container.appendChild(qrDiv);
-
-    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-    const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
-
-    new QRCode(qrDiv, {
-        text: qrData,
-        width: size,
-        height: size,
-        colorDark: '#4c1d95',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
-    setTimeout(() => {
-        const canvas = qrDiv.querySelector('canvas');
-        if (!canvas) return;
-
-        const padding = Math.floor(size * 0.08);
-        const nameHeight = Math.floor(size * 0.18);
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = size + (padding * 2);
-        finalCanvas.height = size + (padding * 2) + nameHeight;
-
-        const ctx = finalCanvas.getContext('2d');
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-        ctx.strokeStyle = '#ede4ff';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(2, 2, finalCanvas.width - 4, finalCanvas.height - 4);
-
-        ctx.drawImage(canvas, padding, padding, size, size);
-
-        ctx.strokeStyle = '#ede4ff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(padding, size + padding + 6);
-        ctx.lineTo(finalCanvas.width - padding, size + padding + 6);
-        ctx.stroke();
-
-        ctx.fillStyle = '#4c1d95';
-        ctx.font = `bold ${Math.floor(size * 0.09)}px 'Tajawal', 'Inter', sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(studentName, finalCanvas.width / 2, size + padding + (nameHeight / 2) + 10);
-
-        container.innerHTML = '';
-        container.appendChild(finalCanvas);
-
-    }, 50);
-}
-
-// ===== تحديث عرض QR =====
-function updateQrAndVerification(student, status, lastPermittedAt) {
-    qrStudentName.textContent = student;
-    verifyName.textContent = student;
-    qrSub.textContent = 'امسح الباركود للتحقق';
-
-    generateQrWithName(qrContainer, student, 140);
-
-    if (status) {
-        verifyStatusBadge.className = 'verify-status permitted';
-        const timeSince = getTimeSince(lastPermittedAt);
-        verifyStatusBadge.innerHTML = `🟢 مسموح · ${timeSince || 'الآن'}`;
-    } else {
-        verifyStatusBadge.className = 'verify-status not-permitted';
-        verifyStatusBadge.innerHTML = '🔴 غير مسموح';
-    }
-
-    downloadQrBtn.disabled = false;
-}
-
-// ===== تحميل باركود واحد =====
-function downloadQr() {
-    if (!selectedStudent) {
-        showToast('اختر طالباً أولاً', 'error');
-        return;
-    }
-
-    const canvas = qrContainer.querySelector('canvas');
-
-    if (!canvas) {
-        showToast('لا يوجد باركود للتحميل', 'error');
-        return;
-    }
-
-    const link = document.createElement('a');
-    link.download = `QR_${selectedStudent}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-
-    showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
 }
 
 // ===== عرض السجلات =====
@@ -830,7 +658,7 @@ function updateSelectedCount() {
     document.getElementById('selectedCount').textContent = selectedDownloadIds.size;
 }
 
-// ===== توليد QR مع اسم (للتحميل الجماعي) =====
+// ===== توليد QR مع اسم =====
 function generateQrCanvas(studentName, size = 400) {
     return new Promise((resolve) => {
         const tempDiv = document.createElement('div');
@@ -931,7 +759,6 @@ function subscribeToChanges() {
                     const deletedName = payload.old?.name;
                     if (deletedName) {
                         allStudents = allStudents.filter(s => s.name !== deletedName);
-                        if (selectedStudent === deletedName) clearQrDisplay();
                         renderStudents(allStudents, searchInput.value);
                         renderDownloadList();
                     }
@@ -948,9 +775,6 @@ function subscribeToChanges() {
                 }
                 renderStudents(allStudents, searchInput.value);
                 renderDownloadList();
-                if (selectedStudent === updatedStudent.name) {
-                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
-                }
             }
         )
         .subscribe();
@@ -971,7 +795,6 @@ function subscribeToChanges() {
 async function init() {
     console.log('🚀 ثانوية هوزان');
     await loadAllData();
-    clearQrDisplay();
 
     const savedSection = sessionStorage.getItem('currentSection') || 'students';
     switchSection(savedSection);
