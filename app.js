@@ -267,7 +267,7 @@ async function loadAllData() {
     renderHistory(history);
 }
 
-// ===== عرض الطلاب =====
+// ===== عرض الطلاب (مع السويتش) =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -286,21 +286,25 @@ function renderStudents(students, filter = '') {
     let html = '';
     filtered.forEach(s => {
         const status = s.permitted === true;
-        const statusText = status ? 'مسموح' : 'غير مسموح';
-        const statusClass = status ? 'permitted' : 'not-permitted';
-        const statusIcon = status ? '🟢' : '🔴';
 
         html += `
             <div class="student-item" data-student="${s.name}">
                 <span class="student-name"><i class="fas fa-user-graduate"></i> ${s.name}</span>
-                <span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span>
+
+                <label class="status-switch">
+                    <input type="checkbox" 
+                           data-action="toggle" 
+                           data-student="${s.name}" 
+                           ${status ? 'checked' : ''}>
+                    <span class="switch-track">
+                        <span class="switch-thumb"></span>
+                    </span>
+                    <span class="switch-label ${status ? 'on' : 'off'}">
+                        ${status ? '🟢 مسموح' : '🔴 غير مسموح'}
+                    </span>
+                </label>
+
                 <div class="actions">
-                    <button class="btn btn-permit btn-sm" data-action="permit" data-student="${s.name}" ${status ? 'disabled' : ''}>
-                        <i class="fas fa-check"></i> سماح
-                    </button>
-                    <button class="btn btn-cancel btn-sm" data-action="cancel" data-student="${s.name}" ${!status ? 'disabled' : ''}>
-                        <i class="fas fa-times"></i> إلغاء
-                    </button>
                     <button class="btn btn-qr btn-sm" data-action="viewqr" data-student="${s.name}">
                         <i class="fas fa-qrcode"></i>
                     </button>
@@ -313,6 +317,7 @@ function renderStudents(students, filter = '') {
     });
     studentListEl.innerHTML = html;
 
+    // ربط أزرار QR والحذف
     document.querySelectorAll('.student-item .btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -320,13 +325,27 @@ function renderStudents(students, filter = '') {
             const action = this.dataset.action;
             const student = this.dataset.student;
             if (!student) return;
-            if (action === 'permit') updateStudentStatus(student, true);
-            else if (action === 'cancel') updateStudentStatus(student, false);
-            else if (action === 'viewqr') selectStudent(student);
+
+            if (action === 'viewqr') selectStudent(student);
             else if (action === 'delete') deleteStudent(student);
         });
     });
 
+    // ربط السويتشات
+    document.querySelectorAll('.status-switch input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', function(e) {
+            e.stopPropagation();
+            if (isProcessing) {
+                this.checked = !this.checked;
+                return;
+            }
+            const student = this.dataset.student;
+            const newStatus = this.checked;
+            updateStudentStatus(student, newStatus);
+        });
+    });
+
+    // تمييز الطالب المحدد
     document.querySelectorAll('.student-item').forEach(el => {
         el.style.background = (el.dataset.student === selectedStudent) ? '#f3ecff' : '';
     });
