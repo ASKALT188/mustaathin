@@ -120,7 +120,6 @@
     <!-- نافذة خيارات الطالب -->
     <div class="modal-overlay" id="studentOptionsModal">
         <div class="modal-box student-options-box">
-            <!-- العرض الأساسي -->
             <div id="optionsMainView">
                 <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
                 <div class="modal-sub">اختر الإجراء اللي تبيه</div>
@@ -172,7 +171,6 @@
                 </button>
             </div>
 
-            <!-- عرض الباركود داخل النافذة -->
             <div id="optionsQrView" style="display: none;">
                 <button class="modal-back-btn" onclick="backToOptions()">
                     <i class="fas fa-arrow-right"></i> رجوع
@@ -226,7 +224,7 @@
         </div>
     </div>
 
-    <!-- ===== القائمة الجانبية ===== -->
+    <!-- القائمة الجانبية -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <i class="fas fa-graduation-cap"></i>
@@ -256,19 +254,17 @@
         </div>
     </aside>
 
-    <!-- زر القائمة للجوال -->
     <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
     </button>
 
-    <!-- خلفية القائمة للجوال -->
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
 
-    <!-- ===== المحتوى الرئيسي ===== -->
+    <!-- المحتوى الرئيسي -->
     <main class="main-content">
         <div class="app-container">
 
-            <!-- ===== قسم كشف الطلاب ===== -->
+            <!-- قسم كشف الطلاب -->
             <div class="page-section active" id="pageStudents">
                 <div class="page-title">
                     <h1><i class="fas fa-users"></i> كشف الطلاب</h1>
@@ -300,7 +296,7 @@
                 </div>
             </div>
 
-            <!-- ===== قسم السجلات ===== -->
+            <!-- قسم السجلات -->
             <div class="page-section" id="pageLogs">
                 <div class="page-title">
                     <h1><i class="fas fa-clipboard-list"></i> سجل العمليات</h1>
@@ -316,7 +312,7 @@
                 </div>
             </div>
 
-            <!-- ===== قسم تحميل الباركودات ===== -->
+            <!-- قسم تحميل الباركودات -->
             <div class="page-section" id="pageDownload">
                 <div class="page-title">
                     <h1><i class="fas fa-download"></i> تحميل الباركودات</h1>
@@ -348,6 +344,12 @@
 
         </div>
     </main>
+
+    <!-- حقوق الطبع -->
+    <footer class="footer">
+        <i class="fas fa-copyright"></i>
+        حقوق طبع ونشر محفوظة لشعبة 208 موهبة
+    </footer>
 
     <div class="toast-container" id="toastContainer"></div>
 
