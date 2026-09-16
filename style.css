@@ -268,115 +268,76 @@ body {
 }
 
 /* ============================================
-   ===== السويتش الاحترافي =====
+   ===== iOS Toggle Switch =====
    ============================================ */
-.toggle-btn {
+.status-cell {
     display: inline-flex;
     align-items: center;
     gap: 0.7rem;
-    cursor: pointer;
-    user-select: none;
-    padding: 0;
-    border: none;
-    background: transparent;
-    font-family: inherit;
-    transition: transform 0.15s;
-}
-.toggle-btn:active {
-    transform: scale(0.96);
+    margin: 0 0.5rem;
 }
 
-/* المسار (الخلفية) */
-.toggle-track {
-    position: relative;
-    width: 62px;
-    height: 32px;
-    border-radius: 40px;
-    display: inline-block;
-    flex-shrink: 0;
-    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
-    box-shadow: 
-        inset 0 2px 6px rgba(0, 0, 0, 0.12),
-        inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-/* حالة الإيقاف - رمادي */
-.toggle-btn.off .toggle-track {
-    background: linear-gradient(180deg, #e5e7eb 0%, #d1d5db 100%);
-}
-
-/* حالة التشغيل - بنفسجي متدرج */
-.toggle-btn.on .toggle-track {
-    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
-    box-shadow: 
-        inset 0 2px 6px rgba(0, 0, 0, 0.15),
-        0 0 12px rgba(124, 58, 237, 0.35);
-}
-
-/* المقبض (الدائرة) */
-.toggle-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 26px;
-    height: 26px;
-    background: #ffffff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 
-        0 2px 6px rgba(0, 0, 0, 0.2),
-        0 1px 2px rgba(0, 0, 0, 0.1);
-    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
-    z-index: 2;
-}
-
-/* لما يفتح → يتحرك يمين */
-.toggle-btn.on .toggle-thumb {
-    left: calc(100% - 29px);
-}
-
-/* الأيقونة داخل المقبض */
-.toggle-icon {
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1;
-    transition: all 0.3s;
-    color: #b13e3e;
-}
-.toggle-btn.on .toggle-icon {
-    color: #006b4e;
-}
-
-/* النص */
-.toggle-text {
+.status-text {
     font-size: 0.75rem;
     font-weight: 700;
     white-space: nowrap;
-    min-width: 85px;
+    min-width: 75px;
     text-align: right;
     transition: color 0.25s;
 }
-.toggle-btn.off .toggle-text {
-    color: #6b7280;
+.status-text.off {
+    color: #b13e3e;
 }
-.toggle-btn.on .toggle-text {
-    color: #5b21b6;
+.status-text.on {
+    color: #22c55e;
 }
 
-/* تأثير Hover */
-.toggle-btn:hover .toggle-track {
-    box-shadow: 
-        inset 0 2px 6px rgba(0, 0, 0, 0.12),
-        inset 0 0 0 1px rgba(0, 0, 0, 0.05),
-        0 0 0 4px rgba(124, 58, 237, 0.08);
+/* السويتش */
+.ios-toggle {
+    position: relative;
+    width: 51px;
+    height: 31px;
+    border-radius: 30px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: #e5e5ea;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    outline: none;
+    font-family: inherit;
 }
-.toggle-btn.on:hover .toggle-track {
+.ios-toggle:hover {
+    opacity: 0.9;
+}
+.ios-toggle:active .ios-toggle-thumb {
+    width: 34px;
+}
+.ios-toggle.on {
+    background: #22c55e;
+}
+
+/* الدائرة (المقبض) */
+.ios-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #ffffff;
     box-shadow: 
-        inset 0 2px 6px rgba(0, 0, 0, 0.15),
-        0 0 18px rgba(124, 58, 237, 0.5),
-        0 0 0 4px rgba(124, 58, 237, 0.1);
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        0 1px 1px rgba(0, 0, 0, 0.16),
+        0 3px 1px rgba(0, 0, 0, 0.1);
+    transition: 
+        left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.2s ease;
+}
+
+/* الحالة المفتوحة → يتحرك يمين */
+.ios-toggle.on .ios-toggle-thumb {
+    left: calc(100% - 29px);
 }
 
 /* ============================================
@@ -601,25 +562,23 @@ body {
     }
 
     /* السويتش على الجوال */
-    .toggle-track {
-        width: 52px;
+    .status-text {
+        font-size: 0.7rem;
+        min-width: 65px;
+    }
+    .ios-toggle {
+        width: 46px;
         height: 28px;
     }
-    .toggle-thumb {
-        width: 22px;
-        height: 22px;
-        top: 3px;
-        left: 3px;
+    .ios-toggle-thumb {
+        width: 24px;
+        height: 24px;
     }
-    .toggle-btn.on .toggle-thumb {
-        left: calc(100% - 25px);
+    .ios-toggle.on .ios-toggle-thumb {
+        left: calc(100% - 26px);
     }
-    .toggle-icon {
-        font-size: 10px;
-    }
-    .toggle-text {
-        font-size: 0.65rem;
-        min-width: 70px;
+    .ios-toggle:active .ios-toggle-thumb {
+        width: 30px;
     }
 }
 
