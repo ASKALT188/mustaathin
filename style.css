@@ -2,7 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Tajawal', 'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
@@ -10,8 +10,9 @@ body {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    padding: 1.2rem 0.8rem;
+    padding: 0.8rem;
     color: #2a1e4a;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .app-container {
@@ -27,18 +28,18 @@ body {
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.8rem 1.5rem;
+    gap: 0.6rem;
     background: white;
-    padding: 0.7rem 1.8rem;
-    border-radius: 3rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 2.5rem;
     border: 2px solid #ede4ff;
     box-shadow: 0 6px 24px rgba(124, 58, 237, 0.06);
-    margin-bottom: 2rem;
+    margin-bottom: 1.2rem;
 }
 
 .school-header h1 {
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: #4c1d95;
     display: flex;
     align-items: center;
@@ -48,13 +49,11 @@ body {
     color: #7c3aed;
 }
 
-.badge-school {
-    background: #ede4ff;
-    padding: 0.25rem 1.2rem;
-    border-radius: 40px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #5b21b6;
+.header-actions {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 /* ============================================
@@ -63,20 +62,20 @@ body {
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
-    gap: 1.8rem;
+    gap: 1.2rem;
 }
 
 @media (max-width: 900px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
-        gap: 1.8rem;
+        gap: 1rem;
     }
 }
 
 .card {
     background: white;
-    border-radius: 28px;
-    padding: 1.5rem 1.4rem;
+    border-radius: 24px;
+    padding: 1.2rem 1rem;
     border: 2px solid #ede4ff;
     box-shadow: 0 8px 26px rgba(124, 58, 237, 0.05);
 }
@@ -86,20 +85,25 @@ body {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.6rem 1rem;
-    margin-bottom: 1.2rem;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .card-header h2 {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #4c1d95;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 .card-header h2 i {
     color: #7c3aed;
+}
+
+.card-hint {
+    font-size: 0.7rem;
+    color: #8b7db8;
 }
 
 /* ============================================
@@ -110,9 +114,12 @@ body {
     align-items: center;
     background: #f7f3ff;
     border-radius: 60px;
-    padding: 0.1rem 0.1rem 0.1rem 1.2rem;
+    padding: 0.1rem 0.1rem 0.1rem 0.9rem;
     border: 2px solid #ede4ff;
     transition: border 0.15s;
+    flex: 1;
+    min-width: 130px;
+    max-width: 200px;
 }
 .search-box:focus-within {
     border-color: #a78bfa;
@@ -120,18 +127,19 @@ body {
 .search-box input {
     border: none;
     background: transparent;
-    padding: 0.45rem 0.2rem;
+    padding: 0.4rem 0.2rem;
     font-size: 0.85rem;
-    width: 150px;
+    width: 100%;
     outline: none;
     color: #2a1e4a;
+    font-family: inherit;
 }
 .search-box input::placeholder { color: #a78bfa; }
 .search-box button {
     background: white;
     border: none;
     border-radius: 40px;
-    padding: 0.3rem 1.1rem;
+    padding: 0.3rem 0.8rem;
     font-weight: 600;
     color: #7c3aed;
     cursor: default;
@@ -144,10 +152,11 @@ body {
 .student-list {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.5rem;
     max-height: 460px;
     overflow-y: auto;
     padding-right: 0.2rem;
+    -webkit-overflow-scrolling: touch;
 }
 
 .student-item {
@@ -155,11 +164,11 @@ body {
     align-items: center;
     justify-content: space-between;
     background: #fbf9ff;
-    padding: 0.55rem 1rem 0.55rem 1.2rem;
+    padding: 0.7rem 0.9rem;
     border-radius: 60px;
     border: 2px solid #f3ecff;
     flex-wrap: wrap;
-    gap: 0.3rem 0.6rem;
+    gap: 0.4rem 0.6rem;
     transition: background 0.12s, border 0.12s;
 }
 .student-item:hover {
@@ -172,7 +181,9 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    flex: 1;
+    min-width: 100px;
 }
 .student-item .student-name i {
     color: #a78bfa;
@@ -180,7 +191,7 @@ body {
 }
 
 /* ============================================
-   ===== Status Badge (يستخدم في التحقق المباشر) =====
+   ===== Status Badge =====
    ============================================ */
 .status-badge {
     padding: 0.15rem 1.1rem;
@@ -217,10 +228,10 @@ body {
 .btn {
     border: none;
     background: transparent;
-    padding: 0.25rem 0.9rem;
+    padding: 0.4rem 0.9rem;
     border-radius: 40px;
     font-weight: 600;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
@@ -228,13 +239,12 @@ body {
     transition: all 0.12s;
     border: 1px solid transparent;
     white-space: nowrap;
-    min-height: 2rem;
+    min-height: 2.2rem;
     font-family: inherit;
 }
 .btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    transform: scale(0.97);
 }
 
 /* زر الباركود */
@@ -242,8 +252,8 @@ body {
     background: #ede4ff;
     color: #5b21b6;
     border-color: #d8c7ff;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.7rem;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
 }
 .btn-qr:hover {
     background: #d8c7ff;
@@ -254,17 +264,33 @@ body {
     background: #fce8e8;
     color: #b13e3e;
     border-color: #f5d0d0;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.7rem;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
 }
 .btn-delete:hover {
     background: #f5d6d6;
     transform: scale(1.05);
 }
 
+/* زر تسجيل الخروج */
+.btn-logout {
+    background: #ede4ff;
+    color: #5b21b6;
+    border: 1px solid #d8c7ff;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+}
+.btn-logout:hover {
+    background: #d8c7ff;
+}
+
 .btn-sm {
-    padding: 0.2rem 0.7rem;
-    font-size: 0.65rem;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
 }
 
 /* ============================================
@@ -273,15 +299,15 @@ body {
 .status-cell {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
-    margin: 0 0.5rem;
+    gap: 0.5rem;
+    margin: 0 0.3rem;
 }
 
 .status-text {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     white-space: nowrap;
-    min-width: 75px;
+    min-width: 68px;
     text-align: right;
     transition: color 0.25s;
 }
@@ -292,7 +318,6 @@ body {
     color: #22c55e;
 }
 
-/* السويتش */
 .ios-toggle {
     position: relative;
     width: 51px;
@@ -317,7 +342,6 @@ body {
     background: #22c55e;
 }
 
-/* الدائرة (المقبض) */
 .ios-toggle-thumb {
     position: absolute;
     top: 2px;
@@ -335,7 +359,6 @@ body {
         width 0.2s ease;
 }
 
-/* الحالة المفتوحة → يتحرك يمين */
 .ios-toggle.on .ios-toggle-thumb {
     left: calc(100% - 29px);
 }
@@ -375,16 +398,17 @@ body {
     color: #8b7db8;
     font-size: 0.7rem;
     margin-top: 0.1rem;
+    text-align: center;
 }
 
 /* ============================================
    ===== Verification Panel =====
    ============================================ */
 .verification-panel {
-    margin-top: 1.6rem;
+    margin-top: 1.2rem;
     background: #f7f3ff;
-    border-radius: 40px;
-    padding: 1rem 1rem 1.2rem;
+    border-radius: 30px;
+    padding: 1rem;
     border: 2px solid #ede4ff;
 }
 .verification-panel h3 {
@@ -399,20 +423,20 @@ body {
 .verify-student {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 0.8rem;
     flex-wrap: wrap;
     justify-content: center;
 }
 .verify-student .student-badge {
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #3b1e6b;
 }
 .verify-status {
     font-weight: 700;
-    padding: 0.15rem 1.6rem;
+    padding: 0.15rem 1.2rem;
     border-radius: 60px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     transition: all 0.15s;
 }
 .verify-status.permitted {
@@ -434,7 +458,7 @@ body {
    ===== History Log =====
    ============================================ */
 .history-log {
-    margin-top: 1.6rem;
+    margin-top: 1.2rem;
     border-top: 2px solid #f3ecff;
     padding-top: 1rem;
 }
@@ -450,16 +474,16 @@ body {
 .log-entry {
     display: flex;
     justify-content: space-between;
-    font-size: 0.7rem;
-    padding: 0.25rem 0;
+    font-size: 0.72rem;
+    padding: 0.35rem 0;
     border-bottom: 1px solid #f7f3ff;
     color: #3b1e6b;
     flex-wrap: wrap;
-    gap: 0.1rem 0.6rem;
+    gap: 0.2rem 0.6rem;
 }
 .log-entry .log-time {
     color: #8b7db8;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
 }
 .teacher-tag {
     background: #ede4ff;
@@ -487,13 +511,13 @@ body {
    ============================================ */
 .toast-container {
     position: fixed;
-    bottom: 2rem;
+    bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
     z-index: 999;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.5rem;
     align-items: center;
     pointer-events: none;
     width: 90%;
@@ -502,7 +526,7 @@ body {
 .toast {
     background: #5b21b6;
     color: white;
-    padding: 0.7rem 1.6rem;
+    padding: 0.7rem 1.4rem;
     border-radius: 60px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -512,59 +536,116 @@ body {
     width: 100%;
     text-align: center;
 }
-.toast.success {
-    background: #006b4e;
-}
-.toast.error {
-    background: #b13e3e;
-}
+.toast.success { background: #006b4e; }
+.toast.error { background: #b13e3e; }
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 /* ============================================
-   ===== Responsive (Mobile) =====
+   ===== Responsive — Tablet =====
+   ============================================ */
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .student-list {
+        max-height: 400px;
+    }
+}
+
+/* ============================================
+   ===== Responsive — Mobile =====
    ============================================ */
 @media (max-width: 600px) {
-    .school-header {
-        padding: 0.6rem 1rem;
-        border-radius: 2rem;
-    }
-    .school-header h1 { font-size: 1.2rem; }
-    .card { padding: 1rem 0.8rem; }
-    .student-item {
-        padding: 0.4rem 0.7rem;
-        border-radius: 40px;
-    }
-    .actions .btn {
-        padding: 0.15rem 0.6rem;
-        font-size: 0.6rem;
-        min-height: 1.8rem;
-    }
-    .search-box input {
-        width: 100px;
-        font-size: 0.8rem;
-    }
-    #qrcode-container img,
-    #qrcode-container canvas {
-        width: 120px;
-        height: 120px;
-    }
-    .verify-student .student-badge { font-size: 1rem; }
-    .verify-status {
-        font-size: 0.85rem;
-        padding: 0.1rem 1.2rem;
-    }
-    .toast {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
+    body {
+        padding: 0.5rem;
     }
 
-    /* السويتش على الجوال */
-    .status-text {
+    .school-header {
+        padding: 0.55rem 0.8rem;
+        border-radius: 2rem;
+        gap: 0.5rem;
+    }
+    .school-header h1 {
+        font-size: 1.05rem;
+    }
+    .school-header h1 i {
+        font-size: 1rem;
+    }
+
+    .header-actions {
+        gap: 0.3rem;
+    }
+
+    .badge-school {
+        display: none;
+    }
+
+    .add-btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.72rem !important;
+    }
+    .add-btn .btn-text {
+        display: none;
+    }
+    .add-btn i {
+        font-size: 0.85rem;
+    }
+
+    .btn-logout {
+        width: 34px;
+        height: 34px;
+        padding: 0.35rem;
+        font-size: 0.75rem;
+    }
+
+    .card {
+        padding: 1rem 0.8rem;
+        border-radius: 20px;
+    }
+
+    .card-header h2 {
+        font-size: 0.95rem;
+    }
+    .card-hint {
+        display: none;
+    }
+
+    .search-box {
+        max-width: 130px;
+    }
+    .search-box input {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.1rem;
+    }
+    .search-box button {
+        padding: 0.25rem 0.6rem;
         font-size: 0.7rem;
-        min-width: 65px;
+    }
+
+    .student-item {
+        padding: 0.55rem 0.7rem;
+        border-radius: 24px;
+        gap: 0.35rem 0.5rem;
+    }
+    .student-item .student-name {
+        font-size: 0.85rem;
+        min-width: 90px;
+        flex: 0 0 auto;
+    }
+    .student-item .student-name i {
+        font-size: 0.75rem;
+    }
+
+    .status-cell {
+        gap: 0.35rem;
+        margin: 0;
+    }
+    .status-text {
+        font-size: 0.65rem;
+        min-width: 58px;
     }
     .ios-toggle {
         width: 46px;
@@ -580,12 +661,70 @@ body {
     .ios-toggle:active .ios-toggle-thumb {
         width: 30px;
     }
+
+    .actions {
+        gap: 0.25rem;
+    }
+    .btn-qr, .btn-delete {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.7rem;
+        min-height: 1.9rem;
+    }
+
+    #qrcode-container img,
+    #qrcode-container canvas {
+        width: 130px;
+        height: 130px;
+    }
+    .qr-label {
+        font-size: 0.9rem;
+    }
+
+    .verify-student .student-badge { font-size: 1rem; }
+    .verify-status {
+        font-size: 0.8rem;
+        padding: 0.1rem 1rem;
+    }
+
+    .toast {
+        font-size: 0.78rem;
+        padding: 0.55rem 1rem;
+    }
 }
 
-@media (max-width: 400px) {
-    .student-item .student-name { font-size: 0.85rem; }
-    .status-badge {
-        font-size: 0.6rem;
-        padding: 0.1rem 0.8rem;
+/* ============================================
+   ===== Responsive — Small Mobile =====
+   ============================================ */
+@media (max-width: 380px) {
+    .school-header h1 {
+        font-size: 0.95rem;
+    }
+    .student-item {
+        padding: 0.5rem 0.6rem;
+    }
+    .student-item .student-name {
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+    .status-text {
+        display: none;
+    }
+    .ios-toggle {
+        width: 42px;
+        height: 26px;
+    }
+    .ios-toggle-thumb {
+        width: 22px;
+        height: 22px;
+    }
+    .ios-toggle.on .ios-toggle-thumb {
+        left: calc(100% - 24px);
+    }
+    .btn-qr, .btn-delete {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.65rem;
+    }
+    .search-box {
+        max-width: 100px;
     }
 }
