@@ -1,5 +1,5 @@
 // ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.1';
+const APP_VERSION = 'v1.0.2';
 
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
@@ -404,14 +404,19 @@ function getTimeSince(lastPermittedAt) {
     return `${diffSec} ثانية`;
 }
 
+// ===== إنشاء رابط التحقق للطالب بدقة =====
+function getStudentVerifyUrl(studentName) {
+    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+    return `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
+}
+
 // ===== تحديث QR في الواجهة =====
 function updateQrAndVerification(student, status, lastPermittedAt) {
     qrStudentName.textContent = student;
     verifyName.textContent = student;
 
     qrContainer.innerHTML = '';
-    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-    const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(student)}`;
+    const qrData = getStudentVerifyUrl(student);
 
     new QRCode(qrContainer, {
         text: qrData,
@@ -437,23 +442,20 @@ window.filterStudents = function() {
     renderStudents(allStudents, searchInput.value);
 };
 
-// ============================================
-// ===== وظائف بناء وتوليد ملفات الـ PDF =====
-// ============================================
+// ==========================================================
+// ===== توليد بطاقة الطالب وPDF بدقة مطابقة للأصل 100% =====
+// ==========================================================
 
-function buildCardImage(studentName) {
+function createSingleStudentCard(studentName) {
     return new Promise((resolve) => {
-        const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-        const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
+        const qrUrl = getStudentVerifyUrl(studentName);
+        const tempHolder = document.createElement('div');
+        tempHolder.style.cssText = 'position:fixed; left:-9999px; top:-9999px;';
+        document.body.appendChild(tempHolder);
 
-        const hiddenDiv = document.createElement('div');
-        hiddenDiv.style.position = 'fixed';
-        hiddenDiv.style.left = '-9999px';
-        hiddenDiv.style.top = '-9999px';
-        document.body.appendChild(hiddenDiv);
-
-        new QRCode(hiddenDiv, {
-            text: qrData,
+        // إنشاء الـ QR بنفس محرك ومكتبة الموقع
+        new QRCode(tempHolder, {
+            text: qrUrl,
             width: 260,
             height: 260,
             colorDark: '#4c1d95',
@@ -462,73 +464,81 @@ function buildCardImage(studentName) {
         });
 
         setTimeout(() => {
-            const canvasEl = hiddenDiv.querySelector('canvas');
-            const imgEl = hiddenDiv.querySelector('img');
+            const canvasSource = tempHolder.querySelector('canvas');
+            const imgSource = tempHolder.querySelector('img');
 
-            const drawToCanvas = (qrSource) => {
-                const card = document.createElement('canvas');
-                card.width = 600;
-                card.height = 760;
-                const ctx = card.getContext('2d');
+            const drawCanvasToData = (sourceEl) => {
+                const cardCanvas = document.createElement('canvas');
+                cardCanvas.width = 600;
+                cardCanvas.height = 760;
+                const ctx = cardCanvas.getContext('2d');
 
+                // خلفية وإطار بنفس أسلوب بطاقات الموقع
                 ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, card.width, card.height);
+                ctx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
 
                 ctx.strokeStyle = '#ede4ff';
-                ctx.lineWidth = 8;
-                ctx.strokeRect(10, 10, card.width - 20, card.height - 20);
+                ctx.lineWidth = 6;
+                ctx.strokeRect(8, 8, cardCanvas.width - 16, cardCanvas.height - 16);
 
-                ctx.font = 'bold 24px "Tajawal", Arial, sans-serif';
+                // العنوان
+                ctx.font = 'bold 22px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#7c3aed';
                 ctx.textAlign = 'center';
-                ctx.fillText('ثانوية هوازن · Hawazen High School', 300, 70);
+                ctx.fillText('ثانوية هوازن · Hawazen High School', 300, 65);
 
+                // خلفية الباركود
                 ctx.fillStyle = '#fbf9ff';
-                ctx.fillRect(150, 110, 300, 300);
+                ctx.fillRect(160, 105, 280, 280);
                 ctx.strokeStyle = '#f3ecff';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(150, 110, 300, 300);
-
-                ctx.drawImage(qrSource, 170, 130, 260, 260);
-
-                ctx.font = 'bold 36px "Tajawal", Arial, sans-serif';
-                ctx.fillStyle = '#4c1d95';
-                ctx.fillText(studentName, 300, 480);
-
-                ctx.font = '22px "Tajawal", Arial, sans-serif';
-                ctx.fillStyle = '#8b7db8';
-                ctx.fillText('امسح للتحقق من الحالة', 300, 540);
-
-                ctx.strokeStyle = '#ede4ff';
                 ctx.lineWidth = 2;
+                ctx.strokeRect(160, 105, 280, 280);
+
+                // رسم رمز الاستجابة
+                ctx.drawImage(sourceEl, 170, 115, 260, 260);
+
+                // اسم الطالب
+                ctx.font = 'bold 34px "Tajawal", Arial, sans-serif';
+                ctx.fillStyle = '#4c1d95';
+                ctx.fillText(studentName, 300, 465);
+
+                // وصف التحقق
+                ctx.font = '20px "Tajawal", Arial, sans-serif';
+                ctx.fillStyle = '#8b7db8';
+                ctx.fillText('امسح للتحقق من الحالة', 300, 520);
+
+                // خط فاصل
+                ctx.strokeStyle = '#ede4ff';
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(100, 600);
-                ctx.lineTo(500, 600);
+                ctx.moveTo(100, 580);
+                ctx.lineTo(500, 580);
                 ctx.stroke();
 
-                ctx.font = '18px "Tajawal", Arial, sans-serif';
+                ctx.font = '16px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#a78bfa';
-                ctx.fillText('نظام إدارة الأجهزة الذكية', 300, 650);
+                ctx.fillText('نظام إدارة إحضار الأجهزة الذكية', 300, 630);
 
-                const dataUri = card.toDataURL('image/png');
-                hiddenDiv.remove();
-                resolve(dataUri);
+                const data = cardCanvas.toDataURL('image/png');
+                tempHolder.remove();
+                resolve(data);
             };
 
-            if (canvasEl) {
-                drawToCanvas(canvasEl);
-            } else if (imgEl && imgEl.src) {
+            if (canvasSource) {
+                drawCanvasToData(canvasSource);
+            } else if (imgSource && imgSource.src) {
                 const img = new Image();
-                img.onload = () => drawToCanvas(img);
-                img.src = imgEl.src;
+                img.onload = () => drawCanvasToData(img);
+                img.src = imgSource.src;
             } else {
-                hiddenDiv.remove();
+                tempHolder.remove();
                 resolve(null);
             }
         }, 120);
     });
 }
 
+// تحميل باركود الطالب المعروض حالياً
 async function downloadSingleQRPdf() {
     if (!selectedStudent) {
         showToast('يرجى اختيار طالب أولاً', 'error');
@@ -536,9 +546,9 @@ async function downloadSingleQRPdf() {
     }
 
     try {
-        showToast('جاري إنشاء ملف PDF...', 'success');
-        const cardImg = await buildCardImage(selectedStudent);
-        if (!cardImg) throw new Error('تعذر إنشاء صورة الباركود');
+        showToast(`جاري إنشاء PDF لباركود ${selectedStudent}...`, 'success');
+        const cardImg = await createSingleStudentCard(selectedStudent);
+        if (!cardImg) throw new Error('تعذر توليد الباركود');
 
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -552,10 +562,11 @@ async function downloadSingleQRPdf() {
         showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
     } catch (err) {
         console.error(err);
-        showToast('حدث خطأ أثناء تنزيل الـ PDF', 'error');
+        showToast('حدث خطأ أثناء تحميل الـ PDF', 'error');
     }
 }
 
+// تحميل كافة باركودات الطلاب المسجلين
 async function downloadAllStudentsQRPdf() {
     if (!allStudents || allStudents.length === 0) {
         showToast('لا يوجد طلاب مسجلين للتحميل', 'error');
@@ -563,7 +574,7 @@ async function downloadAllStudentsQRPdf() {
     }
 
     try {
-        showToast('جاري تجميع باركودات الطلاب في ملف PDF...', 'success');
+        showToast('جاري تجميع كافة الباركودات في ملف PDF...', 'success');
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -589,20 +600,21 @@ async function downloadAllStudentsQRPdf() {
             const x = colPositions[col];
             const y = rowPositions[row];
 
-            const cardImg = await buildCardImage(student.name);
+            const cardImg = await createSingleStudentCard(student.name);
             if (cardImg) {
                 pdf.addImage(cardImg, 'PNG', x, y, cardW, cardH);
             }
         }
 
         pdf.save('باركودات_جميع_الطلاب.pdf');
-        showToast('✅ تم تنزيل ملف PDF لجميع الطلاب', 'success');
+        showToast('✅ تم تحميل جميع الباركودات بنجاح', 'success');
     } catch (err) {
         console.error(err);
-        showToast('حدث خطأ أثناء إنشاء الملف', 'error');
+        showToast('حدث خطأ أثناء تجميع الملف', 'error');
     }
 }
 
+// ربط الأزرار
 function attachDownloadEvents() {
     const singleBtn = document.getElementById('btnDownloadSingle');
     const allBtn = document.getElementById('btnDownloadAll');
