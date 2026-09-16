@@ -267,7 +267,7 @@ async function loadAllData() {
     renderHistory(history);
 }
 
-// ===== عرض الطلاب (مع السويتش الاحترافي) =====
+// ===== عرض الطلاب (مع سويتش iOS) =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -291,17 +291,18 @@ function renderStudents(students, filter = '') {
             <div class="student-item" data-student="${s.name}">
                 <span class="student-name"><i class="fas fa-user-graduate"></i> ${s.name}</span>
 
-                <button class="toggle-btn ${status ? 'on' : 'off'}" 
-                        data-action="toggle" 
-                        data-student="${s.name}"
-                        data-status="${status}">
-                    <span class="toggle-track">
-                        <span class="toggle-thumb">
-                            <span class="toggle-icon">${status ? '✓' : '✕'}</span>
-                        </span>
+                <div class="status-cell">
+                    <span class="status-text ${status ? 'on' : 'off'}">
+                        ${status ? 'مسموح' : 'غير مسموح'}
                     </span>
-                    <span class="toggle-text">${status ? 'مسموح' : 'غير مسموح'}</span>
-                </button>
+                    <button class="ios-toggle ${status ? 'on' : ''}" 
+                            data-action="toggle" 
+                            data-student="${s.name}"
+                            data-status="${status}"
+                            aria-label="Toggle status">
+                        <span class="ios-toggle-thumb"></span>
+                    </button>
+                </div>
 
                 <div class="actions">
                     <button class="btn btn-qr btn-sm" data-action="viewqr" data-student="${s.name}">
@@ -330,15 +331,14 @@ function renderStudents(students, filter = '') {
         });
     });
 
-    // ربط زر السويتش
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
+    // ربط السويتش
+    document.querySelectorAll('.ios-toggle').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (isProcessing) return;
             const student = this.dataset.student;
             const currentStatus = this.dataset.status === 'true';
-            const newStatus = !currentStatus;
-            updateStudentStatus(student, newStatus);
+            updateStudentStatus(student, !currentStatus);
         });
     });
 
