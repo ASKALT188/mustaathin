@@ -11,16 +11,35 @@ let selectedStudent = '';
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
+let allHistory = [];
+let logsFilter = 'all';
 
 // DOM refs
 const studentListEl = document.getElementById('studentList');
-const historyContainer = document.getElementById('historyLogContainer');
+const logsListEl = document.getElementById('logsList');
 const qrContainer = document.getElementById('qrcode-container');
 const qrStudentName = document.getElementById('qrStudentName');
 const verifyName = document.getElementById('verifyName');
 const verifyStatusBadge = document.getElementById('verifyStatusBadge');
 const searchInput = document.getElementById('searchInput');
 const toastContainer = document.getElementById('toastContainer');
+
+// ===== التبويبات =====
+function switchTab(tabName) {
+    // الأزرار
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    // المحتوى
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === 'tab-' + tabName);
+    });
+
+    // تحميل السجلات عند فتح التبويب
+    if (tabName === 'logs') {
+        renderLogs();
+    }
+}
 
 // ===== التحقق من كلمة المرور =====
 function checkPassword() {
@@ -176,9 +195,10 @@ async function fetchHistory() {
             .from('history')
             .select('*')
             .order('id', { ascending: false })
-            .limit(50);
+            .limit(500);
 
         if (error) throw error;
+        allHistory = data;
         return data;
     } catch (error) {
         return [];
@@ -262,12 +282,12 @@ async function updateStudentStatus(name, status) {
 // ===== تحميل جميع البيانات =====
 async function loadAllData() {
     const students = await fetchStudents();
-    const history = await fetchHistory();
+    await fetchHistory();
     renderStudents(students, searchInput.value);
-    renderHistory(history);
+    renderLogs();
 }
 
-// ===== عرض الطلاب (مع سويتش iOS) =====
+// ===== عرض الطلاب =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -348,24 +368,100 @@ function renderStudents(students, filter = '') {
     });
 }
 
-// ===== عرض السجل =====
-function renderHistory(history) {
-    if (!history || history.length === 0) {
-        historyContainer.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات بعد</div>`;
+// ===== عرض السجلات =====
+function renderLogs() {
+    if (!allHistory || allHistory.length === 0) {
+        logsListEl.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات بعد</div>`;
+        return;
+    }
+
+    // فلترة
+    let filtered = allHistory;
+    if (logsFilter === 'permitted') {
+        filtered = allHistory.filter(h => h.status === 'Permitted');
+    } else if (logsFilter === 'not-permitted') {
+        filtered = allHistory.filter(h => h.status === 'Not Permitted');
+    }
+
+    if (filtered.length === 0) {
+        logsListEl.innerHTML = `<div class="empty-history"><i class="fas fa-filter"></i> لا توجد نتائج لهذا الفلتر</div>`;
         return;
     }
 
     let html = '';
-    history.slice(0, 10).forEach(entry => {
-        const icon = entry.status === 'Permitted' ? '🟢' : '🔴';
+    filtered.forEach(entry => {
+        const isPermitted = entry.status === 'Permitted';
+        const icon = isPermitted ? '🟢' : '🔴';
+        const statusText = isPermitted ? 'مسموح' : 'غير مسموح';
+        const statusClass = isPermitted ? 'permitted' : 'not-permitted';
+
         html += `
-            <div class="log-entry">
-                <span><strong>${entry.student_name}</strong> ${icon} ${entry.status === 'Permitted' ? 'مسموح' : 'غير مسموح'}</span>
-                <span class="log-time">${entry.timestamp} · <span class="teacher-tag">${entry.teacher}</span></span>
+            <div class="log-item">
+                <div class="log-item-right">
+                    <div class="log-icon ${statusClass}">
+                        <i class="fas ${isPermitted ? 'fa-check' : 'fa-times'}"></i>
+                    </div>
+                    <div class="log-info">
+                        <div class="log-student">
+                            <i class="fas fa-user-graduate"></i>
+                            ${entry.student_name}
+                        </div>
+                        <div class="log-teacher">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            ${entry.teacher}
+                        </div>
+                    </div>
+                </div>
+                <div class="log-item-left">
+                    <span class="status-badge ${statusClass}">${icon} ${statusText}</span>
+                    <span class="log-time-big">
+                        <i class="fas fa-clock"></i>
+                        ${entry.timestamp}
+                    </span>
+                </div>
             </div>
         `;
     });
-    historyContainer.innerHTML = html;
+    logsListEl.innerHTML = html;
+}
+
+// ===== فلترة السجلات =====
+function filterLogs(type) {
+    logsFilter = type;
+
+    // تحديث حالة الأزرار
+    document.getElementById('filterAll').classList.toggle('active', type === 'all');
+    document.getElementById('filterPermitted').classList.toggle('active', type === 'permitted');
+    document.getElementById('filterNotPermitted').classList.toggle('active', type === 'not-permitted');
+
+    renderLogs();
+}
+
+// ===== تحميل السجل كـ CSV =====
+function downloadLogs() {
+    if (!allHistory || allHistory.length === 0) {
+        showToast('لا توجد سجلات للتحميل', 'error');
+        return;
+    }
+
+    // BOM للعربي
+    let csv = '\uFEFF';
+    csv += 'الطالب,الحالة,التاريخ والوقت,المعلم\n';
+
+    allHistory.forEach(entry => {
+        const status = entry.status === 'Permitted' ? 'مسموح' : 'غير مسموح';
+        const student = entry.student_name.replace(/,/g, ' ');
+        const teacher = entry.teacher.replace(/,/g, ' ');
+        csv += `${student},${status},${entry.timestamp},${teacher}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `سجل_العمليات_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+
+    showToast('✅ تم تحميل السجل', 'success');
 }
 
 // ===== اختيار طالب =====
@@ -460,7 +556,7 @@ function downloadQr() {
     showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
 }
 
-// ===== تحميل كل الباركودات كملف ZIP =====
+// ===== تحميل كل الباركودات =====
 async function downloadAllQr() {
     if (allStudents.length === 0) {
         showToast('لا يوجد طلاب', 'error');
@@ -518,60 +614,4 @@ function subscribeToChanges() {
                     const deletedName = payload.old?.name;
                     if (deletedName) {
                         allStudents = allStudents.filter(s => s.name !== deletedName);
-                        renderStudents(allStudents, searchInput.value);
-                    }
-                    return;
-                }
-
-                const updatedStudent = payload.new;
-                if (!updatedStudent) return;
-                const index = allStudents.findIndex(s => s.name === updatedStudent.name);
-                if (index !== -1) {
-                    allStudents[index] = updatedStudent;
-                } else if (payload.eventType === 'INSERT') {
-                    allStudents.push(updatedStudent);
-                }
-                renderStudents(allStudents, searchInput.value);
-                if (selectedStudent === updatedStudent.name) {
-                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
-                }
-            }
-        )
-        .subscribe();
-
-    supabaseClient
-        .channel('history_changes')
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'history' },
-            async () => {
-                const history = await fetchHistory();
-                renderHistory(history);
-            }
-        )
-        .subscribe();
-}
-
-// ===== التهيئة =====
-async function init() {
-    console.log('🚀 ثانوية هوزان - جاري التحميل...');
-    await loadAllData();
-
-    if (allStudents.length > 0) {
-        selectStudent(allStudents[0].name);
-    } else {
-        qrContainer.innerHTML = '';
-        qrStudentName.textContent = 'اختر طالباً';
-        verifyName.textContent = 'اختر طالباً';
-        verifyStatusBadge.className = 'verify-status';
-        verifyStatusBadge.innerHTML = '—';
-    }
-
-    subscribeToChanges();
-    console.log('✅ جاهز. عدد الطلاب:', allStudents.length);
-}
-
-// ===== بدء التطبيق =====
-if (sessionStorage.getItem('mustaathin_auth') === 'true') {
-    document.getElementById('loginOverlay').style.display = 'none';
-    init();
-}
+                        renderStudents(allStudents, searchInput.value
