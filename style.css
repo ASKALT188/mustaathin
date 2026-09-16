@@ -56,6 +56,19 @@ body {
     flex-wrap: wrap;
 }
 
+.badge-school {
+    background: #f7f3ff;
+    border: 1.5px solid #ede4ff;
+    color: #6d28d9;
+    padding: 0.35rem 0.9rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
 /* ============================================
    ===== Dashboard Grid =====
    ============================================ */
@@ -257,6 +270,22 @@ body {
 }
 .btn-qr:hover {
     background: #d8c7ff;
+}
+
+/* زر تحميل الباركود */
+.btn-qr-download {
+    margin-top: 0.75rem;
+    background: #ede4ff;
+    color: #5b21b6;
+    border: 1.5px solid #d8c7ff;
+    padding: 0.45rem 1.2rem;
+    font-size: 0.78rem;
+    border-radius: 30px;
+}
+.btn-qr-download:hover {
+    background: #7c3aed;
+    color: #ffffff;
+    border-color: #7c3aed;
 }
 
 /* زر الحذف */
