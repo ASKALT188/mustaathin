@@ -19,6 +19,9 @@ body {
     width: 100%;
 }
 
+/* ============================================
+   ===== Header =====
+   ============================================ */
 .school-header {
     display: flex;
     align-items: center;
@@ -54,6 +57,9 @@ body {
     color: #5b21b6;
 }
 
+/* ============================================
+   ===== Dashboard Grid =====
+   ============================================ */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
@@ -96,6 +102,9 @@ body {
     color: #7c3aed;
 }
 
+/* ============================================
+   ===== Search Box =====
+   ============================================ */
 .search-box {
     display: flex;
     align-items: center;
@@ -129,6 +138,9 @@ body {
     font-size: 0.8rem;
 }
 
+/* ============================================
+   ===== Student List =====
+   ============================================ */
 .student-list {
     display: flex;
     flex-direction: column;
@@ -167,7 +179,9 @@ body {
     font-size: 0.85rem;
 }
 
-/* ===== الشارة القديمة (للاستخدام في التحقق المباشر) ===== */
+/* ============================================
+   ===== Status Badge (يستخدم في التحقق المباشر) =====
+   ============================================ */
 .status-badge {
     padding: 0.15rem 1.1rem;
     border-radius: 40px;
@@ -190,6 +204,9 @@ body {
     color: #b13e3e;
 }
 
+/* ============================================
+   ===== Action Buttons =====
+   ============================================ */
 .actions {
     display: flex;
     gap: 0.3rem;
@@ -251,76 +268,115 @@ body {
 }
 
 /* ============================================
-   ===== سويتش السماح / الإلغاء =====
+   ===== السويتش الاحترافي =====
    ============================================ */
-.status-switch {
+.toggle-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.7rem;
     cursor: pointer;
     user-select: none;
-    padding: 0.25rem 0.5rem;
-    border-radius: 40px;
-    transition: background 0.15s;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    transition: transform 0.15s;
 }
-.status-switch:hover {
-    background: #f7f3ff;
-}
-
-/* إخفاء checkbox الأصلي */
-.status-switch input[type="checkbox"] {
-    display: none;
+.toggle-btn:active {
+    transform: scale(0.96);
 }
 
 /* المسار (الخلفية) */
-.switch-track {
+.toggle-track {
     position: relative;
-    width: 52px;
-    height: 28px;
-    background: #fce8e8;
-    border: 2px solid #f5d0d0;
+    width: 62px;
+    height: 32px;
     border-radius: 40px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
     flex-shrink: 0;
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.12),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-/* الدائرة (المقبض) */
-.switch-thumb {
+/* حالة الإيقاف - رمادي */
+.toggle-btn.off .toggle-track {
+    background: linear-gradient(180deg, #e5e7eb 0%, #d1d5db 100%);
+}
+
+/* حالة التشغيل - بنفسجي متدرج */
+.toggle-btn.on .toggle-track {
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.15),
+        0 0 12px rgba(124, 58, 237, 0.35);
+}
+
+/* المقبض (الدائرة) */
+.toggle-thumb {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 20px;
-    height: 20px;
-    background: white;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    background: #ffffff;
     border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 2px 6px rgba(0, 0, 0, 0.2),
+        0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 2;
 }
 
-/* الحالة المفتوحة (مسموح) */
-.status-switch input[type="checkbox"]:checked + .switch-track {
-    background: #d3f0e5;
-    border-color: #b3dfcf;
+/* لما يفتح → يتحرك يمين */
+.toggle-btn.on .toggle-thumb {
+    left: calc(100% - 29px);
 }
-.status-switch input[type="checkbox"]:checked + .switch-track .switch-thumb {
-    right: calc(100% - 22px);
-    background: #006b4e;
+
+/* الأيقونة داخل المقبض */
+.toggle-icon {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    transition: all 0.3s;
+    color: #b13e3e;
+}
+.toggle-btn.on .toggle-icon {
+    color: #006b4e;
 }
 
 /* النص */
-.switch-label {
+.toggle-text {
     font-size: 0.75rem;
     font-weight: 700;
     white-space: nowrap;
-    transition: color 0.2s;
-    min-width: 95px;
+    min-width: 85px;
+    text-align: right;
+    transition: color 0.25s;
 }
-.switch-label.off {
-    color: #b13e3e;
+.toggle-btn.off .toggle-text {
+    color: #6b7280;
 }
-.switch-label.on {
-    color: #006b4e;
+.toggle-btn.on .toggle-text {
+    color: #5b21b6;
+}
+
+/* تأثير Hover */
+.toggle-btn:hover .toggle-track {
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.12),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 0 0 4px rgba(124, 58, 237, 0.08);
+}
+.toggle-btn.on:hover .toggle-track {
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.15),
+        0 0 18px rgba(124, 58, 237, 0.5),
+        0 0 0 4px rgba(124, 58, 237, 0.1);
 }
 
 /* ============================================
@@ -360,6 +416,9 @@ body {
     margin-top: 0.1rem;
 }
 
+/* ============================================
+   ===== Verification Panel =====
+   ============================================ */
 .verification-panel {
     margin-top: 1.6rem;
     background: #f7f3ff;
@@ -410,6 +469,9 @@ body {
     text-align: center;
 }
 
+/* ============================================
+   ===== History Log =====
+   ============================================ */
 .history-log {
     margin-top: 1.6rem;
     border-top: 2px solid #f3ecff;
@@ -459,6 +521,9 @@ body {
     text-align: center;
 }
 
+/* ============================================
+   ===== Toast =====
+   ============================================ */
 .toast-container {
     position: fixed;
     bottom: 2rem;
@@ -498,7 +563,7 @@ body {
 }
 
 /* ============================================
-   ===== Responsive (الجوال) =====
+   ===== Responsive (Mobile) =====
    ============================================ */
 @media (max-width: 600px) {
     .school-header {
@@ -536,22 +601,25 @@ body {
     }
 
     /* السويتش على الجوال */
-    .switch-track {
-        width: 44px;
-        height: 24px;
+    .toggle-track {
+        width: 52px;
+        height: 28px;
     }
-    .switch-thumb {
-        width: 16px;
-        height: 16px;
-        top: 2px;
-        right: 2px;
+    .toggle-thumb {
+        width: 22px;
+        height: 22px;
+        top: 3px;
+        left: 3px;
     }
-    .status-switch input[type="checkbox"]:checked + .switch-track .switch-thumb {
-        right: calc(100% - 18px);
+    .toggle-btn.on .toggle-thumb {
+        left: calc(100% - 25px);
     }
-    .switch-label {
+    .toggle-icon {
+        font-size: 10px;
+    }
+    .toggle-text {
         font-size: 0.65rem;
-        min-width: 80px;
+        min-width: 70px;
     }
 }
 
