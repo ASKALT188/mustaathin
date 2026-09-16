@@ -745,88 +745,96 @@ function updateSelectedCount() {
 }
 
 // ============================================
-// ===== توليد الباركود كصورة =====
+// ===== توليد بطاقة الباركود (باركود + اسم) =====
 // ============================================
-function generateQrDataUrl(studentName, size = 400) {
+function generateQrCardImage(studentName, qrPixelSize = 500) {
     return new Promise((resolve) => {
-        const tempDiv = document.createElement('div');
-        new QRCode(tempDiv, {
-            text: `${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}verify.html?student=${encodeURIComponent(studentName)}`,
-            width: size,
-            height: size,
-            colorDark: '#4c1d95',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
+        try {
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            document.body.appendChild(tempDiv);
 
-        setTimeout(() => {
-            const canvas = tempDiv.querySelector('canvas');
-            if (!canvas) {
-                resolve(null);
-                return;
-            }
-            resolve(canvas.toDataURL('image/png'));
-        }, 150);
+            new QRCode(tempDiv, {
+                text: `${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}verify.html?student=${encodeURIComponent(studentName)}`,
+                width: qrPixelSize,
+                height: qrPixelSize,
+                colorDark: '#4c1d95',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                try {
+                    const qrCanvas = tempDiv.querySelector('canvas');
+                    if (!qrCanvas) {
+                        if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+                        resolve(null);
+                        return;
+                    }
+
+                    const padding = Math.floor(qrPixelSize * 0.06);
+                    const nameHeight = Math.floor(qrPixelSize * 0.16);
+                    const finalWidth = qrPixelSize + (padding * 2);
+                    const finalHeight = qrPixelSize + (padding * 2) + nameHeight;
+
+                    const finalCanvas = document.createElement('canvas');
+                    finalCanvas.width = finalWidth;
+                    finalCanvas.height = finalHeight;
+
+                    const ctx = finalCanvas.getContext('2d');
+
+                    // خلفية بيضاء
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, finalWidth, finalHeight);
+
+                    // إطار بنفسجي فاتح
+                    ctx.strokeStyle = '#ede4ff';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(2, 2, finalWidth - 4, finalHeight - 4);
+
+                    // الباركود
+                    ctx.drawImage(qrCanvas, padding, padding, qrPixelSize, qrPixelSize);
+
+                    // خط فاصل
+                    ctx.strokeStyle = '#ede4ff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, qrPixelSize + padding + 4);
+                    ctx.lineTo(finalWidth - padding, qrPixelSize + padding + 4);
+                    ctx.stroke();
+
+                    // ✅ الاسم العربي (يُرسم صح على canvas)
+                    ctx.fillStyle = '#4c1d95';
+                    ctx.font = `bold ${Math.floor(qrPixelSize * 0.1)}px 'Tajawal', 'Inter', sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.direction = 'rtl';
+
+                    const nameY = qrPixelSize + padding + (nameHeight / 2) + 8;
+                    ctx.fillText(studentName, finalWidth / 2, nameY);
+
+                    const dataUrl = finalCanvas.toDataURL('image/png');
+                    if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+                    resolve(dataUrl);
+
+                } catch (err) {
+                    console.error('Canvas draw error:', err);
+                    if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+                    resolve(null);
+                }
+            }, 250);
+
+        } catch (err) {
+            console.error('QR generation error:', err);
+            resolve(null);
+        }
     });
 }
 
-function generateQrDataUrlWithName(studentName, size = 400) {
-    return new Promise((resolve) => {
-        const tempDiv = document.createElement('div');
-        new QRCode(tempDiv, {
-            text: `${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}verify.html?student=${encodeURIComponent(studentName)}`,
-            width: size,
-            height: size,
-            colorDark: '#4c1d95',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        setTimeout(() => {
-            const qrCanvas = tempDiv.querySelector('canvas');
-            if (!qrCanvas) {
-                resolve(null);
-                return;
-            }
-
-            const padding = Math.floor(size * 0.08);
-            const nameHeight = Math.floor(size * 0.18);
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = size + (padding * 2);
-            finalCanvas.height = size + (padding * 2) + nameHeight;
-
-            const ctx = finalCanvas.getContext('2d');
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-            ctx.strokeStyle = '#ede4ff';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(2, 2, finalCanvas.width - 4, finalCanvas.height - 4);
-
-            ctx.drawImage(qrCanvas, padding, padding, size, size);
-
-            ctx.strokeStyle = '#ede4ff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(padding, size + padding + 6);
-            ctx.lineTo(finalCanvas.width - padding, size + padding + 6);
-            ctx.stroke();
-
-            ctx.fillStyle = '#4c1d95';
-            ctx.font = `bold ${Math.floor(size * 0.1)}px 'Tajawal', 'Inter', sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.direction = 'rtl';
-            ctx.fillText(studentName, finalCanvas.width / 2, size + padding + (nameHeight / 2) + 10);
-
-            resolve(finalCanvas.toDataURL('image/png'));
-        }, 150);
-    });
-}
-
 // ============================================
-// ===== تحميل المحدد: PDF داخل ZIP (PDFMake) =====
+// ===== تحميل المحدد: PDF داخل ZIP =====
 // ============================================
 async function downloadSelectedQr() {
     if (selectedDownloadIds.size === 0) {
@@ -836,126 +844,87 @@ async function downloadSelectedQr() {
 
     const selected = allStudents.filter(s => selectedDownloadIds.has(s.id));
 
-    showToast(`جاري تجهيز الملف... (0/${selected.length})`, 'success');
+    showToast(`جاري التجهيز... (0/${selected.length})`, 'success');
 
     const zip = new JSZip();
+    const { jsPDF } = window.jspdf;
 
-    // ✅ توليد صور الباركودات
-    const qrImages = [];
-    for (let i = 0; i < selected.length; i++) {
-        const student = selected[i];
-        const dataUrl = await generateQrDataUrl(student.name, 400);
-        if (dataUrl) {
-            qrImages.push({
-                name: student.name,
-                dataUrl: dataUrl
-            });
-        }
-        showToast(`جاري التجهيز... (${i + 1}/${selected.length})`, 'success');
-    }
-
-    // ✅ إعدادات الصفحة: 3 أعمدة × 4 صفوف
+    // إعدادات A4
+    const pageWidth = 210;
+    const pageHeight = 297;
     const cols = 3;
     const rows = 4;
     const qrPerPage = cols * rows;
 
-    const pages = [];
+    const marginX = 10;
+    const marginY = 15;
+    const cellWidth = (pageWidth - (marginX * 2)) / cols;
+    const cellHeight = (pageHeight - (marginY * 2)) / rows;
 
-    for (let i = 0; i < qrImages.length; i += qrPerPage) {
-        const pageItems = qrImages.slice(i, i + qrPerPage);
-        const tableBody = [];
+    // قياسات البطاقة
+    const cardWidth = cellWidth * 0.9;
+    const cardHeight = cardWidth; // مربع (الباركود + الاسم داخل الصورة)
 
-        for (let r = 0; r < rows; r++) {
-            const tableRow = [];
-            for (let c = 0; c < cols; c++) {
-                const idx = r * cols + c;
-                if (idx < pageItems.length) {
-                    const item = pageItems[idx];
-                    tableRow.push({
-                        stack: [
-                            {
-                                image: item.dataUrl,
-                                width: 130,
-                                alignment: 'center'
-                            },
-                            {
-                                text: item.name,
-                                fontSize: 13,
-                                bold: true,
-                                color: '#4c1d95',
-                                alignment: 'center',
-                                margin: [0, 6, 0, 0]
-                            }
-                        ],
-                        alignment: 'center',
-                        margin: [5, 10, 5, 10]
-                    });
-                } else {
-                    tableRow.push({ text: '' });
-                }
-            }
-            tableBody.push(tableRow);
-        }
-
-        pages.push({
-            table: {
-                widths: ['*', '*', '*'],
-                body: tableBody
-            },
-            layout: 'noBorders'
-        });
-    }
-
-    // ✅ دمج الصفحات
-    const content = [];
-    pages.forEach((page, idx) => {
-        content.push(page);
-        if (idx < pages.length - 1) {
-            content.push({ text: '', pageBreak: 'after' });
-        }
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
     });
 
-    // ✅ إعدادات PDF
-    const docDefinition = {
-        pageSize: 'A4',
-        pageMargins: [15, 25, 15, 25],
-        content: content,
-        defaultStyle: {
-            font: 'Tajawal'
-        }
-    };
+    let itemIndexOnPage = 0;
 
-    // ✅ توليد PDF
-    let pdfBlob;
-    try {
-        pdfBlob = await new Promise((resolve, reject) => {
-            try {
-                pdfMake.createPdf(docDefinition).getBlob((blob) => {
-                    resolve(blob);
-                });
-            } catch (e) {
-                reject(e);
+    for (let i = 0; i < selected.length; i++) {
+        const student = selected[i];
+
+        try {
+            // صفحة جديدة كل 12 بطاقة
+            if (itemIndexOnPage === 0 && i > 0) {
+                pdf.addPage();
             }
-        });
-    } catch (e) {
-        console.error('PDFMake error:', e);
-        showToast('خطأ في توليد PDF', 'error');
-        return;
+
+            const col = itemIndexOnPage % cols;
+            const row = Math.floor(itemIndexOnPage / cols);
+
+            const cellX = marginX + (col * cellWidth);
+            const cellY = marginY + (row * cellHeight);
+
+            // ✅ توليد البطاقة كاملة (باركود + اسم عربي)
+            const cardDataUrl = await generateQrCardImage(student.name, 500);
+
+            if (cardDataUrl) {
+                const cardX = cellX + (cellWidth - cardWidth) / 2;
+                const cardY = cellY + (cellHeight - cardHeight) / 2;
+
+                pdf.addImage(cardDataUrl, 'PNG', cardX, cardY, cardWidth, cardHeight);
+            }
+
+            itemIndexOnPage++;
+            if (itemIndexOnPage >= qrPerPage) {
+                itemIndexOnPage = 0;
+            }
+
+            showToast(`جاري التجهيز... (${i + 1}/${selected.length})`, 'success');
+
+        } catch (err) {
+            console.error(`Error for ${student.name}:`, err);
+        }
     }
 
+    // حفظ PDF في ZIP
+    const pdfBlob = pdf.output('blob');
     zip.file('باركودات_الطلاب.pdf', pdfBlob);
 
-    // ✅ إضافة مجلد الصور المنفصلة
+    // إضافة مجلد الصور المنفصلة
     const folder = zip.folder('صور_منفصلة');
     for (const student of selected) {
-        const imgDataUrl = await generateQrDataUrlWithName(student.name, 400);
+        const imgDataUrl = await generateQrCardImage(student.name, 600);
         if (imgDataUrl) {
             const base64 = imgDataUrl.split(',')[1];
             folder.file(`QR_${student.name}.png`, base64, { base64: true });
         }
     }
 
-    // ✅ توليد ZIP
+    // توليد ZIP
     const zipContent = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(zipContent);
