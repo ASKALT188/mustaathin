@@ -167,6 +167,7 @@ body {
     font-size: 0.85rem;
 }
 
+/* ===== الشارة القديمة (للاستخدام في التحقق المباشر) ===== */
 .status-badge {
     padding: 0.15rem 1.1rem;
     border-radius: 40px;
@@ -218,24 +219,8 @@ body {
     cursor: not-allowed;
     transform: scale(0.97);
 }
-.btn-permit {
-    background: #d3f0e5;
-    color: #006b4e;
-    border-color: #b3dfcf;
-}
-.btn-permit:hover:not(:disabled) {
-    background: #b8e3d2;
-    transform: scale(1.02);
-}
-.btn-cancel {
-    background: #fce8e8;
-    color: #b13e3e;
-    border-color: #f5d0d0;
-}
-.btn-cancel:hover:not(:disabled) {
-    background: #f5d6d6;
-    transform: scale(1.02);
-}
+
+/* زر الباركود */
 .btn-qr {
     background: #ede4ff;
     color: #5b21b6;
@@ -246,11 +231,101 @@ body {
 .btn-qr:hover {
     background: #d8c7ff;
 }
+
+/* زر الحذف */
+.btn-delete {
+    background: #fce8e8;
+    color: #b13e3e;
+    border-color: #f5d0d0;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.7rem;
+}
+.btn-delete:hover {
+    background: #f5d6d6;
+    transform: scale(1.05);
+}
+
 .btn-sm {
     padding: 0.2rem 0.7rem;
     font-size: 0.65rem;
 }
 
+/* ============================================
+   ===== سويتش السماح / الإلغاء =====
+   ============================================ */
+.status-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 40px;
+    transition: background 0.15s;
+}
+.status-switch:hover {
+    background: #f7f3ff;
+}
+
+/* إخفاء checkbox الأصلي */
+.status-switch input[type="checkbox"] {
+    display: none;
+}
+
+/* المسار (الخلفية) */
+.switch-track {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background: #fce8e8;
+    border: 2px solid #f5d0d0;
+    border-radius: 40px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* الدائرة (المقبض) */
+.switch-thumb {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الحالة المفتوحة (مسموح) */
+.status-switch input[type="checkbox"]:checked + .switch-track {
+    background: #d3f0e5;
+    border-color: #b3dfcf;
+}
+.status-switch input[type="checkbox"]:checked + .switch-track .switch-thumb {
+    right: calc(100% - 22px);
+    background: #006b4e;
+}
+
+/* النص */
+.switch-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: color 0.2s;
+    min-width: 95px;
+}
+.switch-label.off {
+    color: #b13e3e;
+}
+.switch-label.on {
+    color: #006b4e;
+}
+
+/* ============================================
+   ===== QR Preview =====
+   ============================================ */
 .qr-preview {
     display: flex;
     flex-direction: column;
@@ -422,6 +497,9 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============================================
+   ===== Responsive (الجوال) =====
+   ============================================ */
 @media (max-width: 600px) {
     .school-header {
         padding: 0.6rem 1rem;
@@ -456,7 +534,27 @@ body {
         font-size: 0.75rem;
         padding: 0.5rem 1rem;
     }
+
+    /* السويتش على الجوال */
+    .switch-track {
+        width: 44px;
+        height: 24px;
+    }
+    .switch-thumb {
+        width: 16px;
+        height: 16px;
+        top: 2px;
+        right: 2px;
+    }
+    .status-switch input[type="checkbox"]:checked + .switch-track .switch-thumb {
+        right: calc(100% - 18px);
+    }
+    .switch-label {
+        font-size: 0.65rem;
+        min-width: 80px;
+    }
 }
+
 @media (max-width: 400px) {
     .student-item .student-name { font-size: 0.85rem; }
     .status-badge {
