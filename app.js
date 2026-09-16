@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== كلمة المرور =====
-const DASHBOARD_PASSWORD = 'nigga1234';
+const DASHBOARD_PASSWORD = 'HA20ZN30';
 
 // ===== المتغيرات =====
 let openedStudent = '';
