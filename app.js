@@ -1,5 +1,5 @@
 // ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.3';
+const APP_VERSION = 'v1.0.4';
 
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
@@ -14,6 +14,7 @@ let selectedStudent = '';
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
+let liveTimerInterval = null;
 
 // DOM refs
 const studentListEl = document.getElementById('studentList');
@@ -134,6 +135,7 @@ async function deleteStudent(name) {
             verifyName.textContent = 'اختر طالباً';
             verifyStatusBadge.className = 'verify-status';
             verifyStatusBadge.innerHTML = '—';
+            if (liveTimerInterval) clearInterval(liveTimerInterval);
         }
 
         await loadAllData();
@@ -204,24 +206,18 @@ async function fetchStudentStatus(name) {
     }
 }
 
-// ===== تحديث حالة طالب =====
+// ===== تحديث حالة طالب (حفظ UTC قياسي بدون إزاحة مزدوجة) =====
 async function updateStudentStatus(name, status) {
     if (isProcessing) return;
     isProcessing = true;
 
     try {
         const now = new Date();
-        const localTime = new Date(now.getTime() + (3 * 3600000));
-
-        const timestamp = localTime.toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
-        });
-
         const updateData = { permitted: status };
+
         if (status === true) {
-            updateData.last_permitted_at = localTime.toISOString();
+            // حفظ التوقيت العالمي القياسي ISO
+            updateData.last_permitted_at = now.toISOString();
         }
 
         const { error: updateError } = await supabaseClient
@@ -231,6 +227,14 @@ async function updateStudentStatus(name, status) {
 
         if (updateError) throw updateError;
 
+        // تنسيق وقت السجل بتوقيت المملكة العربية السعودية
+        const displayTimestamp = now.toLocaleString('ar-SA', {
+            timeZone: 'Asia/Riyadh',
+            month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: true
+        });
+
         const statusText = status ? 'Permitted' : 'Not Permitted';
 
         const { error: historyError } = await supabaseClient
@@ -238,7 +242,7 @@ async function updateStudentStatus(name, status) {
             .insert([{
                 student_name: name,
                 status: statusText,
-                timestamp: timestamp,
+                timestamp: displayTimestamp,
                 teacher: currentTeacher
             }]);
 
@@ -383,35 +387,47 @@ function selectStudent(student) {
     renderStudents(allStudents, searchInput.value);
 }
 
-// ===== حساب المدة =====
+// ===== حساب المدة بالثواني والدقائق والساعات والأيام تصاعدياً وبدقة =====
 function getTimeSince(lastPermittedAt) {
     if (!lastPermittedAt) return null;
 
-    const now = new Date();
-    const localNow = new Date(now.getTime() + (3 * 3600000));
-    const then = new Date(lastPermittedAt);
-    const localThen = new Date(then.getTime() + (3 * 3600000));
+    const thenTime = new Date(lastPermittedAt).getTime();
+    if (isNaN(thenTime)) return null;
 
-    const diffMs = localNow - localThen;
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHours = Math.floor(diffMin / 60);
-    const diffDays = Math.floor(diffHours / 24);
+    const nowTime = Date.now();
+    let diffMs = nowTime - thenTime;
 
-    if (diffDays > 0) return `${diffDays} يوم ${diffHours % 24} ساعة`;
-    if (diffHours > 0) return `${diffHours} ساعة ${diffMin % 60} دقيقة`;
-    if (diffMin > 0) return `${diffMin} دقيقة ${diffSec % 60} ثانية`;
-    return `${diffSec} ثانية`;
+    // تصحيح أي قيم قديمة كانت محفوظة بزيادة 3 ساعات
+    if (diffMs < 0) {
+        if (diffMs > -10800000) {
+            diffMs = Math.abs(diffMs + 10800000);
+        } else {
+            diffMs = 0;
+        }
+    }
+
+    const totalSec = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days} يوم`);
+    if (hours > 0) parts.push(`${hours} ساعة`);
+    if (minutes > 0) parts.push(`${minutes} دقيقة`);
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} ثانية`);
+
+    return parts.join(' و ');
 }
 
 // ===== رابط صفحة التحقق الدقيق الموحد =====
 function getStudentVerifyUrl(studentName) {
-    // استخدام الرابط الحالي للموقع بحيث يعمل على أي استضافة (Vercel / GitHub Pages / Localhost)
     const base = window.location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
     return `${base}verify.html?student=${encodeURIComponent(studentName)}`;
 }
 
-// ===== تحديث QR في الواجهة =====
+// ===== تحديث QR والتحقق مع عداد حي يتجدد كل ثانية =====
 function updateQrAndVerification(student, status, lastPermittedAt) {
     qrStudentName.textContent = student;
     verifyName.textContent = student;
@@ -428,10 +444,16 @@ function updateQrAndVerification(student, status, lastPermittedAt) {
         correctLevel: QRCode.CorrectLevel.H
     });
 
+    if (liveTimerInterval) clearInterval(liveTimerInterval);
+
     if (status) {
         verifyStatusBadge.className = 'verify-status permitted';
-        const timeSince = getTimeSince(lastPermittedAt);
-        verifyStatusBadge.innerHTML = `🟢 مسموح · ${timeSince || 'الآن'}`;
+        const renderBadgeTime = () => {
+            const timeSince = getTimeSince(lastPermittedAt);
+            verifyStatusBadge.innerHTML = `🟢 مسموح · ${timeSince || 'الآن'}`;
+        };
+        renderBadgeTime();
+        liveTimerInterval = setInterval(renderBadgeTime, 1000);
     } else {
         verifyStatusBadge.className = 'verify-status not-permitted';
         verifyStatusBadge.innerHTML = '🔴 غير مسموح';
@@ -688,6 +710,7 @@ async function init() {
         verifyName.textContent = 'اختر طالباً';
         verifyStatusBadge.className = 'verify-status';
         verifyStatusBadge.innerHTML = '—';
+        if (liveTimerInterval) clearInterval(liveTimerInterval);
     }
 
     subscribeToChanges();
