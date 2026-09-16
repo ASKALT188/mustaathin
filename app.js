@@ -8,7 +8,7 @@ const DASHBOARD_PASSWORD = 'nigga1234';
 
 // ===== المتغيرات =====
 let selectedStudent = '';
-let openedStudent = ''; // الطالب اللي فتحنا خياراته
+let openedStudent = '';
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
@@ -160,6 +160,10 @@ function openStudentOptions(name) {
 
     document.getElementById('optionsStudentName').textContent = name;
 
+    // إظهار الواجهة الرئيسية وإخفاء QR
+    document.getElementById('optionsMainView').style.display = 'block';
+    document.getElementById('optionsQrView').style.display = 'none';
+
     // تحديث الأزرار حسب الحالة الحالية
     const permitBtn = document.getElementById('permitOptionBtn');
     const cancelBtn = document.getElementById('cancelOptionBtn');
@@ -177,6 +181,9 @@ function openStudentOptions(name) {
 
 function closeStudentOptions() {
     document.getElementById('studentOptionsModal').classList.remove('active');
+    document.getElementById('optionsMainView').style.display = 'block';
+    document.getElementById('optionsQrView').style.display = 'none';
+    document.getElementById('modalQrContainer').innerHTML = '';
     openedStudent = '';
 }
 
@@ -188,12 +195,80 @@ async function setStudentStatus(status) {
     await updateStudentStatus(name, status);
 }
 
-// ===== عرض الباركود من النافذة =====
-function showQrFromModal() {
+// ===== عرض الباركود داخل النافذة =====
+function showQrInsideModal() {
     if (!openedStudent) return;
-    const name = openedStudent;
-    closeStudentOptions();
-    selectStudent(name);
+
+    const student = allStudents.find(s => s.name === openedStudent);
+    if (!student) return;
+
+    // إخفاء الواجهة الرئيسية
+    document.getElementById('optionsMainView').style.display = 'none';
+
+    // إظهار واجهة الباركود
+    document.getElementById('optionsQrView').style.display = 'block';
+
+    // توليد الباركود
+    const container = document.getElementById('modalQrContainer');
+    container.innerHTML = '';
+
+    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+    const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(openedStudent)}`;
+
+    new QRCode(container, {
+        text: qrData,
+        width: 200,
+        height: 200,
+        colorDark: '#4c1d95',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // عرض الاسم
+    document.getElementById('modalQrName').textContent = openedStudent;
+
+    // عرض الحالة
+    const statusEl = document.getElementById('modalQrStatus');
+    if (student.permitted) {
+        statusEl.className = 'modal-qr-status permitted';
+        statusEl.innerHTML = `🟢 مسموح`;
+    } else {
+        statusEl.className = 'modal-qr-status not-permitted';
+        statusEl.innerHTML = `🔴 غير مسموح`;
+    }
+}
+
+// ===== رجوع للخيارات =====
+function backToOptions() {
+    document.getElementById('optionsQrView').style.display = 'none';
+    document.getElementById('optionsMainView').style.display = 'block';
+    document.getElementById('modalQrContainer').innerHTML = '';
+}
+
+// ===== تحميل الباركود من النافذة =====
+function downloadQrFromModal() {
+    if (!openedStudent) return;
+
+    const container = document.getElementById('modalQrContainer');
+    const canvas = container.querySelector('canvas');
+    const img = container.querySelector('img');
+
+    if (!canvas && !img) {
+        showToast('لا يوجد باركود للتحميل', 'error');
+        return;
+    }
+
+    const link = document.createElement('a');
+    link.download = `QR_${openedStudent}.png`;
+
+    if (canvas) {
+        link.href = canvas.toDataURL('image/png');
+    } else {
+        link.href = img.src;
+    }
+
+    link.click();
+    showToast(`✅ تم تحميل باركود ${openedStudent}`, 'success');
 }
 
 // ===== حذف الطالب من النافذة =====
@@ -211,6 +286,8 @@ function openEditNameModal() {
 
     document.getElementById('editStudentName').value = name;
     document.getElementById('studentOptionsModal').classList.remove('active');
+    document.getElementById('optionsMainView').style.display = 'block';
+    document.getElementById('optionsQrView').style.display = 'none';
     document.getElementById('editNameModal').classList.add('active');
 
     setTimeout(() => {
@@ -251,7 +328,6 @@ async function saveEditName() {
     }
 
     try {
-        // تحديث في students
         const { error: updateError } = await supabaseClient
             .from('students')
             .update({ name: newName })
@@ -259,13 +335,11 @@ async function saveEditName() {
 
         if (updateError) throw updateError;
 
-        // تحديث في history
         await supabaseClient
             .from('history')
             .update({ student_name: newName })
             .eq('student_name', oldName);
 
-        // إذا كان الطالب المحدد هو نفسه، حدّث المتغير
         if (selectedStudent === oldName) {
             selectedStudent = newName;
             clearQrDisplay();
@@ -440,7 +514,7 @@ async function loadAllData() {
     renderDownloadList();
 }
 
-// ===== عرض الطلاب (الاسم فقط - بدون أزرار) =====
+// ===== عرض الطلاب =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -540,7 +614,6 @@ function getTimeSince(lastPermittedAt) {
 function generateQrWithName(container, studentName, size = 200) {
     container.innerHTML = '';
 
-    // 1. إنشاء الباركود
     const qrDiv = document.createElement('div');
     container.appendChild(qrDiv);
 
@@ -556,12 +629,10 @@ function generateQrWithName(container, studentName, size = 200) {
         correctLevel: QRCode.CorrectLevel.H
     });
 
-    // 2. انتظر رسم الـ QR ثم دمج مع الاسم
     setTimeout(() => {
         const canvas = qrDiv.querySelector('canvas');
         if (!canvas) return;
 
-        // إنشاء canvas جديد بحجم أكبر
         const padding = Math.floor(size * 0.08);
         const nameHeight = Math.floor(size * 0.18);
         const finalCanvas = document.createElement('canvas');
@@ -570,19 +641,15 @@ function generateQrWithName(container, studentName, size = 200) {
 
         const ctx = finalCanvas.getContext('2d');
 
-        // خلفية بيضاء
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
 
-        // إطار بنفسجي خفيف
         ctx.strokeStyle = '#ede4ff';
         ctx.lineWidth = 4;
         ctx.strokeRect(2, 2, finalCanvas.width - 4, finalCanvas.height - 4);
 
-        // رسم الباركود
         ctx.drawImage(canvas, padding, padding, size, size);
 
-        // رسم خط فاصل
         ctx.strokeStyle = '#ede4ff';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -590,14 +657,12 @@ function generateQrWithName(container, studentName, size = 200) {
         ctx.lineTo(finalCanvas.width - padding, size + padding + 6);
         ctx.stroke();
 
-        // رسم الاسم
         ctx.fillStyle = '#4c1d95';
         ctx.font = `bold ${Math.floor(size * 0.09)}px 'Tajawal', 'Inter', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(studentName, finalCanvas.width / 2, size + padding + (nameHeight / 2) + 10);
 
-        // استبدال الباركود الأصلي بالجديد
         container.innerHTML = '';
         container.appendChild(finalCanvas);
 
@@ -610,7 +675,6 @@ function updateQrAndVerification(student, status, lastPermittedAt) {
     verifyName.textContent = student;
     qrSub.textContent = 'امسح الباركود للتحقق';
 
-    // توليد QR مع الاسم تحته
     generateQrWithName(qrContainer, student, 140);
 
     if (status) {
@@ -786,7 +850,6 @@ function generateQrCanvas(studentName, size = 400) {
                 return;
             }
 
-            // إنشاء canvas جديد مع الاسم
             const padding = Math.floor(size * 0.08);
             const nameHeight = Math.floor(size * 0.18);
             const finalCanvas = document.createElement('canvas');
@@ -795,19 +858,15 @@ function generateQrCanvas(studentName, size = 400) {
 
             const ctx = finalCanvas.getContext('2d');
 
-            // خلفية
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
 
-            // إطار
             ctx.strokeStyle = '#ede4ff';
             ctx.lineWidth = 4;
             ctx.strokeRect(2, 2, finalCanvas.width - 4, finalCanvas.height - 4);
 
-            // الباركود
             ctx.drawImage(qrCanvas, padding, padding, size, size);
 
-            // خط فاصل
             ctx.strokeStyle = '#ede4ff';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -815,7 +874,6 @@ function generateQrCanvas(studentName, size = 400) {
             ctx.lineTo(finalCanvas.width - padding, size + padding + 6);
             ctx.stroke();
 
-            // الاسم
             ctx.fillStyle = '#4c1d95';
             ctx.font = `bold ${Math.floor(size * 0.09)}px 'Tajawal', 'Inter', sans-serif`;
             ctx.textAlign = 'center';
