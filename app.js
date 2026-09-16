@@ -31,12 +31,10 @@ const downloadQrBtn = document.getElementById('downloadQrBtn');
 // ===== التنقل بين الأقسام =====
 // ============================================
 function switchSection(section) {
-    // الأزرار
     document.getElementById('navStudents').classList.toggle('active', section === 'students');
     document.getElementById('navLogs').classList.toggle('active', section === 'logs');
     document.getElementById('navDownload').classList.toggle('active', section === 'download');
 
-    // المحتوى
     document.getElementById('pageStudents').classList.toggle('active', section === 'students');
     document.getElementById('pageLogs').classList.toggle('active', section === 'logs');
     document.getElementById('pageDownload').classList.toggle('active', section === 'download');
@@ -44,25 +42,34 @@ function switchSection(section) {
     if (section === 'logs') renderLogs();
     if (section === 'download') renderDownloadList();
 
-    // احفظ القسم الحالي
     sessionStorage.setItem('currentSection', section);
 
-    // اغلق القائمة على الجوال
+    // إغلاق القائمة على الجوال
     closeSidebarOnMobile();
 }
 
-// ===== فتح/إغلاق القائمة على الجوال =====
+// ===== فتح/إغلاق القائمة (للجوال) =====
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
     document.getElementById('sidebarBackdrop').classList.toggle('open');
 }
 
 function closeSidebarOnMobile() {
+    // فقط على الجوال (أقل من 900px)
     if (window.innerWidth <= 900) {
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarBackdrop').classList.remove('open');
     }
 }
+
+// ===== إغلاق القائمة عند تغيير حجم النافذة =====
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) {
+        // إذا صار كمبيوتر، اغلق أي حالة فتح
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarBackdrop').classList.remove('open');
+    }
+});
 
 // ===== كلمة المرور =====
 function checkPassword() {
@@ -327,12 +334,13 @@ function renderStudents(students, filter = '') {
         const status = s.permitted === true;
         const num = index + 1;
         const isSelected = selectedStudent === s.name;
+        const safeName = s.name.replace(/'/g, "\\'");
 
         html += `
-            <div class="student-item ${isSelected ? 'selected' : ''}" data-student="${s.name}">
+            <div class="student-item ${isSelected ? 'selected' : ''}">
                 <span class="student-number">${num}</span>
 
-                <button class="student-name-btn" onclick="selectStudent('${s.name.replace(/'/g, "\\'")}')">
+                <button class="student-name-btn" onclick="selectStudent('${safeName}')">
                     <i class="fas fa-user-graduate"></i>
                     <span>${s.name}</span>
                 </button>
@@ -342,14 +350,13 @@ function renderStudents(students, filter = '') {
                         ${status ? 'مسموح' : 'غير مسموح'}
                     </span>
                     <button class="ios-toggle ${status ? 'on' : ''}" 
-                            data-status="${status}"
-                            onclick="event.stopPropagation(); toggleStatus('${s.name.replace(/'/g, "\\'")}', ${status})">
+                            onclick="event.stopPropagation(); toggleStatus('${safeName}', ${status})">
                         <span class="ios-toggle-thumb"></span>
                     </button>
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-delete btn-sm" onclick="event.stopPropagation(); deleteStudent('${s.name.replace(/'/g, "\\'")}')">
+                    <button class="btn btn-delete btn-sm" onclick="event.stopPropagation(); deleteStudent('${safeName}')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -697,7 +704,6 @@ async function init() {
     await loadAllData();
     clearQrDisplay();
 
-    // استعد القسم السابق
     const savedSection = sessionStorage.getItem('currentSection') || 'students';
     switchSection(savedSection);
 
