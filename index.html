@@ -118,8 +118,8 @@
         <header class="school-header">
             <h1><i class="fas fa-graduation-cap"></i>لوحة التحكم</h1>
             <div class="header-actions">
-                <button class="btn add-btn" onclick="downloadAllQRPdf()" title="تحميل كافة الباركودات كملف PDF">
-                    <i class="fas fa-file-pdf"></i> <span class="btn-text">تحميل باركودات الطلاب (PDF)</span>
+                <button class="btn add-btn" id="btnDownloadAll">
+                    <i class="fas fa-file-pdf"></i> <span class="btn-text">تحميل كافة الباركودات (PDF)</span>
                 </button>
                 <button class="btn add-btn" onclick="openAddModal()">
                     <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
@@ -162,8 +162,8 @@
                     <div id="qrcode-container"></div>
                     <div class="qr-label" id="qrStudentName">اختر طالباً</div>
                     <div class="qr-sub">امسح للتحقق من الحالة</div>
-                    <button class="btn btn-qr-download" id="btnDownloadSingleQR" onclick="downloadCurrentStudentQRPdf()">
-                        <i class="fas fa-download"></i> تحميل الباركود (PDF)
+                    <button class="btn btn-qr-download" id="btnDownloadSingle">
+                        <i class="fas fa-file-pdf"></i> تحميل باركود الطالب (PDF)
                     </button>
                 </div>
 
@@ -183,7 +183,6 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- ✅ المكتبة الرسمية -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
