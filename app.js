@@ -1,5 +1,5 @@
 // ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.2';
+const APP_VERSION = 'v1.0.3';
 
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
@@ -404,10 +404,11 @@ function getTimeSince(lastPermittedAt) {
     return `${diffSec} ثانية`;
 }
 
-// ===== إنشاء رابط التحقق للطالب بدقة =====
+// ===== رابط صفحة التحقق الدقيق الموحد =====
 function getStudentVerifyUrl(studentName) {
-    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-    return `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
+    // استخدام الرابط الحالي للموقع بحيث يعمل على أي استضافة (Vercel / GitHub Pages / Localhost)
+    const base = window.location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
+    return `${base}verify.html?student=${encodeURIComponent(studentName)}`;
 }
 
 // ===== تحديث QR في الواجهة =====
@@ -442,9 +443,9 @@ window.filterStudents = function() {
     renderStudents(allStudents, searchInput.value);
 };
 
-// ==========================================================
-// ===== توليد بطاقة الطالب وPDF بدقة مطابقة للأصل 100% =====
-// ==========================================================
+// ============================================
+// ===== وظائف بناء وتوليد ملفات الـ PDF =====
+// ============================================
 
 function createSingleStudentCard(studentName) {
     return new Promise((resolve) => {
@@ -453,7 +454,6 @@ function createSingleStudentCard(studentName) {
         tempHolder.style.cssText = 'position:fixed; left:-9999px; top:-9999px;';
         document.body.appendChild(tempHolder);
 
-        // إنشاء الـ QR بنفس محرك ومكتبة الموقع
         new QRCode(tempHolder, {
             text: qrUrl,
             width: 260,
@@ -473,7 +473,6 @@ function createSingleStudentCard(studentName) {
                 cardCanvas.height = 760;
                 const ctx = cardCanvas.getContext('2d');
 
-                // خلفية وإطار بنفس أسلوب بطاقات الموقع
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
 
@@ -481,33 +480,27 @@ function createSingleStudentCard(studentName) {
                 ctx.lineWidth = 6;
                 ctx.strokeRect(8, 8, cardCanvas.width - 16, cardCanvas.height - 16);
 
-                // العنوان
                 ctx.font = 'bold 22px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#7c3aed';
                 ctx.textAlign = 'center';
                 ctx.fillText('ثانوية هوازن · Hawazen High School', 300, 65);
 
-                // خلفية الباركود
                 ctx.fillStyle = '#fbf9ff';
                 ctx.fillRect(160, 105, 280, 280);
                 ctx.strokeStyle = '#f3ecff';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(160, 105, 280, 280);
 
-                // رسم رمز الاستجابة
                 ctx.drawImage(sourceEl, 170, 115, 260, 260);
 
-                // اسم الطالب
                 ctx.font = 'bold 34px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#4c1d95';
                 ctx.fillText(studentName, 300, 465);
 
-                // وصف التحقق
                 ctx.font = '20px "Tajawal", Arial, sans-serif';
                 ctx.fillStyle = '#8b7db8';
                 ctx.fillText('امسح للتحقق من الحالة', 300, 520);
 
-                // خط فاصل
                 ctx.strokeStyle = '#ede4ff';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
