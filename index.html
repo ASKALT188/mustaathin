@@ -1,773 +1,243 @@
-// ===== رقم الإصدار الحالي =====
-const APP_VERSION = 'v1.0.9';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>لوحة تحكم بأحضار الجهاز الخاصة في ثانوية هوازن</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        .login-overlay {
+            position: fixed; inset: 0; background: #ffffff;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; padding: 1.5rem;
+        }
+        .login-box {
+            background: white; border-radius: 32px; padding: 2.5rem 2rem;
+            max-width: 420px; width: 100%; text-align: center;
+            border: 2px solid #ede4ff;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.12);
+            animation: popIn 0.4s ease;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .login-box .lock-icon { font-size: 3rem; color: #7c3aed; margin-bottom: 1rem; }
+        .login-box h2 { color: #4c1d95; font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .login-box .subtitle { color: #8b7db8; font-size: 0.85rem; margin-bottom: 1.8rem; }
+        .login-box input[type="password"] {
+            width: 100%; padding: 0.9rem 1.2rem;
+            border: 2px solid #ede4ff; border-radius: 16px;
+            font-size: 1rem; outline: none; text-align: center;
+            letter-spacing: 2px; transition: border 0.2s;
+            font-family: inherit; color: #2a1e4a;
+        }
+        .login-box input[type="password"]:focus { border-color: #7c3aed; }
+        .login-box button {
+            width: 100%; margin-top: 1rem; padding: 0.9rem;
+            background: #7c3aed; color: white; border: none;
+            border-radius: 16px; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: background 0.2s; font-family: inherit;
+        }
+        .login-box button:hover { background: #6d28d9; }
+        .login-error { color: #b13e3e; font-size: 0.85rem; margin-top: 0.8rem; min-height: 1.2rem; }
 
-// ===== تكوين Supabase =====
-const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(76, 29, 149, 0.35);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; padding: 1.5rem; backdrop-filter: blur(6px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white; border-radius: 28px; padding: 2rem 1.8rem;
+            max-width: 440px; width: 100%; border: 2px solid #ede4ff;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
+            animation: popIn 0.3s ease;
+        }
+        .modal-box h3 {
+            color: #4c1d95; font-size: 1.2rem; font-weight: 700;
+            margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .modal-box h3 i { color: #7c3aed; }
+        .modal-box .modal-sub { color: #8b7db8; font-size: 0.8rem; margin-bottom: 1.5rem; }
+        .modal-box input[type="text"] {
+            width: 100%; padding: 0.85rem 1.2rem;
+            border: 2px solid #ede4ff; border-radius: 16px;
+            font-size: 1rem; outline: none; transition: border 0.2s;
+            font-family: inherit; color: #2a1e4a;
+        }
+        .modal-box input[type="text"]:focus { border-color: #7c3aed; }
+        .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; }
+        .modal-actions button {
+            flex: 1; padding: 0.8rem; border: none; border-radius: 16px;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: all 0.15s;
+        }
+        .modal-actions .btn-save { background: #7c3aed; color: white; }
+        .modal-actions .btn-save:hover { background: #6d28d9; }
+        .modal-actions .btn-cancel-modal {
+            background: #f7f3ff; color: #5b21b6; border: 2px solid #ede4ff;
+        }
+        .modal-actions .btn-cancel-modal:hover { background: #ede4ff; }
 
-// ===== كلمة المرور =====
-const DASHBOARD_PASSWORD = 'nigga1234';
-
-// ===== المتغيرات العامة =====
-let selectedStudent = '';
-let isProcessing = false;
-const currentTeacher = 'محمد ماهر او عبدالله العوض';
-let allStudents = [];
-let liveTimerInterval = null;
-
-// DOM refs
-const studentListEl = document.getElementById('studentList');
-const qrContainer = document.getElementById('qrcode-container');
-const qrStudentName = document.getElementById('qrStudentName');
-const verifyName = document.getElementById('verifyName');
-const verifyStatusBadge = document.getElementById('verifyStatusBadge');
-const searchInput = document.getElementById('searchInput');
-const toastContainer = document.getElementById('toastContainer');
-const modalHistoryContainer = document.getElementById('modalHistoryContainer');
-
-// ===== التحقق من كلمة المرور =====
-function checkPassword() {
-    const input = document.getElementById('passwordInput');
-    const errorEl = document.getElementById('loginError');
-    const overlay = document.getElementById('loginOverlay');
-
-    if (input.value === DASHBOARD_PASSWORD) {
-        sessionStorage.setItem('mustaathin_auth', 'true');
-        overlay.style.display = 'none';
-        errorEl.textContent = '';
-        input.value = '';
-        init();
-    } else {
-        errorEl.textContent = '❌ كلمة المرور غير صحيحة';
-        input.value = '';
-        input.focus();
-        input.style.borderColor = '#b13e3e';
-        setTimeout(() => input.style.borderColor = '#ede4ff', 800);
-    }
-}
-
-document.getElementById('passwordInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkPassword();
-});
-
-// ===== تسجيل الخروج =====
-function logout() {
-    if (!confirm('هل تريد تسجيل الخروج؟')) return;
-    sessionStorage.removeItem('mustaathin_auth');
-    location.reload();
-}
-
-// ===== نافذة إضافة طالب =====
-function openAddModal() {
-    document.getElementById('addStudentModal').classList.add('active');
-    document.getElementById('newStudentName').value = '';
-    setTimeout(() => document.getElementById('newStudentName').focus(), 100);
-}
-
-function closeAddModal() {
-    document.getElementById('addStudentModal').classList.remove('active');
-}
-
-document.getElementById('newStudentName').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addNewStudent();
-});
-
-// ===== نافذة سجل العمليات (مربوطة بـ window عالمياً) =====
-window.openHistoryModal = function() {
-    const modal = document.getElementById('historyModal');
-    if (modal) {
-        modal.classList.add('active');
-        loadHistory();
-    }
-};
-
-window.closeHistoryModal = function() {
-    const modal = document.getElementById('historyModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-};
-
-// ===== إضافة طالب جديد =====
-async function addNewStudent() {
-    const nameInput = document.getElementById('newStudentName');
-    const name = nameInput.value.trim();
-
-    if (!name) {
-        showToast('الرجاء إدخال اسم الطالب', 'error');
-        return;
-    }
-
-    if (allStudents.some(s => s.name.toLowerCase() === name.toLowerCase())) {
-        showToast('هذا الطالب موجود مسبقاً', 'error');
-        return;
-    }
-
-    try {
-        const { error } = await supabaseClient
-            .from('students')
-            .insert([{
-                name: name,
-                permitted: false,
-                last_permitted_at: null
-            }]);
-
-        if (error) throw error;
-
-        closeAddModal();
-        showToast(`✅ تم إضافة ${name}`, 'success');
-        await loadAllData();
-        selectStudent(name);
-    } catch (error) {
-        console.error('Add student error:', error);
-        showToast('خطأ في الإضافة: ' + error.message, 'error');
-    }
-}
-
-// ===== حذف طالب =====
-async function deleteStudent(name) {
-    if (!confirm(`هل أنت متأكد من حذف "${name}"؟\n\nسيتم حذف الطالب وسجله نهائياً.`)) return;
-
-    try {
-        const { error: deleteError } = await supabaseClient
-            .from('students')
-            .delete()
-            .eq('name', name);
-
-        if (deleteError) throw deleteError;
-
-        await supabaseClient
-            .from('history')
-            .delete()
-            .eq('student_name', name);
-
-        showToast(`🗑️ تم حذف ${name}`, 'error');
-
-        if (selectedStudent === name) {
-            selectedStudent = '';
-            qrContainer.innerHTML = '';
-            qrStudentName.textContent = 'اختر طالباً';
-            verifyName.textContent = 'اختر طالباً';
-            verifyStatusBadge.className = 'verify-status';
-            verifyStatusBadge.innerHTML = '—';
-            if (liveTimerInterval) clearInterval(liveTimerInterval);
+        /* نافذة السجل المنبثقة */
+        .history-modal-box {
+            background: white; border-radius: 28px; padding: 1.5rem;
+            max-width: 600px; width: 100%; border: 2px solid #ede4ff;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
+            animation: popIn 0.3s ease;
+            display: flex; flex-direction: column; max-height: 85vh;
+        }
+        .history-modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #f3ecff; padding-bottom: 0.8rem; margin-bottom: 0.8rem;
+        }
+        .history-modal-header h3 {
+            color: #4c1d95; font-size: 1.15rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem; margin: 0;
+        }
+        .btn-close-modal {
+            background: #f7f3ff; border: none; color: #7c3aed;
+            width: 34px; height: 34px; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; transition: background 0.15s;
+        }
+        .btn-close-modal:hover { background: #ede4ff; }
+        .history-modal-list {
+            overflow-y: auto; display: flex; flex-direction: column;
+            gap: 0.5rem; padding-left: 0.2rem; flex: 1;
+        }
+        .log-entry-popup {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fbf9ff; padding: 0.7rem 0.9rem; border-radius: 16px;
+            border: 1.5px solid #f3ecff; gap: 0.5rem; flex-wrap: wrap;
+        }
+        .log-entry-popup .st-info {
+            display: flex; align-items: center; gap: 0.5rem; font-weight: 600;
+            color: #3b1e6b; font-size: 0.88rem;
+        }
+        .log-entry-popup .meta-info {
+            display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: #8b7db8;
         }
 
-        await loadAllData();
-        loadHistory();
-
-    } catch (error) {
-        console.error('Delete error:', error);
-        showToast('خطأ في الحذف: ' + error.message, 'error');
-    }
-}
-
-// ===== Toast =====
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    toastContainer.appendChild(toast);
-    setTimeout(() => {
-        if (toast.parentNode) toast.remove();
-    }, 2200);
-}
-
-// ===== جلب الطلاب =====
-async function fetchStudents() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('students')
-            .select('*')
-            .order('name');
-
-        if (error) throw error;
-        allStudents = data;
-        return data;
-    } catch (error) {
-        showToast('خطأ في تحميل الطلاب: ' + error.message, 'error');
-        return [];
-    }
-}
-
-// ===== جلب وعرض السجل داخل المودال =====
-async function loadHistory() {
-    const container = document.getElementById('modalHistoryContainer');
-    if (!container) return;
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('history')
-            .select('*')
-            .order('id', { ascending: false })
-            .limit(50);
-
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-            container.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات مسجلة بعد</div>`;
-            return;
+        .add-btn {
+            background: #7c3aed !important; color: white !important;
+            border-color: #7c3aed !important;
+            padding: 0.45rem 1.2rem !important; font-size: 0.8rem !important;
         }
+        .add-btn:hover { background: #6d28d9 !important; }
+    </style>
+</head>
+<body>
 
-        let html = '';
-        data.forEach(entry => {
-            const isPermitted = entry.status === 'Permitted';
-            const statusBadgeClass = isPermitted ? 'permitted' : 'not-permitted';
-            const statusText = isPermitted ? 'مسموح' : 'غير مسموح';
-            const statusIcon = isPermitted ? '🟢' : '🔴';
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <div class="lock-icon"><i class="fas fa-lock"></i></div>
+            <h2>لوحة تحكم</h2>
+            <div class="subtitle">لوحة تحكم المعلم · Hawazen High School</div>
+            <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" autocomplete="off" />
+            <button onclick="checkPassword()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
 
-            html += `
-                <div class="log-entry-popup">
-                    <div class="st-info">
-                        <i class="fas fa-user-graduate" style="color:#7c3aed;"></i>
-                        <span>${entry.student_name}</span>
-                        <span class="status-badge ${statusBadgeClass}">${statusIcon} ${statusText}</span>
-                    </div>
-                    <div class="meta-info">
-                        <span><i class="fas fa-clock"></i> ${entry.timestamp}</span>
-                        <span class="teacher-tag">${entry.teacher}</span>
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-user-plus"></i> إضافة طالب جديد</h3>
+            <div class="modal-sub">سيتم إنشاء باركود QR تلقائياً للطالب</div>
+            <input type="text" id="newStudentName" placeholder="اسم الطالب الكامل" autocomplete="off" />
+            <div class="modal-actions">
+                <button class="btn-save" onclick="addNewStudent()"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn-cancel-modal" onclick="closeAddModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="history-modal-box">
+            <div class="history-modal-header">
+                <h3><i class="fas fa-clock-rotate-left"></i> سجل العمليات</h3>
+                <button class="btn-close-modal" id="btnCloseHistoryModal" onclick="closeHistoryModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="history-modal-list" id="modalHistoryContainer">
+                <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <header class="school-header">
+            <h1><i class="fas fa-graduation-cap"></i>لوحة التحكم</h1>
+            <div class="header-actions">
+                <button class="btn btn-qr" id="btnOpenHistory" title="سجل العمليات">
+                    <i class="fas fa-clock-rotate-left"></i> <span class="btn-text">السجل</span>
+                </button>
+                <button class="btn add-btn" id="btnDownloadAll">
+                    <i class="fas fa-file-pdf"></i> <span class="btn-text">تحميل كافة الباركودات (PDF)</span>
+                </button>
+                <button class="btn add-btn" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
+                </button>
+                <button class="btn btn-qr" onclick="logout()" title="تسجيل الخروج">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+                <div class="badge-school"><i class="fas fa-school"></i> Hawazen High School</div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chalkboard-teacher"></i> لوحة المعلم</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="ابحث عن طالب..." oninput="filterStudents()" />
+                        <button><i class="fas fa-search"></i></button>
                     </div>
                 </div>
-            `;
-        });
-        container.innerHTML = html;
-    } catch (err) {
-        container.innerHTML = `<div class="loading-message" style="color:#b13e3e;">تعذر جلب السجل</div>`;
-    }
-}
 
-// ===== جلب حالة طالب =====
-async function fetchStudentStatus(name) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('students')
-            .select('name, permitted, last_permitted_at')
-            .eq('name', name)
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        return null;
-    }
-}
-
-// ===== تحديث حالة طالب =====
-async function updateStudentStatus(name, status) {
-    if (isProcessing) return;
-    isProcessing = true;
-
-    try {
-        const now = new Date();
-        const updateData = { permitted: status };
-
-        if (status === true) {
-            updateData.last_permitted_at = now.toISOString();
-        }
-
-        const { error: updateError } = await supabaseClient
-            .from('students')
-            .update(updateData)
-            .eq('name', name);
-
-        if (updateError) throw updateError;
-
-        const displayTimestamp = now.toLocaleString('ar-SA', {
-            timeZone: 'Asia/Riyadh',
-            month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: true
-        });
-
-        const statusText = status ? 'Permitted' : 'Not Permitted';
-
-        const { error: historyError } = await supabaseClient
-            .from('history')
-            .insert([{
-                student_name: name,
-                status: statusText,
-                timestamp: displayTimestamp,
-                teacher: currentTeacher
-            }]);
-
-        if (historyError) throw historyError;
-
-        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
-
-        await loadAllData();
-        loadHistory();
-
-        if (selectedStudent === name) {
-            const studentData = await fetchStudentStatus(name);
-            if (studentData) {
-                updateQrAndVerification(name, studentData.permitted, studentData.last_permitted_at);
-            }
-        }
-
-    } catch (error) {
-        showToast('خطأ في التحديث: ' + error.message, 'error');
-    } finally {
-        setTimeout(() => { isProcessing = false; }, 300);
-    }
-}
-
-// ===== تحميل البيانات =====
-async function loadAllData() {
-    const students = await fetchStudents();
-    renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : students);
-}
-
-// ===== عرض الطلاب =====
-function renderStudents(students) {
-    if (!students || students.length === 0) {
-        studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب.</div>`;
-        return;
-    }
-
-    let html = '';
-    students.forEach(s => {
-        const status = s.permitted === true;
-
-        html += `
-            <div class="student-item" data-student="${s.name}">
-                <span class="student-name"><i class="fas fa-user-graduate"></i> ${s.name}</span>
-
-                <div class="status-cell">
-                    <span class="status-text ${status ? 'on' : 'off'}">
-                        ${status ? 'مسموح' : 'غير مسموح'}
-                    </span>
-                    <button class="ios-toggle ${status ? 'on' : ''}" 
-                            data-action="toggle" 
-                            data-student="${s.name}"
-                            data-status="${status}"
-                            aria-label="Toggle status">
-                        <span class="ios-toggle-thumb"></span>
-                    </button>
-                </div>
-
-                <div class="actions">
-                    <button class="btn btn-qr btn-sm" data-action="viewqr" data-student="${s.name}">
-                        <i class="fas fa-qrcode"></i>
-                    </button>
-                    <button class="btn btn-delete btn-sm" data-action="delete" data-student="${s.name}">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <div class="student-list" id="studentList">
+                    <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الطلاب...</div>
                 </div>
             </div>
-        `;
-    });
-    studentListEl.innerHTML = html;
 
-    document.querySelectorAll('.student-item .btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (isProcessing) return;
-            const action = this.dataset.action;
-            const student = this.dataset.student;
-            if (!student) return;
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-qrcode"></i> باركود الطالب</h2>
+                    <span style="font-size:0.7rem; color:#8b7db8;">دائم · لا يتغير</span>
+                </div>
+                <div class="qr-preview">
+                    <div id="qrcode-container"></div>
+                    <div class="qr-label" id="qrStudentName">اختر طالباً</div>
+                    <div class="qr-sub">امسح للتحقق من الحالة</div>
+                    <button class="btn btn-qr-download" id="btnDownloadSingle">
+                        <i class="fas fa-file-pdf"></i> تحميل باركود الطالب (PDF)
+                    </button>
+                </div>
 
-            if (action === 'viewqr') selectStudent(student);
-            else if (action === 'delete') deleteStudent(student);
-        });
-    });
+                <div class="verification-panel">
+                    <h3><i class="fas fa-shield-alt"></i> التحقق المباشر</h3>
+                    <div class="verify-student" id="verificationDisplay">
+                        <span class="student-badge" id="verifyName">اختر طالباً</span>
+                        <span class="verify-status" id="verifyStatusBadge">—</span>
+                    </div>
+                    <div class="verify-hint">
+                        <i class="fas fa-camera"></i> الباركود يوجّه لصفحة تحقق مخفية
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    document.querySelectorAll('.ios-toggle').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (isProcessing) return;
-            const student = this.dataset.student;
-            const currentStatus = this.dataset.status === 'true';
-            updateStudentStatus(student, !currentStatus);
-        });
-    });
+        <footer class="app-footer">
+            <span>الاصدار : <strong id="appVersion">v1.0.9</strong></span>
+        </footer>
+    </div>
 
-    document.querySelectorAll('.student-item').forEach(el => {
-        el.style.background = (el.dataset.student === selectedStudent) ? '#f3ecff' : '';
-    });
-}
+    <div class="toast-container" id="toastContainer"></div>
 
-// ===== اختيار طالب =====
-function selectStudent(student) {
-    if (isProcessing) return;
-    selectedStudent = student;
-    const studentData = allStudents.find(s => s.name === student);
-    if (studentData) {
-        updateQrAndVerification(student, studentData.permitted, studentData.last_permitted_at);
-    } else {
-        fetchStudentStatus(student).then(data => {
-            if (data) updateQrAndVerification(student, data.permitted, data.last_permitted_at);
-        });
-    }
-    renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
-}
-
-// ===== حساب المدة بوحدة واحدة =====
-function getTimeSince(lastPermittedAt) {
-    if (!lastPermittedAt) return null;
-
-    const thenTime = new Date(lastPermittedAt).getTime();
-    if (isNaN(thenTime)) return null;
-
-    const nowTime = Date.now();
-    let diffMs = nowTime - thenTime;
-
-    if (diffMs < 0) {
-        if (diffMs > -10800000) {
-            diffMs = Math.abs(diffMs + 10800000);
-        } else {
-            diffMs = 0;
-        }
-    }
-
-    const totalSec = Math.floor(diffMs / 1000);
-    const days = Math.floor(totalSec / 86400);
-    const hours = Math.floor(totalSec / 3600);
-    const minutes = Math.floor(totalSec / 60);
-
-    if (days > 0) {
-        if (days === 1) return 'يوم واحد';
-        if (days === 2) return 'يومين';
-        if (days >= 3 && days <= 10) return `${days} أيام`;
-        return `${days} يوماً`;
-    }
-    if (hours > 0) {
-        if (hours === 1) return 'ساعة واحدة';
-        if (hours === 2) return 'ساعتين';
-        if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
-        return `${hours} ساعة`;
-    }
-    if (minutes > 0) {
-        if (minutes === 1) return 'دقيقة واحدة';
-        if (minutes === 2) return 'دقيقتين';
-        if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
-        return `${minutes} دقيقة`;
-    }
-    
-    if (totalSec === 1) return 'ثانية واحدة';
-    if (totalSec === 2) return 'ثانيتين';
-    if (totalSec >= 3 && totalSec <= 10) return `${totalSec} ثوانٍ`;
-    return `${totalSec} ثانية`;
-}
-
-// ===== رابط صفحة التحقق =====
-function getStudentVerifyUrl(studentName) {
-    const base = window.location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
-    return `${base}verify.html?student=${encodeURIComponent(studentName)}`;
-}
-
-// ===== تحديث QR والتحقق =====
-function updateQrAndVerification(student, status, lastPermittedAt) {
-    qrStudentName.textContent = student;
-    verifyName.textContent = student;
-
-    qrContainer.innerHTML = '';
-    const qrData = getStudentVerifyUrl(student);
-
-    new QRCode(qrContainer, {
-        text: qrData,
-        width: 140,
-        height: 140,
-        colorDark: '#4c1d95',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
-    if (liveTimerInterval) clearInterval(liveTimerInterval);
-
-    if (status) {
-        verifyStatusBadge.className = 'verify-status permitted';
-        const renderBadgeTime = () => {
-            const timeSince = getTimeSince(lastPermittedAt);
-            verifyStatusBadge.innerHTML = `🟢 مسموح · ${timeSince || 'الآن'}`;
-        };
-        renderBadgeTime();
-        liveTimerInterval = setInterval(renderBadgeTime, 1000);
-    } else {
-        verifyStatusBadge.className = 'verify-status not-permitted';
-        verifyStatusBadge.innerHTML = '🔴 غير مسموح';
-    }
-}
-
-// ===== فلترة الطلاب =====
-window.filterStudents = function() {
-    const val = searchInput.value.toLowerCase();
-    const filtered = allStudents.filter(s => s.name.toLowerCase().includes(val));
-    renderStudents(filtered);
-};
-
-// ============================================
-// ===== وظائف بناء وتوليد ملفات الـ PDF =====
-// ============================================
-
-function createSingleStudentCard(studentName) {
-    return new Promise((resolve) => {
-        const qrUrl = getStudentVerifyUrl(studentName);
-        const tempHolder = document.createElement('div');
-        tempHolder.style.cssText = 'position:fixed; left:-9999px; top:-9999px;';
-        document.body.appendChild(tempHolder);
-
-        new QRCode(tempHolder, {
-            text: qrUrl,
-            width: 260,
-            height: 260,
-            colorDark: '#4c1d95',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        setTimeout(() => {
-            const canvasSource = tempHolder.querySelector('canvas');
-            const imgSource = tempHolder.querySelector('img');
-
-            const drawCanvasToData = (sourceEl) => {
-                const cardCanvas = document.createElement('canvas');
-                cardCanvas.width = 600;
-                cardCanvas.height = 760;
-                const ctx = cardCanvas.getContext('2d');
-
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
-
-                ctx.strokeStyle = '#ede4ff';
-                ctx.lineWidth = 6;
-                ctx.strokeRect(8, 8, cardCanvas.width - 16, cardCanvas.height - 16);
-
-                ctx.font = 'bold 22px "Tajawal", Arial, sans-serif';
-                ctx.fillStyle = '#7c3aed';
-                ctx.textAlign = 'center';
-                ctx.fillText('ثانوية هوازن · Hawazen High School', 300, 65);
-
-                ctx.fillStyle = '#fbf9ff';
-                ctx.fillRect(160, 105, 280, 280);
-                ctx.strokeStyle = '#f3ecff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(160, 105, 280, 280);
-
-                ctx.drawImage(sourceEl, 170, 115, 260, 260);
-
-                ctx.font = 'bold 34px "Tajawal", Arial, sans-serif';
-                ctx.fillStyle = '#4c1d95';
-                ctx.fillText(studentName, 300, 465);
-
-                ctx.font = '20px "Tajawal", Arial, sans-serif';
-                ctx.fillStyle = '#8b7db8';
-                ctx.fillText('امسح للتحقق من الحالة', 300, 520);
-
-                ctx.strokeStyle = '#ede4ff';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(100, 580);
-                ctx.lineTo(500, 580);
-                ctx.stroke();
-
-                ctx.font = '16px "Tajawal", Arial, sans-serif';
-                ctx.fillStyle = '#a78bfa';
-                ctx.fillText('نظام إدارة إحضار الأجهزة الذكية', 300, 630);
-
-                const data = cardCanvas.toDataURL('image/png');
-                tempHolder.remove();
-                resolve(data);
-            };
-
-            if (canvasSource) {
-                drawCanvasToData(canvasSource);
-            } else if (imgSource && imgSource.src) {
-                const img = new Image();
-                img.onload = () => drawCanvasToData(img);
-                img.src = imgSource.src;
-            } else {
-                tempHolder.remove();
-                resolve(null);
-            }
-        }, 120);
-    });
-}
-
-// تحميل باركود الطالب المعروض حالياً
-async function downloadSingleQRPdf() {
-    if (!selectedStudent) {
-        showToast('يرجى اختيار طالب أولاً', 'error');
-        return;
-    }
-
-    try {
-        showToast(`جاري إنشاء PDF لباركود ${selectedStudent}...`, 'success');
-        const cardImg = await createSingleStudentCard(selectedStudent);
-        if (!cardImg) throw new Error('تعذر توليد الباركود');
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        pdf.addImage(cardImg, 'PNG', 45, 40, 120, 152);
-        pdf.save(`باركود_${selectedStudent}.pdf`);
-        showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
-    } catch (err) {
-        console.error(err);
-        showToast('حدث خطأ أثناء تحميل الـ PDF', 'error');
-    }
-}
-
-// تحميل كافة باركودات الطلاب المسجلين
-async function downloadAllStudentsQRPdf() {
-    if (!allStudents || allStudents.length === 0) {
-        showToast('لا يوجد طلاب مسجلين للتحميل', 'error');
-        return;
-    }
-
-    try {
-        showToast('جاري تجميع كافة الباركودات في ملف PDF...', 'success');
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const colPositions = [15, 110];
-        const rowPositions = [15, 150];
-        const cardW = 85;
-        const cardH = 108;
-
-        for (let i = 0; i < allStudents.length; i++) {
-            const student = allStudents[i];
-            const slot = i % 4;
-
-            if (i > 0 && slot === 0) {
-                pdf.addPage();
-            }
-
-            const col = slot % 2;
-            const row = Math.floor(slot / 2);
-            const x = colPositions[col];
-            const y = rowPositions[row];
-
-            const cardImg = await createSingleStudentCard(student.name);
-            if (cardImg) {
-                pdf.addImage(cardImg, 'PNG', x, y, cardW, cardH);
-            }
-        }
-
-        pdf.save('باركودات_جميع_الطلاب.pdf');
-        showToast('✅ تم تحميل جميع الباركودات بنجاح', 'success');
-    } catch (err) {
-        console.error(err);
-        showToast('حدث خطأ أثناء تجميع الملف', 'error');
-    }
-}
-
-// ربط الأزرار بشكل مباشر في الـ DOM
-function attachEvents() {
-    const singleBtn = document.getElementById('btnDownloadSingle');
-    const allBtn = document.getElementById('btnDownloadAll');
-    const historyBtn = document.getElementById('btnOpenHistory');
-    const closeHistoryBtn = document.getElementById('btnCloseHistoryModal');
-
-    if (singleBtn) {
-        singleBtn.onclick = (e) => {
-            e.preventDefault();
-            downloadSingleQRPdf();
-        };
-    }
-
-    if (allBtn) {
-        allBtn.onclick = (e) => {
-            e.preventDefault();
-            downloadAllStudentsQRPdf();
-        };
-    }
-
-    if (historyBtn) {
-        historyBtn.onclick = (e) => {
-            e.preventDefault();
-            window.openHistoryModal();
-        };
-    }
-
-    if (closeHistoryBtn) {
-        closeHistoryBtn.onclick = (e) => {
-            e.preventDefault();
-            window.closeHistoryModal();
-        };
-    }
-}
-
-// ===== الإشتراك في التغييرات =====
-function subscribeToChanges() {
-    supabaseClient
-        .channel('students_changes')
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'students' },
-            async (payload) => {
-                if (payload.eventType === 'DELETE') {
-                    const deletedName = payload.old?.name;
-                    if (deletedName) {
-                        allStudents = allStudents.filter(s => s.name !== deletedName);
-                        renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
-                    }
-                    return;
-                }
-
-                const updatedStudent = payload.new;
-                if (!updatedStudent) return;
-                const index = allStudents.findIndex(s => s.name === updatedStudent.name);
-                if (index !== -1) {
-                    allStudents[index] = updatedStudent;
-                } else if (payload.eventType === 'INSERT') {
-                    allStudents.push(updatedStudent);
-                }
-                renderStudents(searchInput.value ? allStudents.filter(s => s.name.toLowerCase().includes(searchInput.value.toLowerCase())) : allStudents);
-                if (selectedStudent === updatedStudent.name) {
-                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
-                }
-            }
-        )
-        .subscribe();
-
-    supabaseClient
-        .channel('history_realtime')
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'history' },
-            () => {
-                loadHistory();
-            }
-        )
-        .subscribe();
-}
-
-// ===== التهيئة =====
-async function init() {
-    console.log('🚀 Musta\'athin initializing... Version:', APP_VERSION);
-    const verEl = document.getElementById('appVersion');
-    if (verEl) verEl.textContent = APP_VERSION;
-
-    attachEvents();
-    await loadAllData();
-
-    if (allStudents.length > 0) {
-        selectStudent(allStudents[0].name);
-    } else {
-        qrContainer.innerHTML = '';
-        qrStudentName.textContent = 'اختر طالباً';
-        verifyName.textContent = 'اختر طالباً';
-        verifyStatusBadge.className = 'verify-status';
-        verifyStatusBadge.innerHTML = '—';
-        if (liveTimerInterval) clearInterval(liveTimerInterval);
-    }
-
-    subscribeToChanges();
-    console.log('✅ Ready. Students:', allStudents.length);
-}
-
-// ربط أولي ومباشر
-attachEvents();
-
-// ===== بدء التطبيق =====
-if (sessionStorage.getItem('mustaathin_auth') === 'true') {
-    document.getElementById('loginOverlay').style.display = 'none';
-    init();
-}
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
