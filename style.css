@@ -56,19 +56,6 @@ body {
     flex-wrap: wrap;
 }
 
-.badge-school {
-    background: #f7f3ff;
-    border: 1.5px solid #ede4ff;
-    color: #6d28d9;
-    padding: 0.35rem 0.9rem;
-    border-radius: 30px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
 /* ============================================
    ===== Dashboard Grid =====
    ============================================ */
@@ -166,7 +153,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-height: 480px;
+    max-height: 460px;
     overflow-y: auto;
     padding-right: 0.2rem;
     -webkit-overflow-scrolling: touch;
@@ -177,72 +164,65 @@ body {
     align-items: center;
     justify-content: space-between;
     background: #fbf9ff;
-    padding: 0.75rem 1.1rem;
+    padding: 0.7rem 0.9rem;
     border-radius: 60px;
     border: 2px solid #f3ecff;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    transition: background 0.12s, border 0.12s, transform 0.1s;
+    gap: 0.4rem 0.6rem;
+    transition: background 0.12s, border 0.12s;
 }
 .student-item:hover {
     background: #f7f3ff;
     border-color: #d8c7ff;
 }
-
-/* الضغط على الاسم لفتح التعديل */
-.student-item .student-name-clickable {
+.student-item .student-name {
     font-weight: 600;
     color: #3b1e6b;
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    font-size: 0.92rem;
-    flex: 1;
-    min-width: 140px;
-    cursor: pointer;
-    user-select: none;
-}
-.student-item .student-name-clickable:hover {
-    color: #7c3aed;
-}
-.student-item .student-name-clickable i.fa-user-graduate {
-    color: #a78bfa;
+    gap: 0.5rem;
     font-size: 0.9rem;
+    flex: 1;
+    min-width: 100px;
 }
-.student-item .student-name-clickable .edit-indicator {
-    font-size: 0.75rem;
-    color: #c4b5fd;
-    transition: color 0.15s;
-    margin-right: 0.3rem;
-}
-.student-item .student-name-clickable:hover .edit-indicator {
-    color: #7c3aed;
+.student-item .student-name i {
+    color: #a78bfa;
+    font-size: 0.85rem;
 }
 
-/* حالة الطالب مصغرة بجانب الاسم */
-.student-pill {
+/* ============================================
+   ===== Status Badge =====
+   ============================================ */
+.status-badge {
+    padding: 0.15rem 1.1rem;
+    border-radius: 40px;
     font-size: 0.7rem;
-    padding: 0.15rem 0.6rem;
-    border-radius: 20px;
     font-weight: 700;
-    margin-right: 0.4rem;
+    letter-spacing: 0.2px;
+    background: #f3ecff;
+    color: #5b21b6;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
 }
-.student-pill.permitted {
+.status-badge.permitted {
     background: #d3f0e5;
     color: #006b4e;
 }
-.student-pill.not-permitted {
+.status-badge.not-permitted {
     background: #fce8e8;
     color: #b13e3e;
 }
 
 /* ============================================
-   ===== Action Buttons & Big Delete Button =====
+   ===== Action Buttons =====
    ============================================ */
 .actions {
     display: flex;
-    gap: 0.4rem;
+    gap: 0.3rem;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .btn {
@@ -267,25 +247,7 @@ body {
     cursor: not-allowed;
 }
 
-/* زر الحذف المكبر والواضح */
-.btn-delete-wide {
-    background: #fce8e8;
-    color: #b13e3e;
-    border: 1.5px solid #f5d0d0;
-    font-size: 0.82rem;
-    font-weight: 700;
-    padding: 0.45rem 1.1rem;
-    border-radius: 30px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-.btn-delete-wide:hover {
-    background: #f5d6d6;
-    border-color: #e5b3b3;
-    transform: scale(1.03);
-}
-
+/* زر الباركود */
 .btn-qr {
     background: #ede4ff;
     color: #5b21b6;
@@ -297,40 +259,64 @@ body {
     background: #d8c7ff;
 }
 
-.btn-qr-download {
-    margin-top: 0.8rem;
+/* زر الحذف */
+.btn-delete {
+    background: #fce8e8;
+    color: #b13e3e;
+    border-color: #f5d0d0;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+}
+.btn-delete:hover {
+    background: #f5d6d6;
+    transform: scale(1.05);
+}
+
+/* زر تسجيل الخروج */
+.btn-logout {
     background: #ede4ff;
     color: #5b21b6;
-    border: 1.5px solid #d8c7ff;
-    padding: 0.45rem 1.2rem;
-    font-size: 0.78rem;
-    border-radius: 30px;
+    border: 1px solid #d8c7ff;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    justify-content: center;
 }
-.btn-qr-download:hover {
-    background: #7c3aed;
-    color: #ffffff;
-    border-color: #7c3aed;
+.btn-logout:hover {
+    background: #d8c7ff;
+}
+
+.btn-sm {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
 }
 
 /* ============================================
-   ===== iOS Toggle Switch (داخل المودال) =====
+   ===== iOS Toggle Switch =====
    ============================================ */
 .status-cell {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    margin: 0 0.3rem;
 }
 
 .status-text {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     white-space: nowrap;
-    min-width: 65px;
+    min-width: 68px;
     text-align: right;
     transition: color 0.25s;
 }
-.status-text.off { color: #b13e3e; }
-.status-text.on { color: #22c55e; }
+.status-text.off {
+    color: #b13e3e;
+}
+.status-text.on {
+    color: #22c55e;
+}
 
 .ios-toggle {
     position: relative;
@@ -344,10 +330,17 @@ body {
     transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
     outline: none;
+    font-family: inherit;
 }
-.ios-toggle:hover { opacity: 0.9; }
-.ios-toggle:active .ios-toggle-thumb { width: 34px; }
-.ios-toggle.on { background: #22c55e; }
+.ios-toggle:hover {
+    opacity: 0.9;
+}
+.ios-toggle:active .ios-toggle-thumb {
+    width: 34px;
+}
+.ios-toggle.on {
+    background: #22c55e;
+}
 
 .ios-toggle-thumb {
     position: absolute;
@@ -357,9 +350,15 @@ body {
     height: 27px;
     border-radius: 50%;
     background: #ffffff;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s ease;
+    box-shadow: 
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        0 1px 1px rgba(0, 0, 0, 0.16),
+        0 3px 1px rgba(0, 0, 0, 0.1);
+    transition: 
+        left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.2s ease;
 }
+
 .ios-toggle.on .ios-toggle-thumb {
     left: calc(100% - 29px);
 }
@@ -373,7 +372,7 @@ body {
     align-items: center;
     background: #fbf9ff;
     border-radius: 40px;
-    padding: 1.1rem 0.6rem 1rem;
+    padding: 1rem 0.5rem 1rem;
     border: 2px solid #f3ecff;
 }
 #qrcode-container {
@@ -400,6 +399,33 @@ body {
     font-size: 0.7rem;
     margin-top: 0.1rem;
     text-align: center;
+}
+
+/* ===== زر تحميل الباركود ===== */
+.btn-download-qr {
+    margin-top: 0.9rem;
+    padding: 0.55rem 1.3rem;
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    border-radius: 40px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+}
+.btn-download-qr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+}
+.btn-download-qr:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
 }
 
 /* ============================================
@@ -456,23 +482,55 @@ body {
 }
 
 /* ============================================
-   ===== App Footer (Version) =====
+   ===== History Log =====
    ============================================ */
-.app-footer {
-    margin-top: 1.5rem;
-    text-align: center;
-    padding: 0.8rem;
-    color: #8b7db8;
-    font-size: 0.8rem;
-    border-top: 1.5px solid #f3ecff;
+.history-log {
+    margin-top: 1.2rem;
+    border-top: 2px solid #f3ecff;
+    padding-top: 1rem;
 }
-.app-footer strong {
-    color: #7c3aed;
-    background: #f7f3ff;
-    padding: 0.2rem 0.6rem;
-    border-radius: 20px;
-    border: 1px solid #ede4ff;
-    margin-right: 0.25rem;
+.history-log h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4c1d95;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.log-entry {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f7f3ff;
+    color: #3b1e6b;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.6rem;
+}
+.log-entry .log-time {
+    color: #8b7db8;
+    font-size: 0.65rem;
+}
+.teacher-tag {
+    background: #ede4ff;
+    color: #5b21b6;
+    padding: 0.05rem 0.6rem;
+    border-radius: 40px;
+    font-size: 0.6rem;
+    font-weight: 600;
+}
+.empty-history {
+    color: #a78bfa;
+    font-style: italic;
+    font-size: 0.8rem;
+    padding: 0.4rem 0;
+}
+.loading-message {
+    color: #a78bfa;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    text-align: center;
 }
 
 /* ============================================
@@ -512,14 +570,204 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============================================
+   ===== Responsive — Tablet =====
+   ============================================ */
 @media (max-width: 900px) {
-    .dashboard-grid { grid-template-columns: 1fr; }
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .student-list {
+        max-height: 400px;
+    }
 }
 
+/* ============================================
+   ===== Responsive — Mobile =====
+   ============================================ */
 @media (max-width: 600px) {
-    body { padding: 0.5rem; }
-    .btn-delete-wide {
-        padding: 0.4rem 0.8rem;
+    body {
+        padding: 0.5rem;
+    }
+
+    .school-header {
+        padding: 0.55rem 0.8rem;
+        border-radius: 2rem;
+        gap: 0.5rem;
+    }
+    .school-header h1 {
+        font-size: 1.05rem;
+    }
+    .school-header h1 i {
+        font-size: 1rem;
+    }
+
+    .header-actions {
+        gap: 0.3rem;
+    }
+
+    .badge-school {
+        display: none;
+    }
+
+    .add-btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.72rem !important;
+    }
+    .add-btn .btn-text {
+        display: none;
+    }
+    .add-btn i {
+        font-size: 0.85rem;
+    }
+
+    .btn-download-all {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.72rem !important;
+    }
+    .btn-download-all .btn-text {
+        display: none;
+    }
+    .btn-download-all i {
+        font-size: 0.85rem;
+    }
+
+    .btn-logout {
+        width: 34px;
+        height: 34px;
+        padding: 0.35rem;
         font-size: 0.75rem;
+    }
+
+    .card {
+        padding: 1rem 0.8rem;
+        border-radius: 20px;
+    }
+
+    .card-header h2 {
+        font-size: 0.95rem;
+    }
+    .card-hint {
+        display: none;
+    }
+
+    .search-box {
+        max-width: 130px;
+    }
+    .search-box input {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.1rem;
+    }
+    .search-box button {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .student-item {
+        padding: 0.55rem 0.7rem;
+        border-radius: 24px;
+        gap: 0.35rem 0.5rem;
+    }
+    .student-item .student-name {
+        font-size: 0.85rem;
+        min-width: 90px;
+        flex: 0 0 auto;
+    }
+    .student-item .student-name i {
+        font-size: 0.75rem;
+    }
+
+    .status-cell {
+        gap: 0.35rem;
+        margin: 0;
+    }
+    .status-text {
+        font-size: 0.65rem;
+        min-width: 58px;
+    }
+    .ios-toggle {
+        width: 46px;
+        height: 28px;
+    }
+    .ios-toggle-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    .ios-toggle.on .ios-toggle-thumb {
+        left: calc(100% - 26px);
+    }
+    .ios-toggle:active .ios-toggle-thumb {
+        width: 30px;
+    }
+
+    .actions {
+        gap: 0.25rem;
+    }
+    .btn-qr, .btn-delete {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.7rem;
+        min-height: 1.9rem;
+    }
+
+    #qrcode-container img,
+    #qrcode-container canvas {
+        width: 130px;
+        height: 130px;
+    }
+    .qr-label {
+        font-size: 0.9rem;
+    }
+
+    .btn-download-qr {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    .verify-student .student-badge { font-size: 1rem; }
+    .verify-status {
+        font-size: 0.8rem;
+        padding: 0.1rem 1rem;
+    }
+
+    .toast {
+        font-size: 0.78rem;
+        padding: 0.55rem 1rem;
+    }
+}
+
+/* ============================================
+   ===== Responsive — Small Mobile =====
+   ============================================ */
+@media (max-width: 380px) {
+    .school-header h1 {
+        font-size: 0.95rem;
+    }
+    .student-item {
+        padding: 0.5rem 0.6rem;
+    }
+    .student-item .student-name {
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+    .status-text {
+        display: none;
+    }
+    .ios-toggle {
+        width: 42px;
+        height: 26px;
+    }
+    .ios-toggle-thumb {
+        width: 22px;
+        height: 22px;
+    }
+    .ios-toggle.on .ios-toggle-thumb {
+        left: calc(100% - 24px);
+    }
+    .btn-qr, .btn-delete {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.65rem;
+    }
+    .search-box {
+        max-width: 100px;
     }
 }
