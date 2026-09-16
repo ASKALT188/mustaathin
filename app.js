@@ -434,173 +434,204 @@ window.filterStudents = function() {
     renderStudents(allStudents, searchInput.value);
 };
 
-// =======================================================
-// ===== وظيفة تصدير / طباعة PDF الفورية (عبر iframe خفي) =====
-// =======================================================
+// ============================================
+// ===== وظائف بناء وتوليد ملفات الـ PDF =====
+// ============================================
 
-// الحصول على رابط صورة الـ QR الفورية بنفس لون الموقع
-function getQRImageUrl(studentName) {
-    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-    const qrTargetUrl = `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
-    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=4c1d95&data=${encodeURIComponent(qrTargetUrl)}`;
-}
+// توليد بطاقة الطالب على Canvas لتحويلها مباشرة لملف PDF بدقة عالية
+function buildCardImage(studentName) {
+    return new Promise((resolve) => {
+        const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+        const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(studentName)}`;
 
-// دالة الطباعة وتصدير PDF دون نوافذ منبثقة (لا يمكن للمتصفح حظرها)
-function executePdfPrint(cardsHtml, documentTitle) {
-    // إزالة أي إطار طباعة سابق إن وجد
-    const oldFrame = document.getElementById('printPdfIframe');
-    if (oldFrame) oldFrame.remove();
+        const hiddenDiv = document.createElement('div');
+        hiddenDiv.style.position = 'fixed';
+        hiddenDiv.style.left = '-9999px';
+        hiddenDiv.style.top = '-9999px';
+        document.body.appendChild(hiddenDiv);
 
-    const iframe = document.createElement('iframe');
-    iframe.id = 'printPdfIframe';
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
+        new QRCode(hiddenDiv, {
+            text: qrData,
+            width: 260,
+            height: 260,
+            colorDark: '#4c1d95',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
 
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(`
-        <!DOCTYPE html>
-        <html lang="ar" dir="rtl">
-        <head>
-            <meta charset="UTF-8">
-            <title>${documentTitle}</title>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700&display=swap">
-            <style>
-                @page {
-                    size: A4;
-                    margin: 1cm;
-                }
-                * {
-                    box-sizing: border-box;
-                    font-family: 'Tajawal', sans-serif;
-                }
-                body {
-                    margin: 0;
-                    padding: 15px;
-                    background: #ffffff;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    align-items: flex-start;
-                    gap: 20px;
-                }
-                .pdf-card {
-                    width: 270px;
-                    border: 2px solid #ede4ff;
-                    border-radius: 24px;
-                    padding: 20px 15px;
-                    text-align: center;
-                    background: #ffffff;
-                    page-break-inside: avoid;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }
-                .school-title {
-                    font-size: 0.85rem;
-                    color: #7c3aed;
-                    font-weight: 700;
-                    margin-bottom: 12px;
-                }
-                .qr-box {
-                    width: 170px;
-                    height: 170px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #fbf9ff;
-                    border: 1.5px solid #f3ecff;
-                    border-radius: 18px;
-                    padding: 8px;
-                }
-                .qr-box img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                }
-                .st-name {
-                    font-size: 1.15rem;
-                    font-weight: 700;
-                    color: #4c1d95;
-                    margin: 12px 0 4px;
-                }
-                .hint {
-                    font-size: 0.72rem;
-                    color: #8b7db8;
-                }
-            </style>
-        </head>
-        <body>
-            ${cardsHtml}
-        </body>
-        </html>
-    `);
-    doc.close();
-
-    // انتظار جاهزية تحميل الصور ثم فتح خيار الحفظ كـ PDF فوراً
-    iframe.onload = () => {
+        // منح المتصفح وقتاً لرسم الكود
         setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-        }, 300);
-    };
+            const canvasEl = hiddenDiv.querySelector('canvas');
+            const imgEl = hiddenDiv.querySelector('img');
+
+            const drawToCanvas = (qrSource) => {
+                const card = document.createElement('canvas');
+                card.width = 600;
+                card.height = 760;
+                const ctx = card.getContext('2d');
+
+                // خلفية بيضاء مع زوايا ناعمة وإطار
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, card.width, card.height);
+
+                ctx.strokeStyle = '#ede4ff';
+                ctx.lineWidth = 8;
+                ctx.strokeRect(10, 10, card.width - 20, card.height - 20);
+
+                // اسم المدرسة
+                ctx.font = 'bold 24px "Tajawal", Arial, sans-serif';
+                ctx.fillStyle = '#7c3aed';
+                ctx.textAlign = 'center';
+                ctx.fillText('ثانوية هوازن · Hawazen High School', 300, 70);
+
+                // إطار الباركود الداخلي
+                ctx.fillStyle = '#fbf9ff';
+                ctx.fillRect(150, 110, 300, 300);
+                ctx.strokeStyle = '#f3ecff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(150, 110, 300, 300);
+
+                // رسم الباركود
+                ctx.drawImage(qrSource, 170, 130, 260, 260);
+
+                // اسم الطالب
+                ctx.font = 'bold 36px "Tajawal", Arial, sans-serif';
+                ctx.fillStyle = '#4c1d95';
+                ctx.fillText(studentName, 300, 480);
+
+                // التوجيه
+                ctx.font = '22px "Tajawal", Arial, sans-serif';
+                ctx.fillStyle = '#8b7db8';
+                ctx.fillText('امسح للتحقق من الحالة', 300, 540);
+
+                // خط فاصل
+                ctx.strokeStyle = '#ede4ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(100, 600);
+                ctx.lineTo(500, 600);
+                ctx.stroke();
+
+                ctx.font = '18px "Tajawal", Arial, sans-serif';
+                ctx.fillStyle = '#a78bfa';
+                ctx.fillText('نظام إدارة الأجهزة الذكية', 300, 650);
+
+                const dataUri = card.toDataURL('image/png');
+                hiddenDiv.remove();
+                resolve(dataUri);
+            };
+
+            if (canvasEl) {
+                drawToCanvas(canvasEl);
+            } else if (imgEl && imgEl.src) {
+                const img = new Image();
+                img.onload = () => drawToCanvas(img);
+                img.src = imgEl.src;
+            } else {
+                hiddenDiv.remove();
+                resolve(null);
+            }
+        }, 120);
+    });
 }
 
-// تحميل باركود الطالب الفردي
-window.downloadCurrentStudentQRPdf = function() {
+// تحميل PDF لباركود الطالب المعروض في الشاشة
+async function downloadSingleQRPdf() {
     if (!selectedStudent) {
         showToast('يرجى اختيار طالب أولاً', 'error');
         return;
     }
 
-    showToast(`جاري تجهيز باركود ${selectedStudent}...`, 'success');
-    const qrUrl = getQRImageUrl(selectedStudent);
+    try {
+        showToast('جاري إنشاء ملف PDF...', 'success');
+        const cardImg = await buildCardImage(selectedStudent);
+        if (!cardImg) throw new Error('تعذر إنشاء صورة الباركود');
 
-    const cardHtml = `
-        <div class="pdf-card" style="margin-top: 40px;">
-            <div class="school-title">ثانوية هوازن · Hawazen High School</div>
-            <div class="qr-box">
-                <img src="${qrUrl}" alt="${selectedStudent}" />
-            </div>
-            <div class="st-name">${selectedStudent}</div>
-            <div class="hint">امسح للتحقق من الحالة</div>
-        </div>
-    `;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
 
-    executePdfPrint(cardHtml, `باركود_${selectedStudent}`);
-};
+        // محاذاة في وسط ورقة A4
+        pdf.addImage(cardImg, 'PNG', 45, 40, 120, 152);
+        pdf.save(`باركود_${selectedStudent}.pdf`);
+        showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ أثناء تنزيل الـ PDF', 'error');
+    }
+}
 
-// تحميل كافة الباركودات في ملف واحد من الهيدر
-window.downloadAllQRPdf = function() {
+// تحميل كافة باركودات الطلاب في مستند PDF واحد
+async function downloadAllStudentsQRPdf() {
     if (!allStudents || allStudents.length === 0) {
         showToast('لا يوجد طلاب مسجلين للتحميل', 'error');
         return;
     }
 
-    showToast('جاري تحضير ملف PDF لجميع الطلاب...', 'success');
-    let cardsHtml = '';
+    try {
+        showToast('جاري تجميع باركودات الطلاب في ملف PDF...', 'success');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
 
-    allStudents.forEach(student => {
-        const qrUrl = getQRImageUrl(student.name);
-        cardsHtml += `
-            <div class="pdf-card">
-                <div class="school-title">ثانوية هوازن · Hawazen High School</div>
-                <div class="qr-box">
-                    <img src="${qrUrl}" alt="${student.name}" />
-                </div>
-                <div class="st-name">${student.name}</div>
-                <div class="hint">امسح للتحقق من الحالة</div>
-            </div>
-        `;
-    });
+        // تخطيط شبكة 2x2 في الصفحة (4 باركودات لكل صفحة A4)
+        const colPositions = [15, 110];
+        const rowPositions = [15, 150];
+        const cardW = 85;
+        const cardH = 108;
 
-    executePdfPrint(cardsHtml, 'باركودات_جميع_الطلاب');
-};
+        for (let i = 0; i < allStudents.length; i++) {
+            const student = allStudents[i];
+            const slot = i % 4;
+
+            if (i > 0 && slot === 0) {
+                pdf.addPage();
+            }
+
+            const col = slot % 2;
+            const row = Math.floor(slot / 2);
+            const x = colPositions[col];
+            const y = rowPositions[row];
+
+            const cardImg = await buildCardImage(student.name);
+            if (cardImg) {
+                pdf.addImage(cardImg, 'PNG', x, y, cardW, cardH);
+            }
+        }
+
+        pdf.save('باركودات_جميع_الطلاب.pdf');
+        showToast('✅ تم تنزيل ملف PDF لجميع الطلاب', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ أثناء إنشاء الملف', 'error');
+    }
+}
+
+// ربط أزرار التحميل بشكل مباشر بعد تجهيز الصفحة
+function attachDownloadEvents() {
+    const singleBtn = document.getElementById('btnDownloadSingle');
+    const allBtn = document.getElementById('btnDownloadAll');
+
+    if (singleBtn) {
+        singleBtn.onclick = (e) => {
+            e.preventDefault();
+            downloadSingleQRPdf();
+        };
+    }
+
+    if (allBtn) {
+        allBtn.onclick = (e) => {
+            e.preventDefault();
+            downloadAllStudentsQRPdf();
+        };
+    }
+}
 
 // ===== الإشتراك في التغييرات =====
 function subscribeToChanges() {
@@ -649,6 +680,7 @@ function subscribeToChanges() {
 // ===== التهيئة =====
 async function init() {
     console.log('🚀 Musta\'athin initializing...');
+    attachDownloadEvents();
     await loadAllData();
 
     if (allStudents.length > 0) {
@@ -664,6 +696,9 @@ async function init() {
     subscribeToChanges();
     console.log('✅ Ready. Students:', allStudents.length);
 }
+
+// تشغيل ربط الأزرار مسبقاً لحمايتها
+attachDownloadEvents();
 
 // ===== بدء التطبيق =====
 if (sessionStorage.getItem('mustaathin_auth') === 'true') {
