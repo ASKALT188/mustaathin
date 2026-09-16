@@ -8,6 +8,7 @@ const DASHBOARD_PASSWORD = 'nigga1234';
 
 // ===== المتغيرات =====
 let selectedStudent = '';
+let openedStudent = ''; // الطالب اللي فتحنا خياراته
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
@@ -43,29 +44,24 @@ function switchSection(section) {
     if (section === 'download') renderDownloadList();
 
     sessionStorage.setItem('currentSection', section);
-
-    // إغلاق القائمة على الجوال
     closeSidebarOnMobile();
 }
 
-// ===== فتح/إغلاق القائمة (للجوال) =====
+// ===== فتح/إغلاق القائمة =====
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
     document.getElementById('sidebarBackdrop').classList.toggle('open');
 }
 
 function closeSidebarOnMobile() {
-    // فقط على الجوال (أقل من 900px)
     if (window.innerWidth <= 900) {
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarBackdrop').classList.remove('open');
     }
 }
 
-// ===== إغلاق القائمة عند تغيير حجم النافذة =====
 window.addEventListener('resize', () => {
     if (window.innerWidth > 900) {
-        // إذا صار كمبيوتر، اغلق أي حالة فتح
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarBackdrop').classList.remove('open');
     }
@@ -151,6 +147,137 @@ async function addNewStudent() {
     } catch (error) {
         console.error('Add student error:', error);
         showToast('خطأ في الإضافة: ' + error.message, 'error');
+    }
+}
+
+// ===== فتح نافذة خيارات الطالب =====
+function openStudentOptions(name) {
+    if (isProcessing) return;
+    openedStudent = name;
+
+    const student = allStudents.find(s => s.name === name);
+    if (!student) return;
+
+    document.getElementById('optionsStudentName').textContent = name;
+
+    // تحديث الأزرار حسب الحالة الحالية
+    const permitBtn = document.getElementById('permitOptionBtn');
+    const cancelBtn = document.getElementById('cancelOptionBtn');
+
+    if (student.permitted) {
+        permitBtn.classList.add('current');
+        cancelBtn.classList.remove('current');
+    } else {
+        permitBtn.classList.remove('current');
+        cancelBtn.classList.add('current');
+    }
+
+    document.getElementById('studentOptionsModal').classList.add('active');
+}
+
+function closeStudentOptions() {
+    document.getElementById('studentOptionsModal').classList.remove('active');
+    openedStudent = '';
+}
+
+// ===== تغيير حالة الطالب من النافذة =====
+async function setStudentStatus(status) {
+    if (!openedStudent) return;
+    const name = openedStudent;
+    closeStudentOptions();
+    await updateStudentStatus(name, status);
+}
+
+// ===== عرض الباركود من النافذة =====
+function showQrFromModal() {
+    if (!openedStudent) return;
+    const name = openedStudent;
+    closeStudentOptions();
+    selectStudent(name);
+}
+
+// ===== حذف الطالب من النافذة =====
+function deleteStudentFromModal() {
+    if (!openedStudent) return;
+    const name = openedStudent;
+    closeStudentOptions();
+    deleteStudent(name);
+}
+
+// ===== فتح نافذة تعديل الاسم =====
+function openEditNameModal() {
+    if (!openedStudent) return;
+    const name = openedStudent;
+
+    document.getElementById('editStudentName').value = name;
+    document.getElementById('studentOptionsModal').classList.remove('active');
+    document.getElementById('editNameModal').classList.add('active');
+
+    setTimeout(() => {
+        const input = document.getElementById('editStudentName');
+        input.focus();
+        input.select();
+    }, 100);
+}
+
+function closeEditNameModal() {
+    document.getElementById('editNameModal').classList.remove('active');
+    openedStudent = '';
+}
+
+document.getElementById('editStudentName').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') saveEditName();
+});
+
+// ===== حفظ الاسم الجديد =====
+async function saveEditName() {
+    const input = document.getElementById('editStudentName');
+    const newName = input.value.trim();
+    const oldName = openedStudent;
+
+    if (!newName) {
+        showToast('الرجاء إدخال الاسم', 'error');
+        return;
+    }
+
+    if (newName === oldName) {
+        closeEditNameModal();
+        return;
+    }
+
+    if (allStudents.some(s => s.name.toLowerCase() === newName.toLowerCase())) {
+        showToast('هذا الاسم موجود مسبقاً', 'error');
+        return;
+    }
+
+    try {
+        // تحديث في students
+        const { error: updateError } = await supabaseClient
+            .from('students')
+            .update({ name: newName })
+            .eq('name', oldName);
+
+        if (updateError) throw updateError;
+
+        // تحديث في history
+        await supabaseClient
+            .from('history')
+            .update({ student_name: newName })
+            .eq('student_name', oldName);
+
+        // إذا كان الطالب المحدد هو نفسه، حدّث المتغير
+        if (selectedStudent === oldName) {
+            selectedStudent = newName;
+            clearQrDisplay();
+        }
+
+        closeEditNameModal();
+        showToast(`✅ تم تغيير الاسم إلى ${newName}`, 'success');
+        await loadAllData();
+
+    } catch (error) {
+        console.error('Edit name error:', error);
+        showToast('خطأ في التعديل: ' + error.message, 'error');
     }
 }
 
@@ -313,7 +440,7 @@ async function loadAllData() {
     renderDownloadList();
 }
 
-// ===== عرض الطلاب (مرقمة) =====
+// ===== عرض الطلاب (الاسم فقط - بدون أزرار) =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -335,44 +462,28 @@ function renderStudents(students, filter = '') {
         const num = index + 1;
         const isSelected = selectedStudent === s.name;
         const safeName = s.name.replace(/'/g, "\\'");
+        const statusClass = status ? 'permitted' : 'not-permitted';
+        const statusText = status ? 'مسموح' : 'غير مسموح';
 
         html += `
             <div class="student-item ${isSelected ? 'selected' : ''}">
                 <span class="student-number">${num}</span>
 
-                <button class="student-name-btn" onclick="selectStudent('${safeName}')">
+                <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
                     <i class="fas fa-user-graduate"></i>
                     <span>${s.name}</span>
                 </button>
 
-                <div class="status-cell">
-                    <span class="status-text ${status ? 'on' : 'off'}">
-                        ${status ? 'مسموح' : 'غير مسموح'}
-                    </span>
-                    <button class="ios-toggle ${status ? 'on' : ''}" 
-                            onclick="event.stopPropagation(); toggleStatus('${safeName}', ${status})">
-                        <span class="ios-toggle-thumb"></span>
-                    </button>
-                </div>
-
-                <div class="actions">
-                    <button class="btn btn-delete btn-sm" onclick="event.stopPropagation(); deleteStudent('${safeName}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                <span class="status-badge ${statusClass}">
+                    ${status ? '🟢' : '🔴'} ${statusText}
+                </span>
             </div>
         `;
     });
     studentListEl.innerHTML = html;
 }
 
-// ===== تبديل حالة =====
-function toggleStatus(name, currentStatus) {
-    if (isProcessing) return;
-    updateStudentStatus(name, !currentStatus);
-}
-
-// ===== اختيار طالب =====
+// ===== اختيار طالب (لعرض الباركود) =====
 function selectStudent(student) {
     if (isProcessing) return;
     selectedStudent = student;
@@ -396,323 +507,4 @@ function clearQrDisplay() {
             <p>اضغط على اسم الطالب</p>
         </div>
     `;
-    qrStudentName.textContent = 'لم يتم اختيار طالب';
-    qrSub.textContent = 'اختر طالباً من القائمة';
-    verifyName.textContent = '—';
-    verifyStatusBadge.className = 'verify-status';
-    verifyStatusBadge.innerHTML = '—';
-    downloadQrBtn.disabled = true;
-}
-
-// ===== حساب المدة =====
-function getTimeSince(lastPermittedAt) {
-    if (!lastPermittedAt) return null;
-
-    const now = new Date();
-    const localNow = new Date(now.getTime() + (3 * 3600000));
-    const then = new Date(lastPermittedAt);
-    const localThen = new Date(then.getTime() + (3 * 3600000));
-
-    const diffMs = localNow - localThen;
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHours = Math.floor(diffMin / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `${diffDays} يوم ${diffHours % 24} ساعة`;
-    if (diffHours > 0) return `${diffHours} ساعة ${diffMin % 60} دقيقة`;
-    if (diffMin > 0) return `${diffMin} دقيقة ${diffSec % 60} ثانية`;
-    return `${diffSec} ثانية`;
-}
-
-// ===== تحديث QR =====
-function updateQrAndVerification(student, status, lastPermittedAt) {
-    qrStudentName.textContent = student;
-    verifyName.textContent = student;
-    qrSub.textContent = 'امسح الباركود للتحقق';
-
-    qrContainer.innerHTML = '';
-    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-    const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(student)}`;
-
-    new QRCode(qrContainer, {
-        text: qrData,
-        width: 140,
-        height: 140,
-        colorDark: '#4c1d95',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
-    if (status) {
-        verifyStatusBadge.className = 'verify-status permitted';
-        const timeSince = getTimeSince(lastPermittedAt);
-        verifyStatusBadge.innerHTML = `🟢 مسموح · ${timeSince || 'الآن'}`;
-    } else {
-        verifyStatusBadge.className = 'verify-status not-permitted';
-        verifyStatusBadge.innerHTML = '🔴 غير مسموح';
-    }
-
-    downloadQrBtn.disabled = false;
-}
-
-// ===== تحميل باركود واحد =====
-function downloadQr() {
-    if (!selectedStudent) {
-        showToast('اختر طالباً أولاً', 'error');
-        return;
-    }
-
-    const canvas = qrContainer.querySelector('canvas');
-    const img = qrContainer.querySelector('img');
-
-    if (!canvas && !img) {
-        showToast('لا يوجد باركود للتحميل', 'error');
-        return;
-    }
-
-    const link = document.createElement('a');
-    link.download = `QR_${selectedStudent}.png`;
-
-    if (canvas) {
-        link.href = canvas.toDataURL('image/png');
-    } else {
-        link.href = img.src;
-    }
-
-    link.click();
-    showToast(`✅ تم تحميل باركود ${selectedStudent}`, 'success');
-}
-
-// ===== عرض السجلات =====
-function renderLogs() {
-    if (!allHistory || allHistory.length === 0) {
-        logsListEl.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات بعد</div>`;
-        return;
-    }
-
-    let html = '';
-    allHistory.forEach(entry => {
-        const isPermitted = entry.status === 'Permitted';
-        const icon = isPermitted ? '🟢' : '🔴';
-        const statusText = isPermitted ? 'مسموح' : 'غير مسموح';
-        const statusClass = isPermitted ? 'permitted' : 'not-permitted';
-
-        html += `
-            <div class="log-item">
-                <div class="log-item-right">
-                    <div class="log-icon ${statusClass}">
-                        <i class="fas ${isPermitted ? 'fa-check' : 'fa-times'}"></i>
-                    </div>
-                    <div class="log-info">
-                        <div class="log-student">
-                            <i class="fas fa-user-graduate"></i> ${entry.student_name}
-                        </div>
-                        <div class="log-teacher">
-                            <i class="fas fa-chalkboard-teacher"></i> ${entry.teacher}
-                        </div>
-                    </div>
-                </div>
-                <div class="log-item-left">
-                    <span class="status-badge ${statusClass}">${icon} ${statusText}</span>
-                    <span class="log-time-big">
-                        <i class="fas fa-clock"></i> ${entry.timestamp}
-                    </span>
-                </div>
-            </div>
-        `;
-    });
-    logsListEl.innerHTML = html;
-}
-
-// ===== تحميل CSV =====
-function downloadLogs() {
-    if (!allHistory || allHistory.length === 0) {
-        showToast('لا توجد سجلات للتحميل', 'error');
-        return;
-    }
-
-    let csv = '\uFEFF';
-    csv += 'الطالب,الحالة,التاريخ والوقت,المعلم\n';
-
-    allHistory.forEach(entry => {
-        const status = entry.status === 'Permitted' ? 'مسموح' : 'غير مسموح';
-        const student = entry.student_name.replace(/,/g, ' ');
-        const teacher = entry.teacher.replace(/,/g, ' ');
-        csv += `${student},${status},${entry.timestamp},${teacher}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `سجل_العمليات_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-
-    showToast('✅ تم تحميل السجل', 'success');
-}
-
-// ===== عرض قائمة التحميل =====
-function renderDownloadList() {
-    if (!allStudents || allStudents.length === 0) {
-        downloadListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب.</div>`;
-        return;
-    }
-
-    let html = '';
-    allStudents.forEach((s, index) => {
-        const checked = selectedDownloadIds.has(s.id);
-        html += `
-            <label class="download-item ${checked ? 'checked' : ''}" data-id="${s.id}">
-                <input type="checkbox" ${checked ? 'checked' : ''}
-                       onchange="toggleDownloadSelection(${s.id}, this.checked)">
-                <span class="download-check">
-                    <i class="fas fa-check"></i>
-                </span>
-                <span class="download-number">${index + 1}</span>
-                <span class="download-name">
-                    <i class="fas fa-user-graduate"></i> ${s.name}
-                </span>
-            </label>
-        `;
-    });
-    downloadListEl.innerHTML = html;
-    updateSelectedCount();
-}
-
-function toggleDownloadSelection(id, checked) {
-    if (checked) selectedDownloadIds.add(id);
-    else selectedDownloadIds.delete(id);
-
-    const item = document.querySelector(`.download-item[data-id="${id}"]`);
-    if (item) item.classList.toggle('checked', checked);
-
-    updateSelectedCount();
-}
-
-function selectAllStudents() {
-    allStudents.forEach(s => selectedDownloadIds.add(s.id));
-    renderDownloadList();
-}
-
-function deselectAllStudents() {
-    selectedDownloadIds.clear();
-    renderDownloadList();
-}
-
-function updateSelectedCount() {
-    document.getElementById('selectedCount').textContent = selectedDownloadIds.size;
-}
-
-// ===== تحميل المحدد =====
-async function downloadSelectedQr() {
-    if (selectedDownloadIds.size === 0) {
-        showToast('اختر طالباً واحداً على الأقل', 'error');
-        return;
-    }
-
-    const selected = allStudents.filter(s => selectedDownloadIds.has(s.id));
-
-    showToast(`جاري تجهيز ${selected.length} باركود...`, 'success');
-
-    const zip = new JSZip();
-    const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-
-    for (const student of selected) {
-        const tempDiv = document.createElement('div');
-        new QRCode(tempDiv, {
-            text: `${baseUrl}verify.html?student=${encodeURIComponent(student.name)}`,
-            width: 400,
-            height: 400,
-            colorDark: '#4c1d95',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        await new Promise(r => setTimeout(r, 150));
-
-        const canvas = tempDiv.querySelector('canvas');
-        if (canvas) {
-            const base64 = canvas.toDataURL('image/png').split(',')[1];
-            zip.file(`QR_${student.name}.png`, base64, { base64: true });
-        }
-    }
-
-    const content = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
-    link.download = `باركودات_${selected.length}_طالب.zip`;
-    link.click();
-
-    showToast(`✅ تم تحميل ${selected.length} باركود`, 'success');
-}
-
-// ===== فلترة الطلاب =====
-window.filterStudents = function() {
-    renderStudents(allStudents, searchInput.value);
-};
-
-// ===== Realtime =====
-function subscribeToChanges() {
-    supabaseClient
-        .channel('students_changes')
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'students' },
-            async (payload) => {
-                if (payload.eventType === 'DELETE') {
-                    const deletedName = payload.old?.name;
-                    if (deletedName) {
-                        allStudents = allStudents.filter(s => s.name !== deletedName);
-                        if (selectedStudent === deletedName) clearQrDisplay();
-                        renderStudents(allStudents, searchInput.value);
-                        renderDownloadList();
-                    }
-                    return;
-                }
-
-                const updatedStudent = payload.new;
-                if (!updatedStudent) return;
-                const index = allStudents.findIndex(s => s.name === updatedStudent.name);
-                if (index !== -1) {
-                    allStudents[index] = updatedStudent;
-                } else if (payload.eventType === 'INSERT') {
-                    allStudents.push(updatedStudent);
-                }
-                renderStudents(allStudents, searchInput.value);
-                renderDownloadList();
-                if (selectedStudent === updatedStudent.name) {
-                    updateQrAndVerification(updatedStudent.name, updatedStudent.permitted, updatedStudent.last_permitted_at);
-                }
-            }
-        )
-        .subscribe();
-
-    supabaseClient
-        .channel('history_changes')
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'history' },
-            async () => {
-                await fetchHistory();
-                renderLogs();
-            }
-        )
-        .subscribe();
-}
-
-// ===== التهيئة =====
-async function init() {
-    console.log('🚀 ثانوية هوزان');
-    await loadAllData();
-    clearQrDisplay();
-
-    const savedSection = sessionStorage.getItem('currentSection') || 'students';
-    switchSection(savedSection);
-
-    subscribeToChanges();
-    console.log('✅ جاهز');
-}
-
-// ===== بدء التطبيق =====
-if (sessionStorage.getItem('mustaathin_auth') === 'true') {
-    document.getElementById('loginOverlay').style.display = 'none';
-    init();
-}
+    qrStudentName.textContent = 'لم يتم اخت
