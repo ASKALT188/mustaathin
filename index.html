@@ -6,6 +6,7 @@
     <title>لوحة تحكم بأحضار الجهاز الخاصة في ثانوية هوازن</title>
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         .login-overlay {
@@ -116,12 +117,12 @@
     <div class="app-container">
         <header class="school-header">
             <h1><i class="fas fa-graduation-cap"></i>لوحة التحكم</h1>
-            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                <button class="btn add-btn" onclick="openAddModal()">
-                    <i class="fas fa-plus"></i> إضافة طالب
+            <div class="header-actions">
+                <button class="btn add-btn" onclick="downloadAllQRPdf()" title="تحميل كافة الباركودات كملف PDF">
+                    <i class="fas fa-file-pdf"></i> <span class="btn-text">تحميل باركودات الطلاب (PDF)</span>
                 </button>
-                <button class="btn add-btn" id="downloadAllQrBtn" onclick="downloadAllQRCodesPDF()">
-                    <i class="fas fa-file-pdf"></i> تحميل الباركودات
+                <button class="btn add-btn" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
                 </button>
                 <button class="btn btn-qr" onclick="logout()" title="تسجيل الخروج">
                     <i class="fas fa-sign-out-alt"></i>
@@ -161,6 +162,9 @@
                     <div id="qrcode-container"></div>
                     <div class="qr-label" id="qrStudentName">اختر طالباً</div>
                     <div class="qr-sub">امسح للتحقق من الحالة</div>
+                    <button class="btn btn-qr-download" id="btnDownloadSingleQR" onclick="downloadCurrentStudentQRPdf()">
+                        <i class="fas fa-download"></i> تحميل الباركود (PDF)
+                    </button>
                 </div>
 
                 <div class="verification-panel">
@@ -181,9 +185,6 @@
 
     <!-- ✅ المكتبة الرسمية -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- ✅ مكتبات توليد PDF لتحميل جميع باركودات الطلاب -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
