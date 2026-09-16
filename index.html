@@ -83,6 +83,16 @@
         }
         .modal-actions .btn-cancel-modal:hover { background: #ede4ff; }
 
+        /* تعديل حالة الطالب داخل نافذة التعديل */
+        .edit-status-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fbf9ff; padding: 0.85rem 1rem; border-radius: 16px;
+            border: 2px solid #ede4ff; margin-top: 1rem;
+        }
+        .edit-status-row span {
+            font-weight: 700; font-size: 0.9rem; color: #3b1e6b;
+        }
+
         /* نافذة السجل المنبثقة */
         .history-modal-box {
             background: white; border-radius: 28px; padding: 1.5rem;
@@ -144,6 +154,7 @@
         </div>
     </div>
 
+    <!-- نافذة إضافة طالب -->
     <div class="modal-overlay" id="addStudentModal">
         <div class="modal-box">
             <h3><i class="fas fa-user-plus"></i> إضافة طالب جديد</h3>
@@ -156,6 +167,34 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل الطالب -->
+    <div class="modal-overlay" id="editStudentModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-user-edit"></i> تعديل بيانات الطالب</h3>
+            <div class="modal-sub">تعديل الاسم أو تغيير حالة إحضار الجهاز</div>
+            
+            <input type="hidden" id="editOriginalName" />
+            <label style="font-size:0.8rem; font-weight:700; color:#5b21b6; margin-bottom:0.3rem; display:block;">اسم الطالب:</label>
+            <input type="text" id="editStudentName" placeholder="اسم الطالب الكامل" autocomplete="off" />
+
+            <div class="edit-status-row">
+                <span>حالة السماح بالجهاز:</span>
+                <div class="status-cell" style="margin:0;">
+                    <span class="status-text" id="editStatusLabel">غير مسموح</span>
+                    <button class="ios-toggle" id="editStatusToggle" type="button" aria-label="Toggle status">
+                        <span class="ios-toggle-thumb"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-save" onclick="saveStudentEdit()"><i class="fas fa-check"></i> حفظ التعديلات</button>
+                <button class="btn-cancel-modal" onclick="closeEditModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة السجل -->
     <div class="modal-overlay" id="historyModal">
         <div class="history-modal-box">
             <div class="history-modal-header">
@@ -231,7 +270,7 @@
         </div>
 
         <footer class="app-footer">
-            <span>الاصدار : <strong id="appVersion">v1.0.9</strong></span>
+            <span>الاصدار : <strong id="appVersion">v1.1.0</strong></span>
         </footer>
     </div>
 
