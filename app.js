@@ -12,9 +12,7 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* ============================================
-   ===== القائمة الجانبية =====
-   ============================================ */
+/* ===== القائمة الجانبية ===== */
 .sidebar {
     position: fixed;
     top: 0;
@@ -108,13 +106,12 @@ body {
 }
 .sidebar-logout:hover { background: #f5d6d6; }
 
-/* ============================================
-   ===== المحتوى الرئيسي =====
-   ============================================ */
+/* ===== المحتوى الرئيسي ===== */
 .main-content {
     margin-right: 260px;
     min-height: 100vh;
     padding: 1.2rem;
+    padding-bottom: 4rem;
 }
 
 .app-container { max-width: 1320px; width: 100%; }
@@ -146,9 +143,7 @@ body {
     flex-wrap: wrap;
 }
 
-/* ============================================
-   ===== Pages =====
-   ============================================ */
+/* ===== Pages ===== */
 .page-section { display: none; animation: fadeIn 0.3s ease; }
 .page-section.active { display: block; }
 
@@ -157,9 +152,7 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ============================================
-   ===== Card =====
-   ============================================ */
+/* ===== Card ===== */
 .card {
     background: white;
     border-radius: 24px;
@@ -185,11 +178,8 @@ body {
     gap: 0.4rem;
 }
 .card-header h2 i { color: #7c3aed; }
-.card-hint { font-size: 0.7rem; color: #8b7db8; }
 
-/* ============================================
-   ===== Search Box =====
-   ============================================ */
+/* ===== Search Box ===== */
 .search-box {
     display: flex;
     align-items: center;
@@ -225,9 +215,7 @@ body {
     font-size: 0.8rem;
 }
 
-/* ============================================
-   ===== Student List =====
-   ============================================ */
+/* ===== Student List ===== */
 .student-list {
     display: flex;
     flex-direction: column;
@@ -294,9 +282,7 @@ body {
     white-space: nowrap;
 }
 
-/* ============================================
-   ===== Status Badge =====
-   ============================================ */
+/* ===== Status Badge ===== */
 .status-badge {
     padding: 0.25rem 0.8rem;
     border-radius: 40px;
@@ -311,9 +297,7 @@ body {
 .status-badge.permitted { background: #d3f0e5; color: #006b4e; }
 .status-badge.not-permitted { background: #fce8e8; color: #b13e3e; }
 
-/* ============================================
-   ===== Buttons =====
-   ============================================ */
+/* ===== Buttons ===== */
 .btn {
     border: none;
     background: transparent;
@@ -354,7 +338,6 @@ body {
 
 .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.7rem; }
 
-/* أزرار السماح للكل */
 .btn-permit-all {
     background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
     color: white;
@@ -397,16 +380,14 @@ body {
     box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
 }
 
-/* ============================================
-   ===== Logs =====
-   ============================================ */
+/* ===== Logs ===== */
 .logs-card { padding: 1.2rem 1rem; }
 
 .logs-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-height: 75vh;
+    max-height: 70vh;
     overflow-y: auto;
     padding-right: 0.2rem;
     -webkit-overflow-scrolling: touch;
@@ -501,9 +482,7 @@ body {
     text-align: center;
 }
 
-/* ============================================
-   ===== Download List =====
-   ============================================ */
+/* ===== Download List ===== */
 .download-info {
     background: #f7f3ff;
     border: 2px solid #ede4ff;
@@ -600,9 +579,7 @@ body {
 }
 .download-name i { color: #a78bfa; font-size: 0.8rem; }
 
-/* ============================================
-   ===== Student Options Modal =====
-   ============================================ */
+/* ===== Student Options Modal ===== */
 .student-options-box {
     max-width: 480px;
     padding: 2rem 1.5rem 1.5rem;
@@ -691,9 +668,7 @@ body {
 }
 .modal-close-btn:hover { background: #ede4ff; }
 
-/* ============================================
-   ===== QR داخل النافذة =====
-   ============================================ */
+/* ===== QR داخل النافذة ===== */
 .modal-back-btn {
     background: #f7f3ff;
     color: #5b21b6;
@@ -788,9 +763,7 @@ body {
     box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
 }
 
-/* ============================================
-   ===== نافذة التأكيد =====
-   ============================================ */
+/* ===== نافذة التأكيد ===== */
 .confirm-box {
     max-width: 420px;
     text-align: center;
@@ -880,12 +853,10 @@ body {
 }
 .btn-confirm-no:hover { background: #ede4ff; }
 
-/* ============================================
-   ===== Toast =====
-   ============================================ */
+/* ===== Toast ===== */
 .toast-container {
     position: fixed;
-    bottom: 1rem;
+    bottom: 4rem;
     left: 50%;
     transform: translateX(-50%);
     z-index: 999;
@@ -917,9 +888,29 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ============================================
-   ===== Login =====
-   ============================================ */
+/* ===== Footer (حقوق الطبع) ===== */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 260px;
+    background: white;
+    border-top: 2px solid #f3ecff;
+    padding: 0.7rem 1rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #7c3aed;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    box-shadow: 0 -4px 14px rgba(124, 58, 237, 0.06);
+}
+.footer i { color: #a78bfa; }
+
+/* ===== Login ===== */
 .login-overlay {
     position: fixed; inset: 0; background: #ffffff;
     display: flex; justify-content: center; align-items: center;
@@ -956,9 +947,7 @@ body {
 .login-box button:hover { background: #6d28d9; }
 .login-error { color: #b13e3e; font-size: 0.85rem; margin-top: 0.8rem; min-height: 1.2rem; }
 
-/* ============================================
-   ===== Modal =====
-   ============================================ */
+/* ===== Modal ===== */
 .modal-overlay {
     position: fixed; inset: 0; background: rgba(76, 29, 149, 0.35);
     display: none; justify-content: center; align-items: center;
@@ -997,9 +986,7 @@ body {
 }
 .modal-actions .btn-cancel-modal:hover { background: #ede4ff; }
 
-/* ============================================
-   ===== Menu Toggle =====
-   ============================================ */
+/* ===== Menu Toggle ===== */
 .menu-toggle {
     display: none;
     position: fixed;
@@ -1031,9 +1018,7 @@ body {
 }
 .sidebar-backdrop.open { display: block; }
 
-/* ============================================
-   ===== Responsive =====
-   ============================================ */
+/* ===== Responsive ===== */
 @media (max-width: 900px) {
     .sidebar {
         transform: translateX(100%);
@@ -1046,11 +1031,18 @@ body {
         margin-right: 0;
         padding: 1rem;
         padding-top: 4.5rem;
+        padding-bottom: 3.5rem;
     }
 
     .menu-toggle { display: flex; }
 
     .page-title h1 { font-size: 1.1rem; }
+
+    .footer {
+        right: 0;
+        font-size: 0.7rem;
+        padding: 0.6rem 0.8rem;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1089,6 +1081,8 @@ body {
     .confirm-message { font-size: 0.82rem; }
     .btn-confirm-yes,
     .btn-confirm-no { padding: 0.75rem; font-size: 0.85rem; }
+
+    .toast-container { bottom: 3.5rem; }
 }
 
 @media (max-width: 380px) {
