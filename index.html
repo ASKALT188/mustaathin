@@ -119,69 +119,77 @@
     <!-- نافذة خيارات الطالب -->
     <div class="modal-overlay" id="studentOptionsModal">
         <div class="modal-box student-options-box">
-            <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
-            <div class="modal-sub">اختر الإجراء اللي تبيه</div>
+            <!-- العرض الأساسي -->
+            <div id="optionsMainView">
+                <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
+                <div class="modal-sub">اختر الإجراء اللي تبيه</div>
 
-            <div class="student-options">
-                <!-- السماح -->
-                <button class="option-btn permit-option" id="permitOptionBtn" onclick="setStudentStatus(true)">
-                    <div class="option-icon permit">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <div class="option-text">
-                        <strong>سماح</strong>
-                        <span>السماح للطالب بإحضار جهازه</span>
-                    </div>
-                </button>
+                <div class="student-options">
+                    <button class="option-btn permit-option" id="permitOptionBtn" onclick="setStudentStatus(true)">
+                        <div class="option-icon permit"><i class="fas fa-check"></i></div>
+                        <div class="option-text">
+                            <strong>سماح</strong>
+                            <span>السماح للطالب بإحضار جهازه</span>
+                        </div>
+                    </button>
 
-                <!-- عدم السماح -->
-                <button class="option-btn cancel-option" id="cancelOptionBtn" onclick="setStudentStatus(false)">
-                    <div class="option-icon cancel">
-                        <i class="fas fa-times"></i>
-                    </div>
-                    <div class="option-text">
-                        <strong>غير مسموح</strong>
-                        <span>منع الطالب من إحضار جهازه</span>
-                    </div>
-                </button>
+                    <button class="option-btn cancel-option" id="cancelOptionBtn" onclick="setStudentStatus(false)">
+                        <div class="option-icon cancel"><i class="fas fa-times"></i></div>
+                        <div class="option-text">
+                            <strong>غير مسموح</strong>
+                            <span>منع الطالب من إحضار جهازه</span>
+                        </div>
+                    </button>
 
-                <!-- عرض الباركود -->
-                <button class="option-btn qr-option" onclick="showQrFromModal()">
-                    <div class="option-icon qr">
-                        <i class="fas fa-qrcode"></i>
-                    </div>
-                    <div class="option-text">
-                        <strong>عرض الباركود</strong>
-                        <span>عرض باركود الطالب</span>
-                    </div>
-                </button>
+                    <button class="option-btn qr-option" onclick="showQrInsideModal()">
+                        <div class="option-icon qr"><i class="fas fa-qrcode"></i></div>
+                        <div class="option-text">
+                            <strong>عرض الباركود</strong>
+                            <span>عرض باركود الطالب</span>
+                        </div>
+                    </button>
 
-                <!-- تعديل الاسم -->
-                <button class="option-btn edit-option" onclick="openEditNameModal()">
-                    <div class="option-icon edit">
-                        <i class="fas fa-pen"></i>
-                    </div>
-                    <div class="option-text">
-                        <strong>تعديل الاسم</strong>
-                        <span>تغيير اسم الطالب</span>
-                    </div>
-                </button>
+                    <button class="option-btn edit-option" onclick="openEditNameModal()">
+                        <div class="option-icon edit"><i class="fas fa-pen"></i></div>
+                        <div class="option-text">
+                            <strong>تعديل الاسم</strong>
+                            <span>تغيير اسم الطالب</span>
+                        </div>
+                    </button>
 
-                <!-- حذف -->
-                <button class="option-btn delete-option" onclick="deleteStudentFromModal()">
-                    <div class="option-icon delete">
-                        <i class="fas fa-trash"></i>
-                    </div>
-                    <div class="option-text">
-                        <strong>حذف الطالب</strong>
-                        <span>حذف الطالب نهائياً</span>
-                    </div>
+                    <button class="option-btn delete-option" onclick="deleteStudentFromModal()">
+                        <div class="option-icon delete"><i class="fas fa-trash"></i></div>
+                        <div class="option-text">
+                            <strong>حذف الطالب</strong>
+                            <span>حذف الطالب نهائياً</span>
+                        </div>
+                    </button>
+                </div>
+
+                <button class="modal-close-btn" onclick="closeStudentOptions()">
+                    <i class="fas fa-times"></i> إغلاق
                 </button>
             </div>
 
-            <button class="modal-close-btn" onclick="closeStudentOptions()">
-                <i class="fas fa-times"></i> إغلاق
-            </button>
+            <!-- عرض الباركود داخل النافذة -->
+            <div id="optionsQrView" style="display: none;">
+                <button class="modal-back-btn" onclick="backToOptions()">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </button>
+
+                <h3><i class="fas fa-qrcode"></i> باركود الطالب</h3>
+                <div class="modal-sub">امسح الباركود للتحقق</div>
+
+                <div class="modal-qr-preview">
+                    <div id="modalQrContainer"></div>
+                    <div class="modal-qr-name" id="modalQrName">—</div>
+                    <div class="modal-qr-status" id="modalQrStatus">—</div>
+                </div>
+
+                <button class="btn-download-qr modal-download-btn" onclick="downloadQrFromModal()">
+                    <i class="fas fa-download"></i> تحميل الباركود
+                </button>
+            </div>
         </div>
     </div>
 
