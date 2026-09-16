@@ -116,6 +116,88 @@
         </div>
     </div>
 
+    <!-- نافذة خيارات الطالب -->
+    <div class="modal-overlay" id="studentOptionsModal">
+        <div class="modal-box student-options-box">
+            <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
+            <div class="modal-sub">اختر الإجراء اللي تبيه</div>
+
+            <div class="student-options">
+                <!-- السماح -->
+                <button class="option-btn permit-option" id="permitOptionBtn" onclick="setStudentStatus(true)">
+                    <div class="option-icon permit">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="option-text">
+                        <strong>سماح</strong>
+                        <span>السماح للطالب بإحضار جهازه</span>
+                    </div>
+                </button>
+
+                <!-- عدم السماح -->
+                <button class="option-btn cancel-option" id="cancelOptionBtn" onclick="setStudentStatus(false)">
+                    <div class="option-icon cancel">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="option-text">
+                        <strong>غير مسموح</strong>
+                        <span>منع الطالب من إحضار جهازه</span>
+                    </div>
+                </button>
+
+                <!-- عرض الباركود -->
+                <button class="option-btn qr-option" onclick="showQrFromModal()">
+                    <div class="option-icon qr">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <div class="option-text">
+                        <strong>عرض الباركود</strong>
+                        <span>عرض باركود الطالب</span>
+                    </div>
+                </button>
+
+                <!-- تعديل الاسم -->
+                <button class="option-btn edit-option" onclick="openEditNameModal()">
+                    <div class="option-icon edit">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                    <div class="option-text">
+                        <strong>تعديل الاسم</strong>
+                        <span>تغيير اسم الطالب</span>
+                    </div>
+                </button>
+
+                <!-- حذف -->
+                <button class="option-btn delete-option" onclick="deleteStudentFromModal()">
+                    <div class="option-icon delete">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                    <div class="option-text">
+                        <strong>حذف الطالب</strong>
+                        <span>حذف الطالب نهائياً</span>
+                    </div>
+                </button>
+            </div>
+
+            <button class="modal-close-btn" onclick="closeStudentOptions()">
+                <i class="fas fa-times"></i> إغلاق
+            </button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل اسم الطالب -->
+    <div class="modal-overlay" id="editNameModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-pen"></i> تعديل اسم الطالب</h3>
+            <div class="modal-sub">سيتم تحديث الاسم في القائمة والباركود</div>
+            <input type="text" id="editStudentName" placeholder="الاسم الجديد" autocomplete="off" />
+            <div class="modal-actions">
+                <button class="btn-save" onclick="saveEditName()"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn-cancel-modal" onclick="closeEditNameModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== القائمة الجانبية ===== -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -195,7 +277,7 @@
                                 </div>
                             </div>
                             <div class="qr-label" id="qrStudentName">لم يتم اختيار طالب</div>
-                            <div class="qr-sub" id="qrSub">اختر طالباً من القائمة</div>
+                            <div class="qr-sub" id="qrSub">اضغط على اسم الطالب لعرض الباركود</div>
                             <button class="btn-download-qr" id="downloadQrBtn" onclick="downloadQr()" disabled>
                                 <i class="fas fa-download"></i> تحميل الباركود
                             </button>
