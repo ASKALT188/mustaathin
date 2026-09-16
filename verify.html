@@ -37,10 +37,11 @@
             margin-bottom: 2rem;
         }
         .verify-student-name {
-            font-size: 2.8rem;
+            font-size: 2.4rem;
             font-weight: 700;
             color: #3b1e6b;
             margin: 1rem 0 0.5rem;
+            word-break: break-word;
         }
         .verify-status-large {
             display: inline-block;
@@ -98,7 +99,7 @@
         }
         @media (max-width: 500px) {
             .verify-card { padding: 2rem 1.5rem; }
-            .verify-student-name { font-size: 2rem; }
+            .verify-student-name { font-size: 1.8rem; }
             .verify-status-large { font-size: 1.2rem; padding: 0.4rem 1.8rem; }
             .verify-time { font-size: 0.9rem; }
         }
@@ -124,7 +125,17 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const studentName = urlParams.get('student');
+        let rawStudent = urlParams.get('student');
+        let studentName = null;
+
+        if (rawStudent) {
+            try {
+                // فك التشفير بأمان سواء كان مرمزاً مرة أو مرتين
+                studentName = decodeURIComponent(rawStudent.trim());
+            } catch (e) {
+                studentName = rawStudent.trim();
+            }
+        }
 
         function getTimeSince(lastPermittedAt) {
             if (!lastPermittedAt) return null;
@@ -150,7 +161,7 @@
             if (!timeEl || !lastPermittedAt) return;
             const timeStr = getTimeSince(lastPermittedAt);
             if (timeStr) {
-                timeEl.innerHTML = `<i class="fas fa-clock"></i> مستأذن منذ ${timeStr}`;
+                timeEl.innerHTML = `<i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}`;
             }
         }
 
@@ -162,6 +173,9 @@
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i> باركود غير صالح
                     </div>
+                    <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.9rem;">
+                        لم يتم العثور على اسم الطالب في الرابط.
+                    </p>
                 `;
                 return;
             }
@@ -179,7 +193,7 @@
                             <i class="fas fa-exclamation-triangle"></i> الطالب غير موجود
                         </div>
                         <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.9rem;">
-                            الباركود لا يتوافق مع أي طالب مسجل.
+                            الباركود لا يتوافق مع أي طالب مسجل (${studentName}).
                         </p>
                     `;
                     return;
@@ -228,7 +242,7 @@
                 const timeStr = getTimeSince(lastPermittedAt);
                 timeHtml = `
                     <div class="verify-time" id="timeDisplay">
-                        <i class="fas fa-clock"></i> مسموح بحضار جهازه منذ ${timeStr}
+                        <i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}
                     </div>
                 `;
             }
@@ -238,7 +252,7 @@
                 <div class="verify-status-large ${statusClass}">${statusIcon} ${statusText}</div>
                 ${timeHtml}
                 <div class="verify-timestamp">
-                    <i class="fas fa-check-circle"></i> تم التحديث بواسطة: محمد ماهر
+                    <i class="fas fa-check-circle"></i> تم التحديث بواسطة: محمد ماهر او عبدالله العوض
                 </div>
                 <div class="refresh-indicator">
                     <i class="fas fa-sync-alt fa-fw"></i> يتم التحديث تلقائياً
