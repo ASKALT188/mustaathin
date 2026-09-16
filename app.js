@@ -9,7 +9,7 @@ const DASHBOARD_PASSWORD = 'nigga1234';
 // ===== المتغيرات العامة =====
 let selectedStudent = '';
 let isProcessing = false;
-const currentTeacher = 'عبد الحكيم';
+const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
 
 // DOM refs
