@@ -267,7 +267,7 @@ async function loadAllData() {
     renderHistory(history);
 }
 
-// ===== عرض الطلاب (مع السويتش) =====
+// ===== عرض الطلاب (مع السويتش الاحترافي) =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -291,18 +291,17 @@ function renderStudents(students, filter = '') {
             <div class="student-item" data-student="${s.name}">
                 <span class="student-name"><i class="fas fa-user-graduate"></i> ${s.name}</span>
 
-                <label class="status-switch">
-                    <input type="checkbox" 
-                           data-action="toggle" 
-                           data-student="${s.name}" 
-                           ${status ? 'checked' : ''}>
-                    <span class="switch-track">
-                        <span class="switch-thumb"></span>
+                <button class="toggle-btn ${status ? 'on' : 'off'}" 
+                        data-action="toggle" 
+                        data-student="${s.name}"
+                        data-status="${status}">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb">
+                            <span class="toggle-icon">${status ? '✓' : '✕'}</span>
+                        </span>
                     </span>
-                    <span class="switch-label ${status ? 'on' : 'off'}">
-                        ${status ? '🟢 مسموح' : '🔴 غير مسموح'}
-                    </span>
-                </label>
+                    <span class="toggle-text">${status ? 'مسموح' : 'غير مسموح'}</span>
+                </button>
 
                 <div class="actions">
                     <button class="btn btn-qr btn-sm" data-action="viewqr" data-student="${s.name}">
@@ -331,16 +330,14 @@ function renderStudents(students, filter = '') {
         });
     });
 
-    // ربط السويتشات
-    document.querySelectorAll('.status-switch input[type="checkbox"]').forEach(input => {
-        input.addEventListener('change', function(e) {
+    // ربط زر السويتش
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (isProcessing) {
-                this.checked = !this.checked;
-                return;
-            }
+            if (isProcessing) return;
             const student = this.dataset.student;
-            const newStatus = this.checked;
+            const currentStatus = this.dataset.status === 'true';
+            const newStatus = !currentStatus;
             updateStudentStatus(student, newStatus);
         });
     });
