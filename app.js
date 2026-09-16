@@ -1,6 +1,6 @@
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_--XcbwwHbb_MD3itNqAW3Q_V7yfBDH7';
+const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== كلمة المرور =====
