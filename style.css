@@ -536,6 +536,27 @@ body {
 }
 
 /* ============================================
+   ===== App Footer (Version) =====
+   ============================================ */
+.app-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    padding: 0.8rem;
+    color: #8b7db8;
+    font-size: 0.8rem;
+    border-top: 1.5px solid #f3ecff;
+}
+
+.app-footer strong {
+    color: #7c3aed;
+    background: #f7f3ff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    border: 1px solid #ede4ff;
+    margin-right: 0.25rem;
+}
+
+/* ============================================
    ===== Toast =====
    ============================================ */
 .toast-container {
