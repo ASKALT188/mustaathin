@@ -1,10 +1,13 @@
 // ===== تكوين Supabase =====
 const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
+const SUPABASE_ANON_KEY = 'sb_publishable_--XcbwwHbb_MD3itNqAW3Q_V7yfBDH7';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ===== كلمة المرور =====
+const DASHBOARD_PASSWORD = 'nigga1234';
+
 // ===== المتغيرات العامة =====
-let selectedStudent = 'Haider';
+let selectedStudent = '';
 let isProcessing = false;
 const currentTeacher = 'عبد الحكيم';
 let allStudents = [];
@@ -18,6 +21,125 @@ const verifyName = document.getElementById('verifyName');
 const verifyStatusBadge = document.getElementById('verifyStatusBadge');
 const searchInput = document.getElementById('searchInput');
 const toastContainer = document.getElementById('toastContainer');
+
+// ===== التحقق من كلمة المرور =====
+function checkPassword() {
+    const input = document.getElementById('passwordInput');
+    const errorEl = document.getElementById('loginError');
+    const overlay = document.getElementById('loginOverlay');
+
+    if (input.value === DASHBOARD_PASSWORD) {
+        sessionStorage.setItem('mustaathin_auth', 'true');
+        overlay.style.display = 'none';
+        errorEl.textContent = '';
+        input.value = '';
+        init();
+    } else {
+        errorEl.textContent = '❌ كلمة المرور غير صحيحة';
+        input.value = '';
+        input.focus();
+        input.style.borderColor = '#b13e3e';
+        setTimeout(() => input.style.borderColor = '#ede4ff', 800);
+    }
+}
+
+document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkPassword();
+});
+
+// ===== تسجيل الخروج =====
+function logout() {
+    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+    sessionStorage.removeItem('mustaathin_auth');
+    location.reload();
+}
+
+// ===== نافذة إضافة طالب =====
+function openAddModal() {
+    document.getElementById('addStudentModal').classList.add('active');
+    document.getElementById('newStudentName').value = '';
+    setTimeout(() => document.getElementById('newStudentName').focus(), 100);
+}
+
+function closeAddModal() {
+    document.getElementById('addStudentModal').classList.remove('active');
+}
+
+document.getElementById('newStudentName').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addNewStudent();
+});
+
+// ===== إضافة طالب جديد =====
+async function addNewStudent() {
+    const nameInput = document.getElementById('newStudentName');
+    const name = nameInput.value.trim();
+
+    if (!name) {
+        showToast('الرجاء إدخال اسم الطالب', 'error');
+        return;
+    }
+
+    if (allStudents.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        showToast('هذا الطالب موجود مسبقاً', 'error');
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .insert([{
+                name: name,
+                permitted: false,
+                last_permitted_at: null
+            }]);
+
+        if (error) throw error;
+
+        closeAddModal();
+        showToast(`✅ تم إضافة ${name}`, 'success');
+        await loadAllData();
+        selectStudent(name);
+    } catch (error) {
+        console.error('Add student error:', error);
+        showToast('خطأ في الإضافة: ' + error.message, 'error');
+    }
+}
+
+// ===== حذف طالب =====
+async function deleteStudent(name) {
+    if (!confirm(`هل أنت متأكد من حذف "${name}"؟\n\nسيتم حذف الطالب وسجله نهائياً.`)) return;
+
+    try {
+        const { error: deleteError } = await supabaseClient
+            .from('students')
+            .delete()
+            .eq('name', name);
+
+        if (deleteError) throw deleteError;
+
+        await supabaseClient
+            .from('history')
+            .delete()
+            .eq('student_name', name);
+
+        showToast(`🗑️ تم حذف ${name}`, 'error');
+
+        if (selectedStudent === name) {
+            selectedStudent = '';
+            qrContainer.innerHTML = '';
+            qrStudentName.textContent = 'اختر طالباً';
+            verifyName.textContent = 'اختر طالباً';
+            verifyStatusBadge.className = 'verify-status';
+            verifyStatusBadge.innerHTML = '—';
+        }
+
+        await loadAllData();
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('خطأ في الحذف: ' + error.message, 'error');
+    }
+}
 
 // ===== Toast =====
 function showToast(message, type = 'success') {
@@ -33,23 +155,16 @@ function showToast(message, type = 'success') {
 // ===== جلب الطلاب =====
 async function fetchStudents() {
     try {
-        console.log('🔍 Fetching students from Supabase...');
         const { data, error } = await supabaseClient
             .from('students')
             .select('*')
             .order('name');
 
-        if (error) {
-            console.error('❌ Supabase error:', error);
-            throw error;
-        }
-        
-        console.log('✅ Students loaded:', data);
+        if (error) throw error;
         allStudents = data;
         return data;
     } catch (error) {
-        console.error('❌ Fetch error:', error);
-        showToast('Error loading students: ' + error.message, 'error');
+        showToast('خطأ في تحميل الطلاب: ' + error.message, 'error');
         return [];
     }
 }
@@ -92,21 +207,15 @@ async function updateStudentStatus(name, status) {
     isProcessing = true;
 
     try {
-        // الحصول على الوقت بالتوقيت المحلي (السعودية +3)
         const now = new Date();
-        const localTime = new Date(now.getTime() + (3 * 3600000)); // إضافة 3 ساعات
-        
+        const localTime = new Date(now.getTime() + (3 * 3600000));
+
         const timestamp = localTime.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
             hour12: false
         });
 
-        // تحديث حالة الطالب مع وقت الإذن (بالتوقيت المحلي)
         const updateData = { permitted: status };
         if (status === true) {
             updateData.last_permitted_at = localTime.toISOString();
@@ -132,10 +241,10 @@ async function updateStudentStatus(name, status) {
 
         if (historyError) throw historyError;
 
-        showToast(`${name} ${status ? 'Permitted ✓' : 'Cancelled ✗'}`, status ? 'success' : 'error');
-        
+        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
+
         await loadAllData();
-        
+
         if (selectedStudent === name) {
             const studentData = await fetchStudentStatus(name);
             if (studentData) {
@@ -144,11 +253,9 @@ async function updateStudentStatus(name, status) {
         }
 
     } catch (error) {
-        showToast('Error updating status: ' + error.message, 'error');
+        showToast('خطأ في التحديث: ' + error.message, 'error');
     } finally {
-        setTimeout(() => {
-            isProcessing = false;
-        }, 300);
+        setTimeout(() => { isProcessing = false; }, 300);
     }
 }
 
@@ -156,7 +263,6 @@ async function updateStudentStatus(name, status) {
 async function loadAllData() {
     const students = await fetchStudents();
     const history = await fetchHistory();
-    
     renderStudents(students, searchInput.value);
     renderHistory(history);
 }
@@ -164,7 +270,7 @@ async function loadAllData() {
 // ===== عرض الطلاب =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
-        studentListEl.innerHTML = `<div class="loading-message">No students found. Please check database.</div>`;
+        studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
         return;
     }
 
@@ -173,30 +279,33 @@ function renderStudents(students, filter = '') {
     );
 
     if (filtered.length === 0 && students.length > 0) {
-        studentListEl.innerHTML = `<div class="loading-message">No students match "${filter}"</div>`;
+        studentListEl.innerHTML = `<div class="loading-message">لا يوجد نتائج لـ "${filter}"</div>`;
         return;
     }
 
     let html = '';
     filtered.forEach(s => {
         const status = s.permitted === true;
-        const statusText = status ? 'Permitted' : 'Not Permitted';
+        const statusText = status ? 'مسموح' : 'غير مسموح';
         const statusClass = status ? 'permitted' : 'not-permitted';
         const statusIcon = status ? '🟢' : '🔴';
-        
+
         html += `
             <div class="student-item" data-student="${s.name}">
                 <span class="student-name"><i class="fas fa-user-graduate"></i> ${s.name}</span>
                 <span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span>
                 <div class="actions">
                     <button class="btn btn-permit btn-sm" data-action="permit" data-student="${s.name}" ${status ? 'disabled' : ''}>
-                        <i class="fas fa-check"></i> Permit
+                        <i class="fas fa-check"></i> سماح
                     </button>
                     <button class="btn btn-cancel btn-sm" data-action="cancel" data-student="${s.name}" ${!status ? 'disabled' : ''}>
-                        <i class="fas fa-times"></i> Cancel
+                        <i class="fas fa-times"></i> إلغاء
                     </button>
                     <button class="btn btn-qr btn-sm" data-action="viewqr" data-student="${s.name}">
                         <i class="fas fa-qrcode"></i>
+                    </button>
+                    <button class="btn btn-delete btn-sm" data-action="delete" data-student="${s.name}">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
@@ -211,38 +320,31 @@ function renderStudents(students, filter = '') {
             const action = this.dataset.action;
             const student = this.dataset.student;
             if (!student) return;
-            if (action === 'permit') {
-                updateStudentStatus(student, true);
-            } else if (action === 'cancel') {
-                updateStudentStatus(student, false);
-            } else if (action === 'viewqr') {
-                selectStudent(student);
-            }
+            if (action === 'permit') updateStudentStatus(student, true);
+            else if (action === 'cancel') updateStudentStatus(student, false);
+            else if (action === 'viewqr') selectStudent(student);
+            else if (action === 'delete') deleteStudent(student);
         });
     });
 
     document.querySelectorAll('.student-item').forEach(el => {
-        if (el.dataset.student === selectedStudent) {
-            el.style.background = '#e6f0fa';
-        } else {
-            el.style.background = '';
-        }
+        el.style.background = (el.dataset.student === selectedStudent) ? '#f3ecff' : '';
     });
 }
 
 // ===== عرض السجل =====
 function renderHistory(history) {
     if (!history || history.length === 0) {
-        historyContainer.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> No actions yet</div>`;
+        historyContainer.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عمليات بعد</div>`;
         return;
     }
-    
+
     let html = '';
     history.slice(0, 10).forEach(entry => {
         const icon = entry.status === 'Permitted' ? '🟢' : '🔴';
         html += `
             <div class="log-entry">
-                <span><strong>${entry.student_name}</strong> ${icon} ${entry.status}</span>
+                <span><strong>${entry.student_name}</strong> ${icon} ${entry.status === 'Permitted' ? 'مسموح' : 'غير مسموح'}</span>
                 <span class="log-time">${entry.timestamp} · <span class="teacher-tag">${entry.teacher}</span></span>
             </div>
         `;
@@ -259,24 +361,21 @@ function selectStudent(student) {
         updateQrAndVerification(student, studentData.permitted, studentData.last_permitted_at);
     } else {
         fetchStudentStatus(student).then(data => {
-            if (data) {
-                updateQrAndVerification(student, data.permitted, data.last_permitted_at);
-            }
+            if (data) updateQrAndVerification(student, data.permitted, data.last_permitted_at);
         });
     }
     renderStudents(allStudents, searchInput.value);
 }
 
-// ===== حساب المدة منذ الإذن (توقيت السعودية) =====
+// ===== حساب المدة =====
 function getTimeSince(lastPermittedAt) {
     if (!lastPermittedAt) return null;
-    
+
     const now = new Date();
-    // إضافة 3 ساعات للتوقيت السعودي
     const localNow = new Date(now.getTime() + (3 * 3600000));
     const then = new Date(lastPermittedAt);
     const localThen = new Date(then.getTime() + (3 * 3600000));
-    
+
     const diffMs = localNow - localThen;
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
@@ -297,12 +396,12 @@ function updateQrAndVerification(student, status, lastPermittedAt) {
     qrContainer.innerHTML = '';
     const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
     const qrData = `${baseUrl}verify.html?student=${encodeURIComponent(student)}`;
-    
+
     new QRCode(qrContainer, {
         text: qrData,
         width: 140,
         height: 140,
-        colorDark: '#0b2b4a',
+        colorDark: '#4c1d95',
         colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.H
     });
@@ -310,10 +409,10 @@ function updateQrAndVerification(student, status, lastPermittedAt) {
     if (status) {
         verifyStatusBadge.className = 'verify-status permitted';
         const timeSince = getTimeSince(lastPermittedAt);
-        verifyStatusBadge.innerHTML = `🟢 Permitted · ${timeSince}`;
+        verifyStatusBadge.innerHTML = `🟢 مسموح · ${timeSince || 'الآن'}`;
     } else {
         verifyStatusBadge.className = 'verify-status not-permitted';
-        verifyStatusBadge.innerHTML = '🔴 Not Permitted';
+        verifyStatusBadge.innerHTML = '🔴 غير مسموح';
     }
 }
 
@@ -326,18 +425,25 @@ window.filterStudents = function() {
 function subscribeToChanges() {
     supabaseClient
         .channel('students_changes')
-        .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'students'
-            },
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'students' },
             async (payload) => {
+                if (payload.eventType === 'DELETE') {
+                    const deletedName = payload.old?.name;
+                    if (deletedName) {
+                        allStudents = allStudents.filter(s => s.name !== deletedName);
+                        renderStudents(allStudents, searchInput.value);
+                    }
+                    return;
+                }
+
                 const updatedStudent = payload.new;
+                if (!updatedStudent) return;
                 const index = allStudents.findIndex(s => s.name === updatedStudent.name);
                 if (index !== -1) {
                     allStudents[index] = updatedStudent;
+                } else if (payload.eventType === 'INSERT') {
+                    allStudents.push(updatedStudent);
                 }
                 renderStudents(allStudents, searchInput.value);
                 if (selectedStudent === updatedStudent.name) {
@@ -349,13 +455,8 @@ function subscribeToChanges() {
 
     supabaseClient
         .channel('history_changes')
-        .on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'history'
-            },
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'history' },
             async () => {
                 const history = await fetchHistory();
                 renderHistory(history);
@@ -367,21 +468,24 @@ function subscribeToChanges() {
 // ===== التهيئة =====
 async function init() {
     console.log('🚀 Musta\'athin initializing...');
-    console.log('👨‍🏫 Teacher:', currentTeacher);
-    console.log('🔑 Using Supabase URL:', SUPABASE_URL);
-    
     await loadAllData();
-    
+
     if (allStudents.length > 0) {
-        const firstStudent = allStudents[0];
-        selectStudent(firstStudent.name);
+        selectStudent(allStudents[0].name);
+    } else {
+        qrContainer.innerHTML = '';
+        qrStudentName.textContent = 'اختر طالباً';
+        verifyName.textContent = 'اختر طالباً';
+        verifyStatusBadge.className = 'verify-status';
+        verifyStatusBadge.innerHTML = '—';
     }
-    
+
     subscribeToChanges();
-    
-    console.log('✅ Musta\'athin initialized');
-    console.log('📊 Students:', allStudents.length);
+    console.log('✅ Ready. Students:', allStudents.length);
 }
 
-// بدء التطبيق
-init();
+// ===== بدء التطبيق =====
+if (sessionStorage.getItem('mustaathin_auth') === 'true') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    init();
+}
