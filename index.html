@@ -122,22 +122,22 @@
         <div class="modal-box student-options-box">
             <div id="optionsMainView">
                 <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
-                <div class="modal-sub">اختر الإجراء اللي تبيه</div>
+                <div class="modal-sub" id="optionsSubTitle">اختر الإجراء اللي تبيه</div>
 
                 <div class="student-options">
                     <button class="option-btn permit-option" id="permitOptionBtn" onclick="setStudentStatus(true)">
                         <div class="option-icon permit"><i class="fas fa-check"></i></div>
                         <div class="option-text">
-                            <strong>سماح</strong>
-                            <span>السماح للطالب بإحضار جهازه</span>
+                            <strong id="permitBtnTitle">سماح</strong>
+                            <span id="permitBtnSub">السماح للطالب</span>
                         </div>
                     </button>
 
                     <button class="option-btn cancel-option" id="cancelOptionBtn" onclick="setStudentStatus(false)">
                         <div class="option-icon cancel"><i class="fas fa-times"></i></div>
                         <div class="option-text">
-                            <strong>غير مسموح</strong>
-                            <span>منع الطالب من إحضار جهازه</span>
+                            <strong id="cancelBtnTitle">غير مسموح</strong>
+                            <span id="cancelBtnSub">منع الطالب</span>
                         </div>
                     </button>
 
@@ -300,15 +300,15 @@
                 </div>
             </div>
 
-            <!-- قسم طلاب الاستئذان -->
+            <!-- قسم طلاب الاستئذان (بدون إضافة طالب) -->
             <div class="page-section" id="pageIstiathan">
                 <div class="page-title">
                     <h1><i class="fas fa-user-clock"></i> طلاب الاستئذان</h1>
                     <div class="page-actions">
-                        <button class="btn btn-permit-all" onclick="setAllStatus(true)">
+                        <button class="btn btn-permit-all" onclick="setAllIstiathanStatus(true)">
                             <i class="fas fa-check-double"></i> <span class="btn-text">سماح للكل</span>
                         </button>
-                        <button class="btn btn-cancel-all" onclick="setAllStatus(false)">
+                        <button class="btn btn-cancel-all" onclick="setAllIstiathanStatus(false)">
                             <i class="fas fa-times-circle"></i> <span class="btn-text">غير سماح للكل</span>
                         </button>
                     </div>
