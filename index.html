@@ -233,8 +233,12 @@
 
         <nav class="sidebar-nav">
             <button class="sidebar-item active" id="navStudents" onclick="switchSection('students')">
-                <i class="fas fa-users"></i>
-                <span>كشف الطلاب</span>
+                <i class="fas fa-mobile-alt"></i>
+                <span>سماح إحضار الأجهزة</span>
+            </button>
+            <button class="sidebar-item" id="navIstiathan" onclick="switchSection('istiathan')">
+                <i class="fas fa-user-clock"></i>
+                <span>طلاب الاستئذان</span>
             </button>
             <button class="sidebar-item" id="navLogs" onclick="switchSection('logs')">
                 <i class="fas fa-clipboard-list"></i>
@@ -264,10 +268,10 @@
     <main class="main-content">
         <div class="app-container">
 
-            <!-- قسم كشف الطلاب -->
+            <!-- قسم سماح إحضار الأجهزة -->
             <div class="page-section active" id="pageStudents">
                 <div class="page-title">
-                    <h1><i class="fas fa-users"></i> كشف الطلاب</h1>
+                    <h1><i class="fas fa-mobile-alt"></i> سماح إحضار الأجهزة</h1>
                     <div class="page-actions">
                         <button class="btn btn-permit-all" onclick="setAllStatus(true)">
                             <i class="fas fa-check-double"></i> <span class="btn-text">سماح للكل</span>
@@ -291,6 +295,35 @@
                     </div>
 
                     <div class="student-list" id="studentList">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم طلاب الاستئذان -->
+            <div class="page-section" id="pageIstiathan">
+                <div class="page-title">
+                    <h1><i class="fas fa-user-clock"></i> طلاب الاستئذان</h1>
+                    <div class="page-actions">
+                        <button class="btn btn-permit-all" onclick="setAllStatus(true)">
+                            <i class="fas fa-check-double"></i> <span class="btn-text">سماح للكل</span>
+                        </button>
+                        <button class="btn btn-cancel-all" onclick="setAllStatus(false)">
+                            <i class="fas fa-times-circle"></i> <span class="btn-text">غير سماح للكل</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-list"></i> قائمة الاستئذان</h2>
+                        <div class="search-box">
+                            <input type="text" id="searchInputIstiathan" placeholder="ابحث..." oninput="filterStudentsIstiathan()" />
+                            <button><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="student-list" id="studentListIstiathan">
                         <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                     </div>
                 </div>
