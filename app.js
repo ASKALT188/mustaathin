@@ -8,6 +8,7 @@ const DASHBOARD_PASSWORD = 'HA20ZN30';
 
 // ===== المتغيرات =====
 let openedStudent = '';
+let openedStudentMode = 'devices'; // 'devices' أو 'istiathan'
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
@@ -159,7 +160,9 @@ async function addNewStudent() {
             .insert([{
                 name: name,
                 permitted: false,
-                last_permitted_at: null
+                last_permitted_at: null,
+                istiathan_permitted: false,
+                last_istiathan_at: null
             }]);
 
         if (error) throw error;
@@ -174,9 +177,10 @@ async function addNewStudent() {
 }
 
 // ===== فتح نافذة خيارات الطالب =====
-function openStudentOptions(name) {
+function openStudentOptions(name, mode = 'devices') {
     if (isProcessing) return;
     openedStudent = name;
+    openedStudentMode = mode;
 
     const student = allStudents.find(s => s.name === name);
     if (!student) return;
@@ -186,10 +190,34 @@ function openStudentOptions(name) {
     document.getElementById('optionsMainView').style.display = 'block';
     document.getElementById('optionsQrView').style.display = 'none';
 
+    // تعديل النصوص حسب الوضع
+    const isDevices = mode === 'devices';
+    const subTitle = document.getElementById('optionsSubTitle');
+    const permitBtnTitle = document.getElementById('permitBtnTitle');
+    const permitBtnSub = document.getElementById('permitBtnSub');
+    const cancelBtnTitle = document.getElementById('cancelBtnTitle');
+    const cancelBtnSub = document.getElementById('cancelBtnSub');
+
+    if (isDevices) {
+        subTitle.textContent = 'اختر الإجراء اللي تبيه (سماح إحضار الأجهزة)';
+        permitBtnTitle.textContent = 'سماح';
+        permitBtnSub.textContent = 'السماح للطالب بإحضار جهازه';
+        cancelBtnTitle.textContent = 'غير مسموح';
+        cancelBtnSub.textContent = 'منع الطالب من إحضار جهازه';
+    } else {
+        subTitle.textContent = 'اختر الإجراء اللي تبيه (استئذان)';
+        permitBtnTitle.textContent = 'سماح';
+        permitBtnSub.textContent = 'السماح للطالب بالاستئذان';
+        cancelBtnTitle.textContent = 'غير مسموح';
+        cancelBtnSub.textContent = 'منع الطالب من الاستئذان';
+    }
+
+    // تحديد الحالة الحالية
+    const currentStatus = isDevices ? student.permitted : student.istiathan_permitted;
     const permitBtn = document.getElementById('permitOptionBtn');
     const cancelBtn = document.getElementById('cancelOptionBtn');
 
-    if (student.permitted) {
+    if (currentStatus) {
         permitBtn.classList.add('current');
         cancelBtn.classList.remove('current');
     } else {
@@ -206,14 +234,21 @@ function closeStudentOptions() {
     document.getElementById('optionsQrView').style.display = 'none';
     document.getElementById('modalQrContainer').innerHTML = '';
     openedStudent = '';
+    openedStudentMode = 'devices';
 }
 
 // ===== تغيير حالة الطالب =====
 async function setStudentStatus(status) {
     if (!openedStudent) return;
     const name = openedStudent;
+    const mode = openedStudentMode;
     closeStudentOptions();
-    await updateStudentStatus(name, status);
+
+    if (mode === 'devices') {
+        await updateStudentStatus(name, status);
+    } else {
+        await updateIstiathanStatus(name, status);
+    }
 }
 
 // ===== عرض الباركود داخل النافذة =====
@@ -244,12 +279,20 @@ function showQrInsideModal() {
     document.getElementById('modalQrName').textContent = openedStudent;
 
     const statusEl = document.getElementById('modalQrStatus');
-    if (student.permitted) {
+    statusEl.className = 'modal-qr-status';
+    statusEl.innerHTML = '';
+
+    // عرض الحالتين
+    const statuses = [];
+    if (student.permitted) statuses.push('📱 مسموح بالأجهزة');
+    if (student.istiathan_permitted) statuses.push('🕐 مسموح بالاستئذان');
+
+    if (statuses.length > 0) {
         statusEl.className = 'modal-qr-status permitted';
-        statusEl.innerHTML = `🟢 مسموح`;
+        statusEl.innerHTML = statuses.join(' · ');
     } else {
         statusEl.className = 'modal-qr-status not-permitted';
-        statusEl.innerHTML = `🔴 غير مسموح`;
+        statusEl.innerHTML = '🔴 غير مسموح';
     }
 }
 
@@ -391,7 +434,9 @@ function deleteStudent(name) {
     );
 }
 
-// ===== سماح / غير سماح للكل =====
+// ============================================
+// ===== سماح / غير سماح للكل — الأجهزة =====
+// ============================================
 function setAllStatus(status) {
     if (isProcessing) return;
 
@@ -404,8 +449,8 @@ function setAllStatus(status) {
     const actionText = status ? 'السماح' : 'منع';
 
     showConfirm(
-        `هل أنت متأكد من ${actionText} لجميع الطلاب (${allStudents.length} طالب)؟`,
-        `تأكيد ${statusText} للكل`,
+        `هل أنت متأكد من ${actionText} لجميع الطلاب في قسم الأجهزة (${allStudents.length} طالب)؟`,
+        `تأكيد ${statusText} للكل (الأجهزة)`,
         async () => {
             await updateAllStudentsStatus(status);
         }
@@ -484,6 +529,102 @@ async function updateAllStudentsStatus(status) {
     }
 }
 
+// ============================================
+// ===== سماح / غير سماح للكل — الاستئذان =====
+// ============================================
+function setAllIstiathanStatus(status) {
+    if (isProcessing) return;
+
+    if (allStudents.length === 0) {
+        showToast('لا يوجد طلاب', 'error');
+        return;
+    }
+
+    const statusText = status ? 'سماح' : 'غير سماح';
+    const actionText = status ? 'السماح' : 'منع';
+
+    showConfirm(
+        `هل أنت متأكد من ${actionText} لجميع الطلاب في قسم الاستئذان (${allStudents.length} طالب)؟`,
+        `تأكيد ${statusText} للكل (الاستئذان)`,
+        async () => {
+            await updateAllIstiathanStatus(status);
+        }
+    );
+}
+
+async function updateAllIstiathanStatus(status) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    try {
+        const now = new Date();
+        const localTime = new Date(now.getTime() + (3 * 3600000));
+
+        const timestamp = localTime.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+        });
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const student of allStudents) {
+            try {
+                const updateData = { istiathan_permitted: status };
+                if (status === true) {
+                    updateData.last_istiathan_at = localTime.toISOString();
+                }
+
+                const { error: updateError } = await supabaseClient
+                    .from('students')
+                    .update(updateData)
+                    .eq('id', student.id);
+
+                if (updateError) throw updateError;
+
+                // سجل بلون مختلف للاستئذان
+                const statusText = status ? 'Istiathan Permitted' : 'Istiathan Not Permitted';
+                const { error: historyError } = await supabaseClient
+                    .from('history')
+                    .insert([{
+                        student_name: student.name,
+                        status: statusText,
+                        timestamp: timestamp,
+                        teacher: currentTeacher
+                    }]);
+
+                if (historyError) {
+                    console.warn('History insert error:', historyError);
+                }
+
+                successCount++;
+
+            } catch (e) {
+                console.error(`Failed to update ${student.name}:`, e);
+                failCount++;
+            }
+        }
+
+        if (successCount > 0) {
+            showToast(
+                `✅ تم ${status ? 'السماح' : 'المنع'} للاستئذان لـ ${successCount} طالب${failCount > 0 ? ` (${failCount} فشل)` : ''}`,
+                status ? 'success' : 'error'
+            );
+        } else {
+            showToast('❌ فشل تحديث الطلاب', 'error');
+        }
+
+        await loadAllData();
+
+    } catch (error) {
+        console.error('Set all istiathan status error:', error);
+        showToast('خطأ: ' + error.message, 'error');
+    } finally {
+        isProcessing = false;
+    }
+}
+
 // ===== Toast =====
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -529,7 +670,7 @@ async function fetchHistory() {
     }
 }
 
-// ===== تحديث حالة طالب =====
+// ===== تحديث حالة طالب — الأجهزة =====
 async function updateStudentStatus(name, status) {
     if (isProcessing) return;
     isProcessing = true;
@@ -569,7 +710,58 @@ async function updateStudentStatus(name, status) {
 
         if (historyError) throw historyError;
 
-        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
+        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'} (الأجهزة)`, status ? 'success' : 'error');
+
+        await loadAllData();
+
+    } catch (error) {
+        showToast('خطأ في التحديث: ' + error.message, 'error');
+    } finally {
+        setTimeout(() => { isProcessing = false; }, 300);
+    }
+}
+
+// ===== تحديث حالة طالب — الاستئذان =====
+async function updateIstiathanStatus(name, status) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    try {
+        const now = new Date();
+        const localTime = new Date(now.getTime() + (3 * 3600000));
+
+        const timestamp = localTime.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+        });
+
+        const updateData = { istiathan_permitted: status };
+        if (status === true) {
+            updateData.last_istiathan_at = localTime.toISOString();
+        }
+
+        const { error: updateError } = await supabaseClient
+            .from('students')
+            .update(updateData)
+            .eq('name', name);
+
+        if (updateError) throw updateError;
+
+        const statusText = status ? 'Istiathan Permitted' : 'Istiathan Not Permitted';
+
+        const { error: historyError } = await supabaseClient
+            .from('history')
+            .insert([{
+                student_name: name,
+                status: statusText,
+                timestamp: timestamp,
+                teacher: currentTeacher
+            }]);
+
+        if (historyError) throw historyError;
+
+        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'} (الاستئذان)`, status ? 'success' : 'error');
 
         await loadAllData();
 
@@ -590,7 +782,7 @@ async function loadAllData() {
     renderDownloadList();
 }
 
-// ===== عرض الطلاب (لصفحة سماح الأجهزة) =====
+// ===== عرض الطلاب — الأجهزة =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -618,7 +810,7 @@ function renderStudents(students, filter = '') {
             <div class="student-item">
                 <span class="student-number">${num}</span>
 
-                <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
+                <button class="student-name-btn" onclick="openStudentOptions('${safeName}', 'devices')">
                     <i class="fas fa-mobile-alt"></i>
                     <span>${s.name}</span>
                 </button>
@@ -632,7 +824,7 @@ function renderStudents(students, filter = '') {
     studentListEl.innerHTML = html;
 }
 
-// ===== عرض طلاب الاستئذان =====
+// ===== عرض الطلاب — الاستئذان =====
 function renderIstiathanStudents(students, filter = '') {
     const istiathanListEl = document.getElementById('studentListIstiathan');
     if (!istiathanListEl) return;
@@ -653,7 +845,7 @@ function renderIstiathanStudents(students, filter = '') {
 
     let html = '';
     filtered.forEach((s, index) => {
-        const status = s.permitted === true;
+        const status = s.istiathan_permitted === true;
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
         const statusClass = status ? 'permitted' : 'not-permitted';
@@ -663,7 +855,7 @@ function renderIstiathanStudents(students, filter = '') {
             <div class="student-item">
                 <span class="student-number">${num}</span>
 
-                <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
+                <button class="student-name-btn" onclick="openStudentOptions('${safeName}', 'istiathan')">
                     <i class="fas fa-user-clock"></i>
                     <span>${s.name}</span>
                 </button>
@@ -692,9 +884,33 @@ function renderLogs() {
 
     let html = '';
     allHistory.forEach(entry => {
-        const isPermitted = entry.status === 'Permitted';
-        const icon = isPermitted ? '🟢' : '🔴';
-        const statusText = isPermitted ? 'مسموح' : 'غير مسموح';
+        const status = entry.status;
+        let isPermitted = false;
+        let statusText = '';
+        let icon = '';
+
+        if (status === 'Permitted') {
+            isPermitted = true;
+            statusText = 'مسموح (أجهزة)';
+            icon = '📱';
+        } else if (status === 'Not Permitted') {
+            isPermitted = false;
+            statusText = 'غير مسموح (أجهزة)';
+            icon = '📱';
+        } else if (status === 'Istiathan Permitted') {
+            isPermitted = true;
+            statusText = 'مسموح (استئذان)';
+            icon = '🕐';
+        } else if (status === 'Istiathan Not Permitted') {
+            isPermitted = false;
+            statusText = 'غير مسموح (استئذان)';
+            icon = '🕐';
+        } else {
+            isPermitted = status === 'Permitted';
+            statusText = status;
+            icon = '📋';
+        }
+
         const statusClass = isPermitted ? 'permitted' : 'not-permitted';
 
         html += `
@@ -735,7 +951,12 @@ function downloadLogs() {
     csv += 'الطالب,الحالة,التاريخ والوقت,المعلم\n';
 
     allHistory.forEach(entry => {
-        const status = entry.status === 'Permitted' ? 'مسموح' : 'غير مسموح';
+        let status = entry.status;
+        if (status === 'Permitted') status = 'مسموح (أجهزة)';
+        else if (status === 'Not Permitted') status = 'غير مسموح (أجهزة)';
+        else if (status === 'Istiathan Permitted') status = 'مسموح (استئذان)';
+        else if (status === 'Istiathan Not Permitted') status = 'غير مسموح (استئذان)';
+
         const student = entry.student_name.replace(/,/g, ' ');
         const teacher = entry.teacher.replace(/,/g, ' ');
         csv += `${student},${status},${entry.timestamp},${teacher}\n`;
@@ -803,7 +1024,7 @@ function updateSelectedCount() {
 }
 
 // ============================================
-// ===== توليد بطاقة الباركود (باركود + اسم) =====
+// ===== توليد بطاقة الباركود =====
 // ============================================
 function generateQrCardImage(studentName, qrPixelSize = 500) {
     return new Promise((resolve) => {
