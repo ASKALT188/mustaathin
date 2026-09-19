@@ -13,6 +13,7 @@ const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
 let allHistory = [];
 let selectedDownloadIds = new Set();
+let currentSection = 'students';
 
 // ===== نافذة التأكيد =====
 let confirmCallback = null;
@@ -45,16 +46,21 @@ const toastContainer = document.getElementById('toastContainer');
 
 // ===== التنقل بين الأقسام =====
 function switchSection(section) {
+    currentSection = section;
+
     document.getElementById('navStudents').classList.toggle('active', section === 'students');
+    document.getElementById('navIstiathan').classList.toggle('active', section === 'istiathan');
     document.getElementById('navLogs').classList.toggle('active', section === 'logs');
     document.getElementById('navDownload').classList.toggle('active', section === 'download');
 
     document.getElementById('pageStudents').classList.toggle('active', section === 'students');
+    document.getElementById('pageIstiathan').classList.toggle('active', section === 'istiathan');
     document.getElementById('pageLogs').classList.toggle('active', section === 'logs');
     document.getElementById('pageDownload').classList.toggle('active', section === 'download');
 
     if (section === 'logs') renderLogs();
     if (section === 'download') renderDownloadList();
+    if (section === 'istiathan') renderIstiathanStudents(allStudents, '');
 
     sessionStorage.setItem('currentSection', section);
     closeSidebarOnMobile();
@@ -579,11 +585,12 @@ async function loadAllData() {
     const students = await fetchStudents();
     await fetchHistory();
     renderStudents(students, searchInput.value);
+    renderIstiathanStudents(students, '');
     renderLogs();
     renderDownloadList();
 }
 
-// ===== عرض الطلاب =====
+// ===== عرض الطلاب (لصفحة سماح الأجهزة) =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -612,7 +619,7 @@ function renderStudents(students, filter = '') {
                 <span class="student-number">${num}</span>
 
                 <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
-                    <i class="fas fa-user-graduate"></i>
+                    <i class="fas fa-mobile-alt"></i>
                     <span>${s.name}</span>
                 </button>
 
@@ -624,6 +631,57 @@ function renderStudents(students, filter = '') {
     });
     studentListEl.innerHTML = html;
 }
+
+// ===== عرض طلاب الاستئذان =====
+function renderIstiathanStudents(students, filter = '') {
+    const istiathanListEl = document.getElementById('studentListIstiathan');
+    if (!istiathanListEl) return;
+
+    if (!students || students.length === 0) {
+        istiathanListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
+        return;
+    }
+
+    const filtered = students.filter(s =>
+        s.name.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filtered.length === 0 && students.length > 0) {
+        istiathanListEl.innerHTML = `<div class="loading-message">لا يوجد نتائج لـ "${filter}"</div>`;
+        return;
+    }
+
+    let html = '';
+    filtered.forEach((s, index) => {
+        const status = s.permitted === true;
+        const num = index + 1;
+        const safeName = s.name.replace(/'/g, "\\'");
+        const statusClass = status ? 'permitted' : 'not-permitted';
+        const statusText = status ? 'مسموح' : 'غير مسموح';
+
+        html += `
+            <div class="student-item">
+                <span class="student-number">${num}</span>
+
+                <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
+                    <i class="fas fa-user-clock"></i>
+                    <span>${s.name}</span>
+                </button>
+
+                <span class="status-badge ${statusClass}">
+                    ${status ? '🟢' : '🔴'} ${statusText}
+                </span>
+            </div>
+        `;
+    });
+    istiathanListEl.innerHTML = html;
+}
+
+// ===== فلترة طلاب الاستئذان =====
+window.filterStudentsIstiathan = function() {
+    const input = document.getElementById('searchInputIstiathan');
+    renderIstiathanStudents(allStudents, input ? input.value : '');
+};
 
 // ===== عرض السجلات =====
 function renderLogs() {
@@ -785,19 +843,15 @@ function generateQrCardImage(studentName, qrPixelSize = 500) {
 
                     const ctx = finalCanvas.getContext('2d');
 
-                    // خلفية بيضاء
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, finalWidth, finalHeight);
 
-                    // إطار بنفسجي فاتح
                     ctx.strokeStyle = '#ede4ff';
                     ctx.lineWidth = 4;
                     ctx.strokeRect(2, 2, finalWidth - 4, finalHeight - 4);
 
-                    // الباركود
                     ctx.drawImage(qrCanvas, padding, padding, qrPixelSize, qrPixelSize);
 
-                    // خط فاصل
                     ctx.strokeStyle = '#ede4ff';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
@@ -805,7 +859,6 @@ function generateQrCardImage(studentName, qrPixelSize = 500) {
                     ctx.lineTo(finalWidth - padding, qrPixelSize + padding + 4);
                     ctx.stroke();
 
-                    // ✅ الاسم العربي (يُرسم صح على canvas)
                     ctx.fillStyle = '#4c1d95';
                     ctx.font = `bold ${Math.floor(qrPixelSize * 0.1)}px 'Tajawal', 'Inter', sans-serif`;
                     ctx.textAlign = 'center';
@@ -849,7 +902,6 @@ async function downloadSelectedQr() {
     const zip = new JSZip();
     const { jsPDF } = window.jspdf;
 
-    // إعدادات A4
     const pageWidth = 210;
     const pageHeight = 297;
     const cols = 3;
@@ -861,9 +913,8 @@ async function downloadSelectedQr() {
     const cellWidth = (pageWidth - (marginX * 2)) / cols;
     const cellHeight = (pageHeight - (marginY * 2)) / rows;
 
-    // قياسات البطاقة
     const cardWidth = cellWidth * 0.9;
-    const cardHeight = cardWidth; // مربع (الباركود + الاسم داخل الصورة)
+    const cardHeight = cardWidth;
 
     const pdf = new jsPDF({
         orientation: 'portrait',
@@ -877,7 +928,6 @@ async function downloadSelectedQr() {
         const student = selected[i];
 
         try {
-            // صفحة جديدة كل 12 بطاقة
             if (itemIndexOnPage === 0 && i > 0) {
                 pdf.addPage();
             }
@@ -888,7 +938,6 @@ async function downloadSelectedQr() {
             const cellX = marginX + (col * cellWidth);
             const cellY = marginY + (row * cellHeight);
 
-            // ✅ توليد البطاقة كاملة (باركود + اسم عربي)
             const cardDataUrl = await generateQrCardImage(student.name, 500);
 
             if (cardDataUrl) {
@@ -910,11 +959,9 @@ async function downloadSelectedQr() {
         }
     }
 
-    // حفظ PDF في ZIP
     const pdfBlob = pdf.output('blob');
     zip.file('باركودات_الطلاب.pdf', pdfBlob);
 
-    // إضافة مجلد الصور المنفصلة
     const folder = zip.folder('صور_منفصلة');
     for (const student of selected) {
         const imgDataUrl = await generateQrCardImage(student.name, 600);
@@ -924,7 +971,6 @@ async function downloadSelectedQr() {
         }
     }
 
-    // توليد ZIP
     const zipContent = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(zipContent);
@@ -951,6 +997,7 @@ function subscribeToChanges() {
                     if (deletedName) {
                         allStudents = allStudents.filter(s => s.name !== deletedName);
                         renderStudents(allStudents, searchInput.value);
+                        renderIstiathanStudents(allStudents, '');
                         renderDownloadList();
                     }
                     return;
@@ -965,6 +1012,7 @@ function subscribeToChanges() {
                     allStudents.push(updatedStudent);
                 }
                 renderStudents(allStudents, searchInput.value);
+                renderIstiathanStudents(allStudents, '');
                 renderDownloadList();
             }
         )
