@@ -139,7 +139,7 @@ document.getElementById('newStudentName').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addNewStudent();
 });
 
-// ===== إضافة طالب =====
+// ===== إضافة طالب (نضيفه بدون أي حالة) =====
 async function addNewStudent() {
     const nameInput = document.getElementById('newStudentName');
     const name = nameInput.value.trim();
@@ -190,7 +190,6 @@ function openStudentOptions(name, mode = 'devices') {
     document.getElementById('optionsMainView').style.display = 'block';
     document.getElementById('optionsQrView').style.display = 'none';
 
-    // تعديل النصوص حسب الوضع
     const isDevices = mode === 'devices';
     const subTitle = document.getElementById('optionsSubTitle');
     const permitBtnTitle = document.getElementById('permitBtnTitle');
@@ -212,8 +211,8 @@ function openStudentOptions(name, mode = 'devices') {
         cancelBtnSub.textContent = 'منع الطالب من الاستئذان';
     }
 
-    // تحديد الحالة الحالية
-    const currentStatus = isDevices ? student.permitted : student.istiathan_permitted;
+    // ✅ تحديد الحالة الحالية حسب الوضع
+    const currentStatus = isDevices ? student.permitted === true : student.istiathan_permitted === true;
     const permitBtn = document.getElementById('permitOptionBtn');
     const cancelBtn = document.getElementById('cancelOptionBtn');
 
@@ -237,7 +236,7 @@ function closeStudentOptions() {
     openedStudentMode = 'devices';
 }
 
-// ===== تغيير حالة الطالب =====
+// ===== تغيير حالة الطالب (حسب الوضع) =====
 async function setStudentStatus(status) {
     if (!openedStudent) return;
     const name = openedStudent;
@@ -282,7 +281,6 @@ function showQrInsideModal() {
     statusEl.className = 'modal-qr-status';
     statusEl.innerHTML = '';
 
-    // عرض الحالتين
     const statuses = [];
     if (student.permitted) statuses.push('📱 مسموح بالأجهزة');
     if (student.istiathan_permitted) statuses.push('🕐 مسموح بالاستئذان');
@@ -476,6 +474,7 @@ async function updateAllStudentsStatus(status) {
 
         for (const student of allStudents) {
             try {
+                // ✅ حقل الأجهزة فقط
                 const updateData = { permitted: status };
                 if (status === true) {
                     updateData.last_permitted_at = localTime.toISOString();
@@ -571,6 +570,7 @@ async function updateAllIstiathanStatus(status) {
 
         for (const student of allStudents) {
             try {
+                // ✅ حقل الاستئذان فقط
                 const updateData = { istiathan_permitted: status };
                 if (status === true) {
                     updateData.last_istiathan_at = localTime.toISOString();
@@ -583,7 +583,6 @@ async function updateAllIstiathanStatus(status) {
 
                 if (updateError) throw updateError;
 
-                // سجل بلون مختلف للاستئذان
                 const statusText = status ? 'Istiathan Permitted' : 'Istiathan Not Permitted';
                 const { error: historyError } = await supabaseClient
                     .from('history')
@@ -685,6 +684,7 @@ async function updateStudentStatus(name, status) {
             hour12: false
         });
 
+        // ✅ حقل الأجهزة فقط
         const updateData = { permitted: status };
         if (status === true) {
             updateData.last_permitted_at = localTime.toISOString();
@@ -736,6 +736,7 @@ async function updateIstiathanStatus(name, status) {
             hour12: false
         });
 
+        // ✅ حقل الاستئذان فقط
         const updateData = { istiathan_permitted: status };
         if (status === true) {
             updateData.last_istiathan_at = localTime.toISOString();
@@ -800,6 +801,7 @@ function renderStudents(students, filter = '') {
 
     let html = '';
     filtered.forEach((s, index) => {
+        // ✅ نستخدم permitted للأجهزة فقط
         const status = s.permitted === true;
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
@@ -845,6 +847,7 @@ function renderIstiathanStudents(students, filter = '') {
 
     let html = '';
     filtered.forEach((s, index) => {
+        // ✅ نستخدم istiathan_permitted للاستئذان فقط
         const status = s.istiathan_permitted === true;
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
@@ -906,7 +909,6 @@ function renderLogs() {
             statusText = 'غير مسموح (استئذان)';
             icon = '🕐';
         } else {
-            isPermitted = status === 'Permitted';
             statusText = status;
             icon = '📋';
         }
