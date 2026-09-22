@@ -8,7 +8,7 @@ const DASHBOARD_PASSWORD = 'HA20ZN30';
 
 // ===== المتغيرات =====
 let openedStudent = '';
-let openedStudentMode = 'devices'; // 'devices' أو 'istiathan'
+let openedStudentMode = 'devices';
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
@@ -139,7 +139,7 @@ document.getElementById('newStudentName').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addNewStudent();
 });
 
-// ===== إضافة طالب (نضيفه بدون أي حالة) =====
+// ===== إضافة طالب =====
 async function addNewStudent() {
     const nameInput = document.getElementById('newStudentName');
     const name = nameInput.value.trim();
@@ -211,7 +211,6 @@ function openStudentOptions(name, mode = 'devices') {
         cancelBtnSub.textContent = 'منع الطالب من الاستئذان';
     }
 
-    // ✅ تحديد الحالة الحالية حسب الوضع
     const currentStatus = isDevices ? student.permitted === true : student.istiathan_permitted === true;
     const permitBtn = document.getElementById('permitOptionBtn');
     const cancelBtn = document.getElementById('cancelOptionBtn');
@@ -222,6 +221,26 @@ function openStudentOptions(name, mode = 'devices') {
     } else {
         permitBtn.classList.remove('current');
         cancelBtn.classList.add('current');
+    }
+
+    // مؤشرات وجود معلومات/ملاحظات
+    const infoBtn = document.querySelector('.info-option');
+    const notesBtn = document.querySelector('.notes-option');
+
+    if (infoBtn) {
+        if (student.hijri_birth_date || student.student_id) {
+            infoBtn.classList.add('has-info');
+        } else {
+            infoBtn.classList.remove('has-info');
+        }
+    }
+
+    if (notesBtn) {
+        if (student.notes && student.notes.trim()) {
+            notesBtn.classList.add('has-notes');
+        } else {
+            notesBtn.classList.remove('has-notes');
+        }
     }
 
     document.getElementById('studentOptionsModal').classList.add('active');
@@ -236,7 +255,7 @@ function closeStudentOptions() {
     openedStudentMode = 'devices';
 }
 
-// ===== تغيير حالة الطالب (حسب الوضع) =====
+// ===== تغيير حالة الطالب =====
 async function setStudentStatus(status) {
     if (!openedStudent) return;
     const name = openedStudent;
@@ -402,6 +421,95 @@ async function saveEditName() {
     }
 }
 
+// ===== نافذة معلومات الطالب =====
+function openStudentInfoModal() {
+    if (!openedStudent) return;
+
+    const student = allStudents.find(s => s.name === openedStudent);
+    if (!student) return;
+
+    document.getElementById('hijriBirthDate').value = student.hijri_birth_date || '';
+    document.getElementById('studentIdInput').value = student.student_id || '';
+
+    document.getElementById('studentOptionsModal').classList.remove('active');
+    document.getElementById('studentInfoModal').classList.add('active');
+}
+
+function closeStudentInfoModal() {
+    document.getElementById('studentInfoModal').classList.remove('active');
+    openedStudent = '';
+}
+
+async function saveStudentInfo() {
+    const hijriBirthDate = document.getElementById('hijriBirthDate').value.trim();
+    const studentId = document.getElementById('studentIdInput').value.trim();
+    const name = openedStudent;
+
+    if (!name) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({
+                hijri_birth_date: hijriBirthDate || null,
+                student_id: studentId || null
+            })
+            .eq('name', name);
+
+        if (error) throw error;
+
+        closeStudentInfoModal();
+        showToast(`✅ تم حفظ معلومات ${name}`, 'success');
+        await loadAllData();
+
+    } catch (error) {
+        console.error('Save info error:', error);
+        showToast('خطأ في الحفظ: ' + error.message, 'error');
+    }
+}
+
+// ===== نافذة الملاحظات =====
+function openNotesModal() {
+    if (!openedStudent) return;
+
+    const student = allStudents.find(s => s.name === openedStudent);
+    if (!student) return;
+
+    document.getElementById('studentNotes').value = student.notes || '';
+
+    document.getElementById('studentOptionsModal').classList.remove('active');
+    document.getElementById('notesModal').classList.add('active');
+}
+
+function closeNotesModal() {
+    document.getElementById('notesModal').classList.remove('active');
+    openedStudent = '';
+}
+
+async function saveStudentNotes() {
+    const notes = document.getElementById('studentNotes').value.trim();
+    const name = openedStudent;
+
+    if (!name) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({ notes: notes || null })
+            .eq('name', name);
+
+        if (error) throw error;
+
+        closeNotesModal();
+        showToast(`✅ تم حفظ الملاحظات`, 'success');
+        await loadAllData();
+
+    } catch (error) {
+        console.error('Save notes error:', error);
+        showToast('خطأ في الحفظ: ' + error.message, 'error');
+    }
+}
+
 // ===== حذف طالب =====
 function deleteStudent(name) {
     showConfirm(
@@ -432,9 +540,7 @@ function deleteStudent(name) {
     );
 }
 
-// ============================================
-// ===== سماح / غير سماح للكل — الأجهزة =====
-// ============================================
+// ===== سماح للكل — الأجهزة =====
 function setAllStatus(status) {
     if (isProcessing) return;
 
@@ -474,7 +580,6 @@ async function updateAllStudentsStatus(status) {
 
         for (const student of allStudents) {
             try {
-                // ✅ حقل الأجهزة فقط
                 const updateData = { permitted: status };
                 if (status === true) {
                     updateData.last_permitted_at = localTime.toISOString();
@@ -528,9 +633,7 @@ async function updateAllStudentsStatus(status) {
     }
 }
 
-// ============================================
-// ===== سماح / غير سماح للكل — الاستئذان =====
-// ============================================
+// ===== سماح للكل — الاستئذان =====
 function setAllIstiathanStatus(status) {
     if (isProcessing) return;
 
@@ -570,7 +673,6 @@ async function updateAllIstiathanStatus(status) {
 
         for (const student of allStudents) {
             try {
-                // ✅ حقل الاستئذان فقط
                 const updateData = { istiathan_permitted: status };
                 if (status === true) {
                     updateData.last_istiathan_at = localTime.toISOString();
@@ -684,7 +786,6 @@ async function updateStudentStatus(name, status) {
             hour12: false
         });
 
-        // ✅ حقل الأجهزة فقط
         const updateData = { permitted: status };
         if (status === true) {
             updateData.last_permitted_at = localTime.toISOString();
@@ -736,7 +837,6 @@ async function updateIstiathanStatus(name, status) {
             hour12: false
         });
 
-        // ✅ حقل الاستئذان فقط
         const updateData = { istiathan_permitted: status };
         if (status === true) {
             updateData.last_istiathan_at = localTime.toISOString();
@@ -801,12 +901,14 @@ function renderStudents(students, filter = '') {
 
     let html = '';
     filtered.forEach((s, index) => {
-        // ✅ نستخدم permitted للأجهزة فقط
         const status = s.permitted === true;
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
         const statusClass = status ? 'permitted' : 'not-permitted';
         const statusText = status ? 'مسموح' : 'غير مسموح';
+
+        const hasNotes = s.notes && s.notes.trim();
+        const hasInfo = s.hijri_birth_date || s.student_id;
 
         html += `
             <div class="student-item">
@@ -815,6 +917,8 @@ function renderStudents(students, filter = '') {
                 <button class="student-name-btn" onclick="openStudentOptions('${safeName}', 'devices')">
                     <i class="fas fa-mobile-alt"></i>
                     <span>${s.name}</span>
+                    ${hasInfo ? '<span class="mini-badge info-badge" title="فيه معلومات"><i class="fas fa-id-card"></i></span>' : ''}
+                    ${hasNotes ? '<span class="mini-badge notes-badge" title="فيه ملاحظات"><i class="fas fa-sticky-note"></i></span>' : ''}
                 </button>
 
                 <span class="status-badge ${statusClass}">
@@ -847,12 +951,14 @@ function renderIstiathanStudents(students, filter = '') {
 
     let html = '';
     filtered.forEach((s, index) => {
-        // ✅ نستخدم istiathan_permitted للاستئذان فقط
         const status = s.istiathan_permitted === true;
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
         const statusClass = status ? 'permitted' : 'not-permitted';
         const statusText = status ? 'مسموح' : 'غير مسموح';
+
+        const hasNotes = s.notes && s.notes.trim();
+        const hasInfo = s.hijri_birth_date || s.student_id;
 
         html += `
             <div class="student-item">
@@ -861,6 +967,8 @@ function renderIstiathanStudents(students, filter = '') {
                 <button class="student-name-btn" onclick="openStudentOptions('${safeName}', 'istiathan')">
                     <i class="fas fa-user-clock"></i>
                     <span>${s.name}</span>
+                    ${hasInfo ? '<span class="mini-badge info-badge" title="فيه معلومات"><i class="fas fa-id-card"></i></span>' : ''}
+                    ${hasNotes ? '<span class="mini-badge notes-badge" title="فيه ملاحظات"><i class="fas fa-sticky-note"></i></span>' : ''}
                 </button>
 
                 <span class="status-badge ${statusClass}">
@@ -1025,9 +1133,7 @@ function updateSelectedCount() {
     document.getElementById('selectedCount').textContent = selectedDownloadIds.size;
 }
 
-// ============================================
 // ===== توليد بطاقة الباركود =====
-// ============================================
 function generateQrCardImage(studentName, qrPixelSize = 500) {
     return new Promise((resolve) => {
         try {
@@ -1109,9 +1215,7 @@ function generateQrCardImage(studentName, qrPixelSize = 500) {
     });
 }
 
-// ============================================
 // ===== تحميل المحدد: PDF داخل ZIP =====
-// ============================================
 async function downloadSelectedQr() {
     if (selectedDownloadIds.size === 0) {
         showToast('اختر طالباً واحداً على الأقل', 'error');
