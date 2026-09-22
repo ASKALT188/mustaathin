@@ -95,11 +95,9 @@
             padding: 1rem;
             margin: 1rem 0;
         }
-
         .verify-info-section .verify-section-title {
             color: #0284c7;
         }
-
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -112,9 +110,7 @@
             flex-wrap: wrap;
             gap: 0.3rem;
         }
-
         .info-row:last-child { margin-bottom: 0; }
-
         .info-label {
             color: #6b5b95;
             font-weight: 700;
@@ -122,9 +118,7 @@
             align-items: center;
             gap: 0.35rem;
         }
-
         .info-label i { color: #7c3aed; font-size: 0.8rem; }
-
         .info-value {
             color: #3b1e6b;
             font-weight: 700;
@@ -143,7 +137,6 @@
             margin: 1rem 0;
             text-align: right;
         }
-
         .verify-notes-title {
             font-size: 0.85rem;
             font-weight: 700;
@@ -154,7 +147,6 @@
             justify-content: center;
             gap: 0.4rem;
         }
-
         .verify-notes-content {
             background: white;
             border-radius: 12px;
@@ -222,6 +214,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // ===== استخراج اسم الطالب من الرابط =====
         const urlParams = new URLSearchParams(window.location.search);
         let rawStudent = urlParams.get('student');
         let studentName = null;
@@ -234,6 +227,32 @@
             }
         }
 
+        // ===== دالة تطبيع النص =====
+        // توحّد الاختلافات العربية والإنجليزية
+        function normalize(text) {
+            if (!text) return '';
+            return String(text)
+                .trim()
+                .replace(/\s+/g, ' ')
+                // إزالة أي حرف إنجليزي من البداية (مثل J احمد → احمد)
+                .replace(/^[A-Za-z]+\s+/, '')
+                // توحيد الألف
+                .replace(/[أإآا]/g, 'ا')
+                // توحيد الياء
+                .replace(/[ىي]/g, 'ي')
+                // توحيد التاء المربوطة والهاء
+                .replace(/[ةه]/g, 'ه')
+                // تحويل الأرقام العربية إلى إنجليزية
+                .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+                // الاحتفاظ بالعربي والأرقام والمسافات فقط
+                .replace(/[^\u0600-\u06FF0-9\s]/g, '')
+                // مسافة واحدة
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
+        // ===== حساب المدة =====
         function getTimeSince(lastTime) {
             if (!lastTime) return null;
             
@@ -315,6 +334,7 @@
             }
         }
 
+        // ===== تحميل حالة الطالب (البحث الذكي) =====
         async function loadStudentStatus() {
             const content = document.getElementById('verificationContent');
 
@@ -328,35 +348,93 @@
             }
 
             try {
-                const { data, error } = await supabaseClient
+                // جلب كل الطلاب
+                const { data: allData, error: fetchErr } = await supabaseClient
                     .from('students')
-                    .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes')
-                    .eq('name', studentName)
-                    .single();
+                    .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes');
 
-                if (error || !data) {
+                if (fetchErr) throw fetchErr;
+
+                if (!allData || allData.length === 0) {
+                    content.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> لا يوجد طلاب مسجلين
+                        </div>
+                    `;
+                    return;
+                }
+
+                const target = normalize(studentName);
+
+                // 6 محاولات بحث (من الأدق إلى الأعم)
+                let data =
+                    // 1. مطابقة تامة
+                    allData.find(s => s.name === studentName) ||
+                    // 2. مطابقة بعد التطبيع
+                    allData.find(s => normalize(s.name) === target) ||
+                    // 3. البحث الجزئي (اسم الطالب في الداتا يحتوي على البحث)
+                    allData.find(s => normalize(s.name).includes(target)) ||
+                    // 4. البحث العكسي
+                    allData.find(s => target.includes(normalize(s.name)));
+
+                // 5. البحث بأول كلمة
+                if (!data) {
+                    const firstWord = target.split(' ')[0];
+                    if (firstWord.length >= 3) {
+                        data = allData.find(s => normalize(s.name).startsWith(firstWord));
+                    }
+                }
+
+                // 6. البحث بأي كلمة
+                if (!data) {
+                    const words = target.split(' ').filter(w => w.length >= 3);
+                    for (const word of words) {
+                        const found = allData.find(s => normalize(s.name).includes(word));
+                        if (found) {
+                            data = found;
+                            break;
+                        }
+                    }
+                }
+
+                if (!data) {
                     content.innerHTML = `
                         <div class="error-message">
                             <i class="fas fa-exclamation-triangle"></i> الطالب غير موجود
                         </div>
                         <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.9rem;">
-                            الباركود لا يتوافق مع أي طالب مسجل (${studentName}).
+                            الباركود لا يتوافق مع أي طالب مسجل.
                         </p>
+                        <div style="margin-top: 1rem; padding: 0.8rem; background: #f7f3ff; border-radius: 12px; font-size: 0.75rem; color: #6b5b95; text-align: right;">
+                            <strong>الاسم المستخرج من الباركود:</strong>
+                            <div style="direction: ltr; margin-top: 0.3rem; background: white; padding: 0.3rem 0.8rem; border-radius: 8px; word-break: break-all;">
+                                ${escapeHtml(studentName)}
+                            </div>
+                            <div style="margin-top: 0.6rem;">
+                                <strong>أول 5 أسماء في الداتا:</strong>
+                                <div style="margin-top: 0.3rem;">
+                                    ${allData.slice(0, 5).map(s => `<span style="display: inline-block; background: white; padding: 0.15rem 0.5rem; border-radius: 6px; margin: 0.15rem;">${escapeHtml(s.name)}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
                     `;
                     return;
                 }
 
+                // ✅ عرض النتيجة
                 renderStatus(data);
 
+                // التحديث التلقائي كل 5 ثواني
                 const refreshInterval = setInterval(async () => {
                     try {
-                        const { data: refreshData, error: refreshError } = await supabaseClient
+                        const { data: refreshAll, error: refreshErr } = await supabaseClient
                             .from('students')
-                            .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes')
-                            .eq('name', studentName)
-                            .single();
+                            .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes');
 
-                        if (!refreshError && refreshData) {
+                        if (refreshErr || !refreshAll) return;
+
+                        const refreshData = refreshAll.find(s => s.name === data.name);
+                        if (refreshData) {
                             renderStatus(refreshData);
                         }
                     } catch (e) {}
@@ -369,14 +447,19 @@
                 });
 
             } catch (error) {
+                console.error('Load error:', error);
                 content.innerHTML = `
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i> خطأ في الاتصال
                     </div>
+                    <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #8b7db8;">
+                        ${escapeHtml(error.message || '')}
+                    </p>
                 `;
             }
         }
 
+        // ===== عرض حالة الطالب =====
         function renderStatus(data) {
             const content = document.getElementById('verificationContent');
 
@@ -412,6 +495,7 @@
                 `;
             }
 
+            // معلومات الطالب
             let infoHtml = '';
             if (data.hijri_birth_date || data.student_id) {
                 let infoRows = '';
@@ -419,7 +503,7 @@
                     infoRows += `
                         <div class="info-row">
                             <span class="info-label"><i class="fas fa-calendar-alt"></i> الميلاد الهجري</span>
-                            <span class="info-value">${data.hijri_birth_date}</span>
+                            <span class="info-value">${escapeHtml(data.hijri_birth_date)}</span>
                         </div>
                     `;
                 }
@@ -427,7 +511,7 @@
                     infoRows += `
                         <div class="info-row">
                             <span class="info-label"><i class="fas fa-id-card"></i> رقم الهوية</span>
-                            <span class="info-value">${data.student_id}</span>
+                            <span class="info-value">${escapeHtml(data.student_id)}</span>
                         </div>
                     `;
                 }
@@ -442,6 +526,7 @@
                 `;
             }
 
+            // الملاحظات
             let notesHtml = '';
             if (data.notes && data.notes.trim()) {
                 notesHtml = `
@@ -456,7 +541,7 @@
             }
 
             content.innerHTML = `
-                <div class="verify-student-name">${data.name}</div>
+                <div class="verify-student-name">${escapeHtml(data.name)}</div>
 
                 <div class="verify-section">
                     <div class="verify-section-title">
@@ -501,6 +586,7 @@
             }
         }
 
+        // ===== بدء التحميل =====
         loadStudentStatus();
     </script>
 </body>
