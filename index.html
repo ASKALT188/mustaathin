@@ -149,6 +149,22 @@
                         </div>
                     </button>
 
+                    <button class="option-btn info-option" onclick="openStudentInfoModal()">
+                        <div class="option-icon info"><i class="fas fa-id-card"></i></div>
+                        <div class="option-text">
+                            <strong>معلومات الطالب</strong>
+                            <span>الميلاد والهوية</span>
+                        </div>
+                    </button>
+
+                    <button class="option-btn notes-option" onclick="openNotesModal()">
+                        <div class="option-icon notes"><i class="fas fa-sticky-note"></i></div>
+                        <div class="option-text">
+                            <strong>إضافة ملاحظات</strong>
+                            <span>ملاحظات على الطالب</span>
+                        </div>
+                    </button>
+
                     <button class="option-btn edit-option" onclick="openEditNameModal()">
                         <div class="option-icon edit"><i class="fas fa-pen"></i></div>
                         <div class="option-text">
@@ -201,6 +217,44 @@
             <div class="modal-actions">
                 <button class="btn-save" onclick="saveEditName()"><i class="fas fa-save"></i> حفظ</button>
                 <button class="btn-cancel-modal" onclick="closeEditNameModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة معلومات الطالب -->
+    <div class="modal-overlay" id="studentInfoModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-id-card"></i> معلومات الطالب</h3>
+            <div class="modal-sub">تعديل المعلومات الأساسية للطالب</div>
+            
+            <div class="input-group">
+                <label><i class="fas fa-calendar-alt"></i> تاريخ الميلاد الهجري</label>
+                <input type="text" id="hijriBirthDate" placeholder="مثال: 1445/05/15" autocomplete="off" />
+            </div>
+
+            <div class="input-group">
+                <label><i class="fas fa-id-card"></i> رقم هوية الطالب</label>
+                <input type="text" id="studentIdInput" placeholder="مثال: 1234567890" autocomplete="off" />
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-save" onclick="saveStudentInfo()"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn-cancel-modal" onclick="closeStudentInfoModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة ملاحظات -->
+    <div class="modal-overlay" id="notesModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-sticky-note"></i> ملاحظات الطالب</h3>
+            <div class="modal-sub">أضف ملاحظات ستظهر عند مسح الباركود</div>
+            
+            <textarea id="studentNotes" placeholder="اكتب الملاحظات هنا..." rows="6"></textarea>
+
+            <div class="modal-actions">
+                <button class="btn-save" onclick="saveStudentNotes()"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn-cancel-modal" onclick="closeNotesModal()">إلغاء</button>
             </div>
         </div>
     </div>
@@ -300,7 +354,7 @@
                 </div>
             </div>
 
-            <!-- قسم طلاب الاستئذان (بدون إضافة طالب) -->
+            <!-- قسم طلاب الاستئذان -->
             <div class="page-section" id="pageIstiathan">
                 <div class="page-title">
                     <h1><i class="fas fa-user-clock"></i> طلاب الاستئذان</h1>
