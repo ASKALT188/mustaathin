@@ -7,42 +7,61 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', 'Inter', -apple-system, system-ui, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            color: #2a1e4a;
+        }
+
         .verify-page {
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #ffffff;
             padding: 1.5rem;
         }
+
         .verify-card {
             background: white;
-            border-radius: 40px;
-            padding: 3rem 2.5rem;
-            max-width: 550px;
+            border-radius: 32px;
+            padding: 2.5rem 2rem;
+            max-width: 540px;
             width: 100%;
             text-align: center;
             border: 2px solid #ede4ff;
-            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.08);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.06);
         }
-        .verify-card .school-icon {
+
+        /* ===== رأس البطاقة ===== */
+        .school-icon {
             font-size: 2.5rem;
             color: #7c3aed;
             margin-bottom: 0.5rem;
         }
-        .verify-card h2 {
+
+        .school-title {
             color: #4c1d95;
             font-weight: 700;
             font-size: 1.1rem;
-            margin-bottom: 2rem;
         }
+
+        /* ===== اسم الطالب ===== */
         .verify-student-name {
-            font-size: 2.4rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: #3b1e6b;
-            margin: 1rem 0 0.5rem;
+            margin: 1.5rem 0 1rem;
             word-break: break-word;
         }
+
+        /* ===== حالة الأجهزة والاستئذان (تحت بعض) ===== */
         .verify-section {
             margin: 1rem 0;
             padding: 1rem;
@@ -50,6 +69,7 @@
             background: #fbf9ff;
             border: 2px solid #f3ecff;
         }
+
         .verify-section-title {
             font-size: 0.85rem;
             font-weight: 700;
@@ -60,75 +80,93 @@
             justify-content: center;
             gap: 0.4rem;
         }
+
         .verify-status-large {
             display: inline-block;
-            padding: 0.6rem 2.5rem;
+            padding: 0.5rem 2rem;
             border-radius: 60px;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 700;
             margin: 0.3rem 0;
         }
+
         .verify-status-large.permitted {
             background: #d3f0e5;
             color: #006b4e;
         }
+
         .verify-status-large.not-permitted {
             background: #fce8e8;
             color: #b13e3e;
         }
+
         .verify-time {
             color: #3b1e6b;
-            font-size: 0.95rem;
-            font-weight: 700;
+            font-size: 0.9rem;
+            font-weight: 600;
             margin-top: 0.6rem;
-            padding: 0.5rem;
+            padding: 0.4rem 0.8rem;
             background: #f7f3ff;
             border-radius: 12px;
-            border: 2px solid #ede4ff;
+            border: 1px solid #ede4ff;
+            display: inline-block;
         }
-        .verify-time i { color: #7c3aed; margin-left: 0.5rem; }
 
+        .verify-time i {
+            color: #7c3aed;
+            margin-left: 0.4rem;
+            font-size: 0.8rem;
+        }
+
+        /* ===== معلومات الطالب ===== */
         .verify-info-section {
-            background: #f0f9ff;
-            border: 2px solid #bae6fd;
+            background: #f7f3ff;
+            border: 2px solid #ede4ff;
             border-radius: 20px;
             padding: 1rem;
             margin: 1rem 0;
         }
-        .verify-info-section .verify-section-title {
-            color: #0284c7;
-        }
-        .info-row {
+
+        .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 0.6rem;
+            padding: 0.5rem 0.8rem;
             background: white;
             border-radius: 12px;
             margin-bottom: 0.4rem;
             font-size: 0.85rem;
-            flex-wrap: wrap;
-            gap: 0.3rem;
+            gap: 0.5rem;
         }
-        .info-row:last-child { margin-bottom: 0; }
-        .info-label {
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-item-label {
             color: #6b5b95;
-            font-weight: 700;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.4rem;
         }
-        .info-label i { color: #7c3aed; font-size: 0.8rem; }
-        .info-value {
+
+        .info-item-label i {
+            color: #a78bfa;
+            font-size: 0.8rem;
+        }
+
+        .info-item-value {
             color: #3b1e6b;
             font-weight: 700;
-            direction: ltr;
             background: #f7f3ff;
             padding: 0.2rem 0.7rem;
             border-radius: 40px;
             border: 1px solid #ede4ff;
+            direction: ltr;
         }
 
+        /* ===== الملاحظات ===== */
         .verify-notes-section {
             background: #fffbeb;
             border: 2px solid #fde68a;
@@ -137,16 +175,22 @@
             margin: 1rem 0;
             text-align: right;
         }
+
         .verify-notes-title {
             font-size: 0.85rem;
             font-weight: 700;
-            color: #d97706;
+            color: #b45309;
             margin-bottom: 0.6rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.4rem;
         }
+
+        .verify-notes-title i {
+            color: #d97706;
+        }
+
         .verify-notes-content {
             background: white;
             border-radius: 12px;
@@ -159,52 +203,137 @@
             border: 1px solid #fef3c7;
         }
 
+        /* ===== ذيل البطاقة ===== */
         .verify-timestamp {
             color: #8b7db8;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             margin-top: 1.5rem;
         }
+
+        .verify-timestamp i {
+            color: #7c3aed;
+            margin-left: 0.3rem;
+        }
+
         .refresh-indicator {
             color: #a78bfa;
             font-size: 0.7rem;
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
             opacity: 0.8;
         }
+
+        /* ===== التحميل ===== */
         .loading-spinner {
             font-size: 2rem;
             color: #7c3aed;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .loading-text {
+            color: #8b7db8;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        /* ===== الأخطاء ===== */
         .error-message {
             color: #b13e3e;
             font-size: 1rem;
             padding: 1rem;
             background: #fce8e8;
             border-radius: 16px;
+            border: 1px solid #f5d0d0;
         }
+
+        .error-details {
+            margin-top: 1rem;
+            padding: 0.9rem;
+            background: #f7f3ff;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #6b5b95;
+            text-align: right;
+            border: 1px solid #ede4ff;
+        }
+
+        .error-details strong {
+            color: #4c1d95;
+            display: block;
+            margin-bottom: 0.4rem;
+        }
+
+        .error-details code {
+            direction: ltr;
+            display: inline-block;
+            background: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            word-break: break-all;
+            border: 1px solid #ede4ff;
+            color: #b13e3e;
+            font-weight: 600;
+        }
+
+        .error-details .name-chip {
+            display: inline-block;
+            background: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            margin: 0.15rem;
+            border: 1px solid #ede4ff;
+            color: #3b1e6b;
+            font-weight: 600;
+        }
+
+        /* ===== الجوال ===== */
         @media (max-width: 500px) {
-            .verify-card { padding: 2rem 1.5rem; }
-            .verify-student-name { font-size: 1.8rem; }
-            .verify-status-large { font-size: 1.1rem; padding: 0.4rem 1.8rem; }
-            .verify-time { font-size: 0.85rem; }
-            .info-row { font-size: 0.78rem; }
+            .verify-card {
+                padding: 2rem 1.4rem;
+                border-radius: 28px;
+            }
+            .verify-student-name {
+                font-size: 1.7rem;
+            }
+            .verify-status-large {
+                font-size: 1.05rem;
+                padding: 0.4rem 1.5rem;
+            }
+            .verify-time {
+                font-size: 0.82rem;
+            }
+            .info-item {
+                font-size: 0.78rem;
+                padding: 0.45rem 0.7rem;
+            }
+            .info-item-value {
+                font-size: 0.85rem;
+                padding: 0.15rem 0.6rem;
+            }
+            .verify-notes-content {
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="verify-page">
         <div class="verify-card" id="verifyCard">
+
             <div class="school-icon"><i class="fas fa-graduation-cap"></i></div>
-            <h2>ثانوية هوزان</h2>
+            <h2 class="school-title">ثانوية هوزان</h2>
 
             <div id="verificationContent">
-                <div class="loading-spinner"><i class="fas fa-spinner"></i></div>
-                <p style="margin-top: 1rem; color: #8b7db8;">جاري تحميل حالة الطالب...</p>
+                <div style="padding: 2rem 0;">
+                    <div class="loading-spinner"><i class="fas fa-spinner"></i></div>
+                    <div class="loading-text">جاري تحميل حالة الطالب...</div>
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -214,7 +343,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ===== استخراج اسم الطالب من الرابط =====
+        // ===== استخراج اسم الطالب =====
         const urlParams = new URLSearchParams(window.location.search);
         let rawStudent = urlParams.get('student');
         let studentName = null;
@@ -227,26 +356,18 @@
             }
         }
 
-        // ===== دالة تطبيع النص =====
-        // توحّد الاختلافات العربية والإنجليزية
+        // ===== تطبيع النص =====
         function normalize(text) {
             if (!text) return '';
             return String(text)
                 .trim()
                 .replace(/\s+/g, ' ')
-                // إزالة أي حرف إنجليزي من البداية (مثل J احمد → احمد)
                 .replace(/^[A-Za-z]+\s+/, '')
-                // توحيد الألف
                 .replace(/[أإآا]/g, 'ا')
-                // توحيد الياء
                 .replace(/[ىي]/g, 'ي')
-                // توحيد التاء المربوطة والهاء
                 .replace(/[ةه]/g, 'ه')
-                // تحويل الأرقام العربية إلى إنجليزية
                 .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
-                // الاحتفاظ بالعربي والأرقام والمسافات فقط
                 .replace(/[^\u0600-\u06FF0-9\s]/g, '')
-                // مسافة واحدة
                 .replace(/\s+/g, ' ')
                 .trim()
                 .toLowerCase();
@@ -255,7 +376,7 @@
         // ===== حساب المدة =====
         function getTimeSince(lastTime) {
             if (!lastTime) return null;
-            
+
             const thenTime = new Date(lastTime).getTime();
             if (isNaN(thenTime)) return null;
 
@@ -293,7 +414,6 @@
                 if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
                 return `${minutes} دقيقة`;
             }
-            
             if (totalSec === 1) return 'ثانية واحدة';
             if (totalSec === 2) return 'ثانيتين';
             if (totalSec >= 3 && totalSec <= 10) return `${totalSec} ثوانٍ`;
@@ -302,7 +422,7 @@
 
         function escapeHtml(text) {
             if (!text) return '';
-            return text
+            return String(text)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
@@ -334,7 +454,7 @@
             }
         }
 
-        // ===== تحميل حالة الطالب (البحث الذكي) =====
+        // ===== تحميل الحالة =====
         async function loadStudentStatus() {
             const content = document.getElementById('verificationContent');
 
@@ -343,12 +463,14 @@
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i> باركود غير صالح
                     </div>
+                    <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.85rem;">
+                        لم يتم العثور على اسم الطالب في الرابط.
+                    </p>
                 `;
                 return;
             }
 
             try {
-                // جلب كل الطلاب
                 const { data: allData, error: fetchErr } = await supabaseClient
                     .from('students')
                     .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes');
@@ -366,18 +488,12 @@
 
                 const target = normalize(studentName);
 
-                // 6 محاولات بحث (من الأدق إلى الأعم)
                 let data =
-                    // 1. مطابقة تامة
                     allData.find(s => s.name === studentName) ||
-                    // 2. مطابقة بعد التطبيع
                     allData.find(s => normalize(s.name) === target) ||
-                    // 3. البحث الجزئي (اسم الطالب في الداتا يحتوي على البحث)
                     allData.find(s => normalize(s.name).includes(target)) ||
-                    // 4. البحث العكسي
                     allData.find(s => target.includes(normalize(s.name)));
 
-                // 5. البحث بأول كلمة
                 if (!data) {
                     const firstWord = target.split(' ')[0];
                     if (firstWord.length >= 3) {
@@ -385,15 +501,11 @@
                     }
                 }
 
-                // 6. البحث بأي كلمة
                 if (!data) {
                     const words = target.split(' ').filter(w => w.length >= 3);
                     for (const word of words) {
                         const found = allData.find(s => normalize(s.name).includes(word));
-                        if (found) {
-                            data = found;
-                            break;
-                        }
+                        if (found) { data = found; break; }
                     }
                 }
 
@@ -402,18 +514,16 @@
                         <div class="error-message">
                             <i class="fas fa-exclamation-triangle"></i> الطالب غير موجود
                         </div>
-                        <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.9rem;">
+                        <p style="margin-top: 1rem; color: #8b7db8; font-size: 0.85rem;">
                             الباركود لا يتوافق مع أي طالب مسجل.
                         </p>
-                        <div style="margin-top: 1rem; padding: 0.8rem; background: #f7f3ff; border-radius: 12px; font-size: 0.75rem; color: #6b5b95; text-align: right;">
-                            <strong>الاسم المستخرج من الباركود:</strong>
-                            <div style="direction: ltr; margin-top: 0.3rem; background: white; padding: 0.3rem 0.8rem; border-radius: 8px; word-break: break-all;">
-                                ${escapeHtml(studentName)}
-                            </div>
-                            <div style="margin-top: 0.6rem;">
-                                <strong>أول 5 أسماء في الداتا:</strong>
-                                <div style="margin-top: 0.3rem;">
-                                    ${allData.slice(0, 5).map(s => `<span style="display: inline-block; background: white; padding: 0.15rem 0.5rem; border-radius: 6px; margin: 0.15rem;">${escapeHtml(s.name)}</span>`).join('')}
+                        <div class="error-details">
+                            <strong><i class="fas fa-barcode"></i> الاسم من الباركود:</strong>
+                            <code>${escapeHtml(studentName)}</code>
+                            <div style="margin-top: 0.7rem;">
+                                <strong><i class="fas fa-list"></i> أسماء في النظام:</strong>
+                                <div style="margin-top: 0.4rem;">
+                                    ${allData.slice(0, 5).map(s => `<span class="name-chip">${escapeHtml(s.name)}</span>`).join('')}
                                 </div>
                             </div>
                         </div>
@@ -421,22 +531,17 @@
                     return;
                 }
 
-                // ✅ عرض النتيجة
                 renderStatus(data);
 
-                // التحديث التلقائي كل 5 ثواني
                 const refreshInterval = setInterval(async () => {
                     try {
-                        const { data: refreshAll, error: refreshErr } = await supabaseClient
+                        const { data: refreshAll } = await supabaseClient
                             .from('students')
                             .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes');
 
-                        if (refreshErr || !refreshAll) return;
-
+                        if (!refreshAll) return;
                         const refreshData = refreshAll.find(s => s.name === data.name);
-                        if (refreshData) {
-                            renderStatus(refreshData);
-                        }
+                        if (refreshData) renderStatus(refreshData);
                     } catch (e) {}
                 }, 5000);
 
@@ -452,14 +557,11 @@
                     <div class="error-message">
                         <i class="fas fa-exclamation-triangle"></i> خطأ في الاتصال
                     </div>
-                    <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #8b7db8;">
-                        ${escapeHtml(error.message || '')}
-                    </p>
                 `;
             }
         }
 
-        // ===== عرض حالة الطالب =====
+        // ===== عرض الحالة =====
         function renderStatus(data) {
             const content = document.getElementById('verificationContent');
 
@@ -478,40 +580,50 @@
             let devicesTimeHtml = '';
             if (devicesStatus && devicesTime) {
                 const timeStr = getTimeSince(devicesTime);
-                devicesTimeHtml = `
-                    <div class="verify-time" id="timeDisplayDevices">
-                        <i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}
-                    </div>
-                `;
+                if (timeStr) {
+                    devicesTimeHtml = `
+                        <div class="verify-time" id="timeDisplayDevices">
+                            <i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}
+                        </div>
+                    `;
+                }
             }
 
             let istiathanTimeHtml = '';
             if (istiathanStatus && istiathanTime) {
                 const timeStr = getTimeSince(istiathanTime);
-                istiathanTimeHtml = `
-                    <div class="verify-time" id="timeDisplayIstiathan">
-                        <i class="fas fa-clock"></i> مستأذن منذ ${timeStr}
-                    </div>
-                `;
+                if (timeStr) {
+                    istiathanTimeHtml = `
+                        <div class="verify-time" id="timeDisplayIstiathan">
+                            <i class="fas fa-clock"></i> مستأذن منذ ${timeStr}
+                        </div>
+                    `;
+                }
             }
 
             // معلومات الطالب
             let infoHtml = '';
             if (data.hijri_birth_date || data.student_id) {
-                let infoRows = '';
+                let infoItems = '';
                 if (data.hijri_birth_date) {
-                    infoRows += `
-                        <div class="info-row">
-                            <span class="info-label"><i class="fas fa-calendar-alt"></i> الميلاد الهجري</span>
-                            <span class="info-value">${escapeHtml(data.hijri_birth_date)}</span>
+                    infoItems += `
+                        <div class="info-item">
+                            <span class="info-item-label">
+                                <i class="fas fa-calendar-alt"></i>
+                                تاريخ الميلاد الهجري
+                            </span>
+                            <span class="info-item-value">${escapeHtml(data.hijri_birth_date)}</span>
                         </div>
                     `;
                 }
                 if (data.student_id) {
-                    infoRows += `
-                        <div class="info-row">
-                            <span class="info-label"><i class="fas fa-id-card"></i> رقم الهوية</span>
-                            <span class="info-value">${escapeHtml(data.student_id)}</span>
+                    infoItems += `
+                        <div class="info-item">
+                            <span class="info-item-label">
+                                <i class="fas fa-id-card"></i>
+                                رقم الهوية
+                            </span>
+                            <span class="info-item-value">${escapeHtml(data.student_id)}</span>
                         </div>
                     `;
                 }
@@ -521,7 +633,7 @@
                             <i class="fas fa-id-card"></i>
                             معلومات الطالب
                         </div>
-                        ${infoRows}
+                        ${infoItems}
                     </div>
                 `;
             }
@@ -565,10 +677,12 @@
                 ${notesHtml}
 
                 <div class="verify-timestamp">
-                    <i class="fas fa-check-circle"></i> تم التحديث بواسطة: محمد ماهر او عبدالله العوض
+                    <i class="fas fa-check-circle"></i>
+                    تم التحديث بواسطة: محمد ماهر او عبدالله العوض
                 </div>
                 <div class="refresh-indicator">
-                    <i class="fas fa-sync-alt fa-fw"></i> يتم التحديث تلقائياً
+                    <i class="fas fa-sync-alt"></i>
+                    يتم التحديث تلقائياً
                 </div>
             `;
 
@@ -586,7 +700,6 @@
             }
         }
 
-        // ===== بدء التحميل =====
         loadStudentStatus();
     </script>
 </body>
