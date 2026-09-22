@@ -87,6 +87,86 @@
             border: 2px solid #ede4ff;
         }
         .verify-time i { color: #7c3aed; margin-left: 0.5rem; }
+
+        .verify-info-section {
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            border-radius: 20px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .verify-info-section .verify-section-title {
+            color: #0284c7;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.6rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .info-row:last-child { margin-bottom: 0; }
+
+        .info-label {
+            color: #6b5b95;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .info-label i { color: #7c3aed; font-size: 0.8rem; }
+
+        .info-value {
+            color: #3b1e6b;
+            font-weight: 700;
+            direction: ltr;
+            background: #f7f3ff;
+            padding: 0.2rem 0.7rem;
+            border-radius: 40px;
+            border: 1px solid #ede4ff;
+        }
+
+        .verify-notes-section {
+            background: #fffbeb;
+            border: 2px solid #fde68a;
+            border-radius: 20px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: right;
+        }
+
+        .verify-notes-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #d97706;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .verify-notes-content {
+            background: white;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: #3b1e6b;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid #fef3c7;
+        }
+
         .verify-timestamp {
             color: #8b7db8;
             font-size: 0.8rem;
@@ -119,6 +199,7 @@
             .verify-student-name { font-size: 1.8rem; }
             .verify-status-large { font-size: 1.1rem; padding: 0.4rem 1.8rem; }
             .verify-time { font-size: 0.85rem; }
+            .info-row { font-size: 0.78rem; }
         }
     </style>
 </head>
@@ -200,6 +281,17 @@
             return `${totalSec} ثانية`;
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/\n/g, '<br>');
+        }
+
         let timeIntervalDevices = null;
         let timeIntervalIstiathan = null;
         let lastDevicesTime = null;
@@ -238,7 +330,7 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('students')
-                    .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at')
+                    .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes')
                     .eq('name', studentName)
                     .single();
 
@@ -260,7 +352,7 @@
                     try {
                         const { data: refreshData, error: refreshError } = await supabaseClient
                             .from('students')
-                            .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at')
+                            .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, hijri_birth_date, student_id, notes')
                             .eq('name', studentName)
                             .single();
 
@@ -320,6 +412,49 @@
                 `;
             }
 
+            let infoHtml = '';
+            if (data.hijri_birth_date || data.student_id) {
+                let infoRows = '';
+                if (data.hijri_birth_date) {
+                    infoRows += `
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-calendar-alt"></i> الميلاد الهجري</span>
+                            <span class="info-value">${data.hijri_birth_date}</span>
+                        </div>
+                    `;
+                }
+                if (data.student_id) {
+                    infoRows += `
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-id-card"></i> رقم الهوية</span>
+                            <span class="info-value">${data.student_id}</span>
+                        </div>
+                    `;
+                }
+                infoHtml = `
+                    <div class="verify-info-section">
+                        <div class="verify-section-title">
+                            <i class="fas fa-id-card"></i>
+                            معلومات الطالب
+                        </div>
+                        ${infoRows}
+                    </div>
+                `;
+            }
+
+            let notesHtml = '';
+            if (data.notes && data.notes.trim()) {
+                notesHtml = `
+                    <div class="verify-notes-section">
+                        <div class="verify-notes-title">
+                            <i class="fas fa-sticky-note"></i>
+                            ملاحظات
+                        </div>
+                        <div class="verify-notes-content">${escapeHtml(data.notes)}</div>
+                    </div>
+                `;
+            }
+
             content.innerHTML = `
                 <div class="verify-student-name">${data.name}</div>
 
@@ -341,6 +476,9 @@
                     ${istiathanTimeHtml}
                 </div>
 
+                ${infoHtml}
+                ${notesHtml}
+
                 <div class="verify-timestamp">
                     <i class="fas fa-check-circle"></i> تم التحديث بواسطة: محمد ماهر او عبدالله العوض
                 </div>
@@ -349,7 +487,6 @@
                 </div>
             `;
 
-            // تشغيل العدادات
             lastDevicesTime = devicesTime;
             lastIstiathanTime = istiathanTime;
 
