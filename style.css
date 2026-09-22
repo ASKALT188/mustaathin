@@ -1090,3 +1090,112 @@ body {
     .student-number { width: 28px; height: 28px; font-size: 0.68rem; }
     .status-badge { display: none; }
 }
+/* ============================================
+   ===== حقول الإدخال في النوافذ =====
+   ============================================ */
+.input-group {
+    margin-bottom: 1rem;
+    text-align: right;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #4c1d95;
+    margin-bottom: 0.4rem;
+}
+
+.input-group label i {
+    color: #7c3aed;
+    margin-left: 0.3rem;
+}
+
+.input-group input[type="text"],
+.modal-box textarea {
+    width: 100%;
+    padding: 0.85rem 1.2rem;
+    border: 2px solid #ede4ff;
+    border-radius: 16px;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.2s;
+    font-family: inherit;
+    color: #2a1e4a;
+    background: white;
+}
+
+.input-group input[type="text"]:focus,
+.modal-box textarea:focus {
+    border-color: #7c3aed;
+}
+
+.modal-box textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+/* ===== أيقونات الخيارات الجديدة ===== */
+.option-icon.info {
+    background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+}
+
+.option-icon.notes {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+}
+
+/* ===== حالة وجود ملاحظات ===== */
+.notes-option.has-notes {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-color: #fbbf24;
+}
+
+.notes-option.has-notes::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #d97706;
+    margin-right: auto;
+    font-size: 0.9rem;
+}
+
+/* ===== حالة وجود معلومات ===== */
+.info-option.has-info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-color: #38bdf8;
+}
+
+.info-option.has-info::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #0284c7;
+    margin-right: auto;
+    font-size: 0.9rem;
+}
+
+/* ===== شارات صغيرة للطالب ===== */
+.mini-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.6rem;
+    flex-shrink: 0;
+    margin-right: 0.2rem;
+}
+
+.mini-badge.info-badge {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #38bdf8;
+}
+
+.mini-badge.notes-badge {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fbbf24;
+}
