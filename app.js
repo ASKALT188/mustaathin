@@ -8,7 +8,6 @@ const DASHBOARD_PASSWORD = 'HA20ZN30';
 
 // ===== المتغيرات =====
 let openedStudent = '';
-let openedStudentMode = 'devices';
 let isProcessing = false;
 const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
@@ -50,18 +49,15 @@ function switchSection(section) {
     currentSection = section;
 
     document.getElementById('navStudents').classList.toggle('active', section === 'students');
-    document.getElementById('navIstiathan').classList.toggle('active', section === 'istiathan');
     document.getElementById('navLogs').classList.toggle('active', section === 'logs');
     document.getElementById('navDownload').classList.toggle('active', section === 'download');
 
     document.getElementById('pageStudents').classList.toggle('active', section === 'students');
-    document.getElementById('pageIstiathan').classList.toggle('active', section === 'istiathan');
     document.getElementById('pageLogs').classList.toggle('active', section === 'logs');
     document.getElementById('pageDownload').classList.toggle('active', section === 'download');
 
     if (section === 'logs') renderLogs();
     if (section === 'download') renderDownloadList();
-    if (section === 'istiathan') renderIstiathanStudents(allStudents, '');
 
     sessionStorage.setItem('currentSection', section);
     closeSidebarOnMobile();
@@ -177,10 +173,9 @@ async function addNewStudent() {
 }
 
 // ===== فتح نافذة خيارات الطالب =====
-function openStudentOptions(name, mode = 'devices') {
+function openStudentOptions(name) {
     if (isProcessing) return;
     openedStudent = name;
-    openedStudentMode = mode;
 
     const student = allStudents.find(s => s.name === name);
     if (!student) return;
@@ -190,37 +185,28 @@ function openStudentOptions(name, mode = 'devices') {
     document.getElementById('optionsMainView').style.display = 'block';
     document.getElementById('optionsQrView').style.display = 'none';
 
-    const isDevices = mode === 'devices';
-    const subTitle = document.getElementById('optionsSubTitle');
-    const permitBtnTitle = document.getElementById('permitBtnTitle');
-    const permitBtnSub = document.getElementById('permitBtnSub');
-    const cancelBtnTitle = document.getElementById('cancelBtnTitle');
-    const cancelBtnSub = document.getElementById('cancelBtnSub');
-
-    if (isDevices) {
-        subTitle.textContent = 'اختر الإجراء اللي تبيه (سماح إحضار الأجهزة)';
-        permitBtnTitle.textContent = 'سماح';
-        permitBtnSub.textContent = 'السماح للطالب بإحضار جهازه';
-        cancelBtnTitle.textContent = 'غير مسموح';
-        cancelBtnSub.textContent = 'منع الطالب من إحضار جهازه';
+    // ضبط سويتش الأجهزة
+    const devicesToggle = document.getElementById('devicesToggle');
+    const devicesStatusText = document.getElementById('devicesStatusText');
+    devicesToggle.checked = student.permitted === true;
+    if (student.permitted) {
+        devicesStatusText.textContent = 'مسموح';
+        devicesStatusText.className = 'toggle-status-text on';
     } else {
-        subTitle.textContent = 'اختر الإجراء اللي تبيه (استئذان)';
-        permitBtnTitle.textContent = 'سماح';
-        permitBtnSub.textContent = 'السماح للطالب بالاستئذان';
-        cancelBtnTitle.textContent = 'غير مسموح';
-        cancelBtnSub.textContent = 'منع الطالب من الاستئذان';
+        devicesStatusText.textContent = 'غير مسموح';
+        devicesStatusText.className = 'toggle-status-text off';
     }
 
-    const currentStatus = isDevices ? student.permitted === true : student.istiathan_permitted === true;
-    const permitBtn = document.getElementById('permitOptionBtn');
-    const cancelBtn = document.getElementById('cancelOptionBtn');
-
-    if (currentStatus) {
-        permitBtn.classList.add('current');
-        cancelBtn.classList.remove('current');
+    // ضبط سويتش الاستئذان
+    const istiathanToggle = document.getElementById('istiathanToggle');
+    const istiathanStatusText = document.getElementById('istiathanStatusText');
+    istiathanToggle.checked = student.istiathan_permitted === true;
+    if (student.istiathan_permitted) {
+        istiathanStatusText.textContent = 'مسموح';
+        istiathanStatusText.className = 'toggle-status-text on';
     } else {
-        permitBtn.classList.remove('current');
-        cancelBtn.classList.add('current');
+        istiathanStatusText.textContent = 'غير مسموح';
+        istiathanStatusText.className = 'toggle-status-text off';
     }
 
     // مؤشرات وجود معلومات/ملاحظات
@@ -252,21 +238,28 @@ function closeStudentOptions() {
     document.getElementById('optionsQrView').style.display = 'none';
     document.getElementById('modalQrContainer').innerHTML = '';
     openedStudent = '';
-    openedStudentMode = 'devices';
 }
 
-// ===== تغيير حالة الطالب =====
-async function setStudentStatus(status) {
+// ===== عند تبديل سويتش الأجهزة =====
+async function onDevicesToggleChange(checked) {
     if (!openedStudent) return;
-    const name = openedStudent;
-    const mode = openedStudentMode;
-    closeStudentOptions();
 
-    if (mode === 'devices') {
-        await updateStudentStatus(name, status);
-    } else {
-        await updateIstiathanStatus(name, status);
-    }
+    const statusText = document.getElementById('devicesStatusText');
+    statusText.textContent = checked ? 'مسموح' : 'غير مسموح';
+    statusText.className = checked ? 'toggle-status-text on' : 'toggle-status-text off';
+
+    await updateStudentStatus(openedStudent, checked);
+}
+
+// ===== عند تبديل سويتش الاستئذان =====
+async function onIstiathanToggleChange(checked) {
+    if (!openedStudent) return;
+
+    const statusText = document.getElementById('istiathanStatusText');
+    statusText.textContent = checked ? 'مسموح' : 'غير مسموح';
+    statusText.className = checked ? 'toggle-status-text on' : 'toggle-status-text off';
+
+    await updateIstiathanStatus(openedStudent, checked);
 }
 
 // ===== عرض الباركود داخل النافذة =====
@@ -540,192 +533,6 @@ function deleteStudent(name) {
     );
 }
 
-// ===== سماح للكل — الأجهزة =====
-function setAllStatus(status) {
-    if (isProcessing) return;
-
-    if (allStudents.length === 0) {
-        showToast('لا يوجد طلاب', 'error');
-        return;
-    }
-
-    const statusText = status ? 'سماح' : 'غير سماح';
-    const actionText = status ? 'السماح' : 'منع';
-
-    showConfirm(
-        `هل أنت متأكد من ${actionText} لجميع الطلاب في قسم الأجهزة (${allStudents.length} طالب)؟`,
-        `تأكيد ${statusText} للكل (الأجهزة)`,
-        async () => {
-            await updateAllStudentsStatus(status);
-        }
-    );
-}
-
-async function updateAllStudentsStatus(status) {
-    if (isProcessing) return;
-    isProcessing = true;
-
-    try {
-        const now = new Date();
-        const localTime = new Date(now.getTime() + (3 * 3600000));
-
-        const timestamp = localTime.toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
-        });
-
-        let successCount = 0;
-        let failCount = 0;
-
-        for (const student of allStudents) {
-            try {
-                const updateData = { permitted: status };
-                if (status === true) {
-                    updateData.last_permitted_at = localTime.toISOString();
-                }
-
-                const { error: updateError } = await supabaseClient
-                    .from('students')
-                    .update(updateData)
-                    .eq('id', student.id);
-
-                if (updateError) throw updateError;
-
-                const statusText = status ? 'Permitted' : 'Not Permitted';
-                const { error: historyError } = await supabaseClient
-                    .from('history')
-                    .insert([{
-                        student_name: student.name,
-                        status: statusText,
-                        timestamp: timestamp,
-                        teacher: currentTeacher
-                    }]);
-
-                if (historyError) {
-                    console.warn('History insert error:', historyError);
-                }
-
-                successCount++;
-
-            } catch (e) {
-                console.error(`Failed to update ${student.name}:`, e);
-                failCount++;
-            }
-        }
-
-        if (successCount > 0) {
-            showToast(
-                `✅ تم ${status ? 'السماح' : 'المنع'} لـ ${successCount} طالب${failCount > 0 ? ` (${failCount} فشل)` : ''}`,
-                status ? 'success' : 'error'
-            );
-        } else {
-            showToast('❌ فشل تحديث الطلاب', 'error');
-        }
-
-        await loadAllData();
-
-    } catch (error) {
-        console.error('Set all status error:', error);
-        showToast('خطأ: ' + error.message, 'error');
-    } finally {
-        isProcessing = false;
-    }
-}
-
-// ===== سماح للكل — الاستئذان =====
-function setAllIstiathanStatus(status) {
-    if (isProcessing) return;
-
-    if (allStudents.length === 0) {
-        showToast('لا يوجد طلاب', 'error');
-        return;
-    }
-
-    const statusText = status ? 'سماح' : 'غير سماح';
-    const actionText = status ? 'السماح' : 'منع';
-
-    showConfirm(
-        `هل أنت متأكد من ${actionText} لجميع الطلاب في قسم الاستئذان (${allStudents.length} طالب)؟`,
-        `تأكيد ${statusText} للكل (الاستئذان)`,
-        async () => {
-            await updateAllIstiathanStatus(status);
-        }
-    );
-}
-
-async function updateAllIstiathanStatus(status) {
-    if (isProcessing) return;
-    isProcessing = true;
-
-    try {
-        const now = new Date();
-        const localTime = new Date(now.getTime() + (3 * 3600000));
-
-        const timestamp = localTime.toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
-        });
-
-        let successCount = 0;
-        let failCount = 0;
-
-        for (const student of allStudents) {
-            try {
-                const updateData = { istiathan_permitted: status };
-                if (status === true) {
-                    updateData.last_istiathan_at = localTime.toISOString();
-                }
-
-                const { error: updateError } = await supabaseClient
-                    .from('students')
-                    .update(updateData)
-                    .eq('id', student.id);
-
-                if (updateError) throw updateError;
-
-                const statusText = status ? 'Istiathan Permitted' : 'Istiathan Not Permitted';
-                const { error: historyError } = await supabaseClient
-                    .from('history')
-                    .insert([{
-                        student_name: student.name,
-                        status: statusText,
-                        timestamp: timestamp,
-                        teacher: currentTeacher
-                    }]);
-
-                if (historyError) {
-                    console.warn('History insert error:', historyError);
-                }
-
-                successCount++;
-
-            } catch (e) {
-                console.error(`Failed to update ${student.name}:`, e);
-                failCount++;
-            }
-        }
-
-        if (successCount > 0) {
-            showToast(
-                `✅ تم ${status ? 'السماح' : 'المنع'} للاستئذان لـ ${successCount} طالب${failCount > 0 ? ` (${failCount} فشل)` : ''}`,
-                status ? 'success' : 'error'
-            );
-        } else {
-            showToast('❌ فشل تحديث الطلاب', 'error');
-        }
-
-        await loadAllData();
-
-    } catch (error) {
-        console.error('Set all istiathan status error:', error);
-        showToast('خطأ: ' + error.message, 'error');
-    } finally {
-        isProcessing = false;
-    }
-}
-
 // ===== Toast =====
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -878,12 +685,11 @@ async function loadAllData() {
     const students = await fetchStudents();
     await fetchHistory();
     renderStudents(students, searchInput.value);
-    renderIstiathanStudents(students, '');
     renderLogs();
     renderDownloadList();
 }
 
-// ===== عرض الطلاب — الأجهزة =====
+// ===== عرض الطلاب =====
 function renderStudents(students, filter = '') {
     if (!students || students.length === 0) {
         studentListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
@@ -901,90 +707,38 @@ function renderStudents(students, filter = '') {
 
     let html = '';
     filtered.forEach((s, index) => {
-        const status = s.permitted === true;
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
-        const statusClass = status ? 'permitted' : 'not-permitted';
-        const statusText = status ? 'مسموح' : 'غير مسموح';
-
-        const hasNotes = s.notes && s.notes.trim();
         const hasInfo = s.hijri_birth_date || s.student_id;
+        const hasNotes = s.notes && s.notes.trim();
+
+        const devicesStatus = s.permitted === true;
+        const istiathanStatus = s.istiathan_permitted === true;
 
         html += `
             <div class="student-item">
                 <span class="student-number">${num}</span>
 
-                <button class="student-name-btn" onclick="openStudentOptions('${safeName}', 'devices')">
-                    <i class="fas fa-mobile-alt"></i>
+                <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
+                    <i class="fas fa-user-graduate"></i>
                     <span>${s.name}</span>
                     ${hasInfo ? '<span class="mini-badge info-badge" title="فيه معلومات"><i class="fas fa-id-card"></i></span>' : ''}
                     ${hasNotes ? '<span class="mini-badge notes-badge" title="فيه ملاحظات"><i class="fas fa-sticky-note"></i></span>' : ''}
                 </button>
 
-                <span class="status-badge ${statusClass}">
-                    ${status ? '🟢' : '🔴'} ${statusText}
-                </span>
+                <div class="student-status-icons">
+                    <span class="mini-status ${devicesStatus ? 'on' : 'off'}" title="إحضار الأجهزة">
+                        <i class="fas fa-mobile-alt"></i>
+                    </span>
+                    <span class="mini-status ${istiathanStatus ? 'on' : 'off'}" title="الاستئذان">
+                        <i class="fas fa-user-clock"></i>
+                    </span>
+                </div>
             </div>
         `;
     });
     studentListEl.innerHTML = html;
 }
-
-// ===== عرض الطلاب — الاستئذان =====
-function renderIstiathanStudents(students, filter = '') {
-    const istiathanListEl = document.getElementById('studentListIstiathan');
-    if (!istiathanListEl) return;
-
-    if (!students || students.length === 0) {
-        istiathanListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب. أضف طالباً جديداً.</div>`;
-        return;
-    }
-
-    const filtered = students.filter(s =>
-        s.name.toLowerCase().includes(filter.toLowerCase())
-    );
-
-    if (filtered.length === 0 && students.length > 0) {
-        istiathanListEl.innerHTML = `<div class="loading-message">لا يوجد نتائج لـ "${filter}"</div>`;
-        return;
-    }
-
-    let html = '';
-    filtered.forEach((s, index) => {
-        const status = s.istiathan_permitted === true;
-        const num = index + 1;
-        const safeName = s.name.replace(/'/g, "\\'");
-        const statusClass = status ? 'permitted' : 'not-permitted';
-        const statusText = status ? 'مسموح' : 'غير مسموح';
-
-        const hasNotes = s.notes && s.notes.trim();
-        const hasInfo = s.hijri_birth_date || s.student_id;
-
-        html += `
-            <div class="student-item">
-                <span class="student-number">${num}</span>
-
-                <button class="student-name-btn" onclick="openStudentOptions('${safeName}', 'istiathan')">
-                    <i class="fas fa-user-clock"></i>
-                    <span>${s.name}</span>
-                    ${hasInfo ? '<span class="mini-badge info-badge" title="فيه معلومات"><i class="fas fa-id-card"></i></span>' : ''}
-                    ${hasNotes ? '<span class="mini-badge notes-badge" title="فيه ملاحظات"><i class="fas fa-sticky-note"></i></span>' : ''}
-                </button>
-
-                <span class="status-badge ${statusClass}">
-                    ${status ? '🟢' : '🔴'} ${statusText}
-                </span>
-            </div>
-        `;
-    });
-    istiathanListEl.innerHTML = html;
-}
-
-// ===== فلترة طلاب الاستئذان =====
-window.filterStudentsIstiathan = function() {
-    const input = document.getElementById('searchInputIstiathan');
-    renderIstiathanStudents(allStudents, input ? input.value : '');
-};
 
 // ===== عرض السجلات =====
 function renderLogs() {
@@ -1324,7 +1078,6 @@ function subscribeToChanges() {
                     if (deletedName) {
                         allStudents = allStudents.filter(s => s.name !== deletedName);
                         renderStudents(allStudents, searchInput.value);
-                        renderIstiathanStudents(allStudents, '');
                         renderDownloadList();
                     }
                     return;
@@ -1339,7 +1092,6 @@ function subscribeToChanges() {
                     allStudents.push(updatedStudent);
                 }
                 renderStudents(allStudents, searchInput.value);
-                renderIstiathanStudents(allStudents, '');
                 renderDownloadList();
             }
         )
