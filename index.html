@@ -122,25 +122,46 @@
         <div class="modal-box student-options-box">
             <div id="optionsMainView">
                 <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
-                <div class="modal-sub" id="optionsSubTitle">اختر الإجراء اللي تبيه</div>
+                <div class="modal-sub">إدارة صلاحيات الطالب</div>
 
                 <div class="student-options">
-                    <button class="option-btn permit-option" id="permitOptionBtn" onclick="setStudentStatus(true)">
-                        <div class="option-icon permit"><i class="fas fa-check"></i></div>
-                        <div class="option-text">
-                            <strong id="permitBtnTitle">سماح</strong>
-                            <span id="permitBtnSub">السماح للطالب</span>
+                    <!-- سويتش إحضار الأجهزة -->
+                    <div class="toggle-option-card">
+                        <div class="toggle-option-header">
+                            <div class="toggle-option-icon devices">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="toggle-option-text">
+                                <strong>إحضار الأجهزة</strong>
+                                <span>السماح للطالب بإحضار جهازه</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="devicesToggle" onchange="onDevicesToggleChange(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
-                    </button>
+                        <div class="toggle-status-text off" id="devicesStatusText">غير مسموح</div>
+                    </div>
 
-                    <button class="option-btn cancel-option" id="cancelOptionBtn" onclick="setStudentStatus(false)">
-                        <div class="option-icon cancel"><i class="fas fa-times"></i></div>
-                        <div class="option-text">
-                            <strong id="cancelBtnTitle">غير مسموح</strong>
-                            <span id="cancelBtnSub">منع الطالب</span>
+                    <!-- سويتش الاستئذان -->
+                    <div class="toggle-option-card">
+                        <div class="toggle-option-header">
+                            <div class="toggle-option-icon istiathan">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                            <div class="toggle-option-text">
+                                <strong>الاستئذان</strong>
+                                <span>السماح للطالب بالاستئذان</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="istiathanToggle" onchange="onIstiathanToggleChange(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
-                    </button>
+                        <div class="toggle-status-text off" id="istiathanStatusText">غير مسموح</div>
+                    </div>
 
+                    <!-- عرض الباركود -->
                     <button class="option-btn qr-option" onclick="showQrInsideModal()">
                         <div class="option-icon qr"><i class="fas fa-qrcode"></i></div>
                         <div class="option-text">
@@ -149,6 +170,7 @@
                         </div>
                     </button>
 
+                    <!-- معلومات الطالب -->
                     <button class="option-btn info-option" onclick="openStudentInfoModal()">
                         <div class="option-icon info"><i class="fas fa-id-card"></i></div>
                         <div class="option-text">
@@ -157,6 +179,7 @@
                         </div>
                     </button>
 
+                    <!-- الملاحظات -->
                     <button class="option-btn notes-option" onclick="openNotesModal()">
                         <div class="option-icon notes"><i class="fas fa-sticky-note"></i></div>
                         <div class="option-text">
@@ -165,6 +188,7 @@
                         </div>
                     </button>
 
+                    <!-- تعديل الاسم -->
                     <button class="option-btn edit-option" onclick="openEditNameModal()">
                         <div class="option-icon edit"><i class="fas fa-pen"></i></div>
                         <div class="option-text">
@@ -173,6 +197,7 @@
                         </div>
                     </button>
 
+                    <!-- حذف -->
                     <button class="option-btn delete-option" onclick="deleteStudentFromModal()">
                         <div class="option-icon delete"><i class="fas fa-trash"></i></div>
                         <div class="option-text">
@@ -226,7 +251,7 @@
         <div class="modal-box">
             <h3><i class="fas fa-id-card"></i> معلومات الطالب</h3>
             <div class="modal-sub">تعديل المعلومات الأساسية للطالب</div>
-            
+
             <div class="input-group">
                 <label><i class="fas fa-calendar-alt"></i> تاريخ الميلاد الهجري</label>
                 <input type="text" id="hijriBirthDate" placeholder="مثال: 1445/05/15" autocomplete="off" />
@@ -249,7 +274,7 @@
         <div class="modal-box">
             <h3><i class="fas fa-sticky-note"></i> ملاحظات الطالب</h3>
             <div class="modal-sub">أضف ملاحظات ستظهر عند مسح الباركود</div>
-            
+
             <textarea id="studentNotes" placeholder="اكتب الملاحظات هنا..." rows="6"></textarea>
 
             <div class="modal-actions">
@@ -287,12 +312,8 @@
 
         <nav class="sidebar-nav">
             <button class="sidebar-item active" id="navStudents" onclick="switchSection('students')">
-                <i class="fas fa-mobile-alt"></i>
-                <span>سماح إحضار الأجهزة</span>
-            </button>
-            <button class="sidebar-item" id="navIstiathan" onclick="switchSection('istiathan')">
-                <i class="fas fa-user-clock"></i>
-                <span>طلاب الاستئذان</span>
+                <i class="fas fa-users"></i>
+                <span>كشف الطلاب</span>
             </button>
             <button class="sidebar-item" id="navLogs" onclick="switchSection('logs')">
                 <i class="fas fa-clipboard-list"></i>
@@ -322,17 +343,11 @@
     <main class="main-content">
         <div class="app-container">
 
-            <!-- قسم سماح إحضار الأجهزة -->
+            <!-- قسم كشف الطلاب -->
             <div class="page-section active" id="pageStudents">
                 <div class="page-title">
-                    <h1><i class="fas fa-mobile-alt"></i> سماح إحضار الأجهزة</h1>
+                    <h1><i class="fas fa-users"></i> كشف الطلاب</h1>
                     <div class="page-actions">
-                        <button class="btn btn-permit-all" onclick="setAllStatus(true)">
-                            <i class="fas fa-check-double"></i> <span class="btn-text">سماح للكل</span>
-                        </button>
-                        <button class="btn btn-cancel-all" onclick="setAllStatus(false)">
-                            <i class="fas fa-times-circle"></i> <span class="btn-text">غير سماح للكل</span>
-                        </button>
                         <button class="btn add-btn" onclick="openAddModal()">
                             <i class="fas fa-plus"></i> <span class="btn-text">إضافة طالب</span>
                         </button>
@@ -349,35 +364,6 @@
                     </div>
 
                     <div class="student-list" id="studentList">
-                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- قسم طلاب الاستئذان -->
-            <div class="page-section" id="pageIstiathan">
-                <div class="page-title">
-                    <h1><i class="fas fa-user-clock"></i> طلاب الاستئذان</h1>
-                    <div class="page-actions">
-                        <button class="btn btn-permit-all" onclick="setAllIstiathanStatus(true)">
-                            <i class="fas fa-check-double"></i> <span class="btn-text">سماح للكل</span>
-                        </button>
-                        <button class="btn btn-cancel-all" onclick="setAllIstiathanStatus(false)">
-                            <i class="fas fa-times-circle"></i> <span class="btn-text">غير سماح للكل</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-list"></i> قائمة الاستئذان</h2>
-                        <div class="search-box">
-                            <input type="text" id="searchInputIstiathan" placeholder="ابحث..." oninput="filterStudentsIstiathan()" />
-                            <button><i class="fas fa-search"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="student-list" id="studentListIstiathan">
                         <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                     </div>
                 </div>
@@ -435,7 +421,7 @@
     <!-- حقوق الطبع -->
     <footer class="footer">
         <i class="fas fa-copyright"></i>
-        حقوق طبع ونشر محفوظة لشعبة 208 موهبة
+        حقوق طبع ونشر محفوظة HIT
     </footer>
 
     <div class="toast-container" id="toastContainer"></div>
