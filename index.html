@@ -179,7 +179,7 @@
                         <div class="option-icon info"><i class="fas fa-id-card"></i></div>
                         <div class="option-text">
                             <strong>بيانات الطالب</strong>
-                            <span>الميلاد والهوية</span>
+                            <span>الاسم الكامل، رقم الهوية، الميلاد</span>
                         </div>
                     </button>
 
@@ -250,16 +250,21 @@
     <div class="modal-overlay" id="studentInfoModal">
         <div class="modal-box">
             <h3><i class="fas fa-id-card"></i> بيانات الطالب</h3>
-            <div class="modal-sub">تعديل البيانات الأساسية للطالب</div>
+            <div class="modal-sub">الاسم الكامل، رقم الهوية، الميلاد</div>
+
+            <div class="input-group">
+                <label><i class="fas fa-user"></i> الاسم الكامل</label>
+                <input type="text" id="fullNameInput" placeholder="مثال: احمد محمد البلادي" autocomplete="off" />
+            </div>
+
+            <div class="input-group">
+                <label><i class="fas fa-id-card"></i> رقم الهوية</label>
+                <input type="text" id="studentIdInput" placeholder="مثال: 1234567890" autocomplete="off" />
+            </div>
 
             <div class="input-group">
                 <label><i class="fas fa-calendar-alt"></i> تاريخ الميلاد الهجري</label>
                 <input type="text" id="hijriBirthDate" placeholder="مثال: 1445/05/15" autocomplete="off" />
-            </div>
-
-            <div class="input-group">
-                <label><i class="fas fa-id-card"></i> رقم هوية الطالب</label>
-                <input type="text" id="studentIdInput" placeholder="مثال: 1234567890" autocomplete="off" />
             </div>
 
             <div class="modal-actions">
@@ -421,7 +426,7 @@
     <!-- حقوق الطبع -->
     <footer class="footer">
         <i class="fas fa-copyright"></i>
-        حقوق طبع ونشر محفوظة HIT
+        حقوق طبع ونشر محفوظة لشعبة 208 موهبة
     </footer>
 
     <div class="toast-container" id="toastContainer"></div>
