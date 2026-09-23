@@ -209,12 +209,12 @@ function openStudentOptions(name) {
         istiathanStatusText.className = 'toggle-status-text off';
     }
 
-    // مؤشرات وجود معلومات/ملاحظات
+    // مؤشرات وجود بيانات/ملاحظات
     const infoBtn = document.querySelector('.info-option');
     const notesBtn = document.querySelector('.notes-option');
 
     if (infoBtn) {
-        if (student.hijri_birth_date || student.student_id) {
+        if (student.full_name || student.hijri_birth_date || student.student_id) {
             infoBtn.classList.add('has-info');
         } else {
             infoBtn.classList.remove('has-info');
@@ -414,15 +414,16 @@ async function saveEditName() {
     }
 }
 
-// ===== نافذة معلومات الطالب =====
+// ===== نافذة بيانات الطالب =====
 function openStudentInfoModal() {
     if (!openedStudent) return;
 
     const student = allStudents.find(s => s.name === openedStudent);
     if (!student) return;
 
-    document.getElementById('hijriBirthDate').value = student.hijri_birth_date || '';
+    document.getElementById('fullNameInput').value = student.full_name || '';
     document.getElementById('studentIdInput').value = student.student_id || '';
+    document.getElementById('hijriBirthDate').value = student.hijri_birth_date || '';
 
     document.getElementById('studentOptionsModal').classList.remove('active');
     document.getElementById('studentInfoModal').classList.add('active');
@@ -434,8 +435,9 @@ function closeStudentInfoModal() {
 }
 
 async function saveStudentInfo() {
-    const hijriBirthDate = document.getElementById('hijriBirthDate').value.trim();
+    const fullName = document.getElementById('fullNameInput').value.trim();
     const studentId = document.getElementById('studentIdInput').value.trim();
+    const hijriBirthDate = document.getElementById('hijriBirthDate').value.trim();
     const name = openedStudent;
 
     if (!name) return;
@@ -444,15 +446,16 @@ async function saveStudentInfo() {
         const { error } = await supabaseClient
             .from('students')
             .update({
-                hijri_birth_date: hijriBirthDate || null,
-                student_id: studentId || null
+                full_name: fullName || null,
+                student_id: studentId || null,
+                hijri_birth_date: hijriBirthDate || null
             })
             .eq('name', name);
 
         if (error) throw error;
 
         closeStudentInfoModal();
-        showToast(`✅ تم حفظ معلومات ${name}`, 'success');
+        showToast(`✅ تم حفظ بيانات ${name}`, 'success');
         await loadAllData();
 
     } catch (error) {
@@ -709,7 +712,7 @@ function renderStudents(students, filter = '') {
     filtered.forEach((s, index) => {
         const num = index + 1;
         const safeName = s.name.replace(/'/g, "\\'");
-        const hasInfo = s.hijri_birth_date || s.student_id;
+        const hasInfo = s.full_name || s.hijri_birth_date || s.student_id;
         const hasNotes = s.notes && s.notes.trim();
 
         const devicesStatus = s.permitted === true;
@@ -722,7 +725,7 @@ function renderStudents(students, filter = '') {
                 <button class="student-name-btn" onclick="openStudentOptions('${safeName}')">
                     <i class="fas fa-user-graduate"></i>
                     <span>${s.name}</span>
-                    ${hasInfo ? '<span class="mini-badge info-badge" title="فيه معلومات"><i class="fas fa-id-card"></i></span>' : ''}
+                    ${hasInfo ? '<span class="mini-badge info-badge" title="فيه بيانات"><i class="fas fa-id-card"></i></span>' : ''}
                     ${hasNotes ? '<span class="mini-badge notes-badge" title="فيه ملاحظات"><i class="fas fa-sticky-note"></i></span>' : ''}
                 </button>
 
