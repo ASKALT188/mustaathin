@@ -120,29 +120,15 @@
     <!-- نافذة خيارات الطالب -->
     <div class="modal-overlay" id="studentOptionsModal">
         <div class="modal-box student-options-box">
+            <button class="modal-top-close" onclick="closeStudentOptions()" title="إغلاق">
+                <i class="fas fa-times"></i>
+            </button>
+
             <div id="optionsMainView">
                 <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
                 <div class="modal-sub">إدارة صلاحيات الطالب</div>
 
                 <div class="student-options">
-                    <!-- سويتش إحضار الأجهزة -->
-                    <div class="toggle-option-card">
-                        <div class="toggle-option-header">
-                            <div class="toggle-option-icon devices">
-                                <i class="fas fa-mobile-alt"></i>
-                            </div>
-                            <div class="toggle-option-text">
-                                <strong>إحضار الأجهزة</strong>
-                                <span>السماح للطالب بإحضار جهازه</span>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="devicesToggle" onchange="onDevicesToggleChange(this.checked)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-status-text off" id="devicesStatusText">غير مسموح</div>
-                    </div>
-
                     <!-- سويتش الاستئذان -->
                     <div class="toggle-option-card">
                         <div class="toggle-option-header">
@@ -161,6 +147,24 @@
                         <div class="toggle-status-text off" id="istiathanStatusText">غير مسموح</div>
                     </div>
 
+                    <!-- سويتش إحضار الأجهزة -->
+                    <div class="toggle-option-card">
+                        <div class="toggle-option-header">
+                            <div class="toggle-option-icon devices">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="toggle-option-text">
+                                <strong>إحضار الأجهزة</strong>
+                                <span>السماح للطالب بإحضار جهازه</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="devicesToggle" onchange="onDevicesToggleChange(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-status-text off" id="devicesStatusText">غير مسموح</div>
+                    </div>
+
                     <!-- عرض الباركود -->
                     <button class="option-btn qr-option" onclick="showQrInsideModal()">
                         <div class="option-icon qr"><i class="fas fa-qrcode"></i></div>
@@ -170,11 +174,11 @@
                         </div>
                     </button>
 
-                    <!-- معلومات الطالب -->
+                    <!-- بيانات الطالب -->
                     <button class="option-btn info-option" onclick="openStudentInfoModal()">
                         <div class="option-icon info"><i class="fas fa-id-card"></i></div>
                         <div class="option-text">
-                            <strong>معلومات الطالب</strong>
+                            <strong>بيانات الطالب</strong>
                             <span>الميلاد والهوية</span>
                         </div>
                     </button>
@@ -206,10 +210,6 @@
                         </div>
                     </button>
                 </div>
-
-                <button class="modal-close-btn" onclick="closeStudentOptions()">
-                    <i class="fas fa-times"></i> إغلاق
-                </button>
             </div>
 
             <div id="optionsQrView" style="display: none;">
@@ -246,11 +246,11 @@
         </div>
     </div>
 
-    <!-- نافذة معلومات الطالب -->
+    <!-- نافذة بيانات الطالب -->
     <div class="modal-overlay" id="studentInfoModal">
         <div class="modal-box">
-            <h3><i class="fas fa-id-card"></i> معلومات الطالب</h3>
-            <div class="modal-sub">تعديل المعلومات الأساسية للطالب</div>
+            <h3><i class="fas fa-id-card"></i> بيانات الطالب</h3>
+            <div class="modal-sub">تعديل البيانات الأساسية للطالب</div>
 
             <div class="input-group">
                 <label><i class="fas fa-calendar-alt"></i> تاريخ الميلاد الهجري</label>
