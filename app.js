@@ -172,6 +172,101 @@ async function addNewStudent() {
     }
 }
 
+// ============================================
+// ===== سماح / غير سماح للكل — الأجهزة فقط =====
+// ============================================
+function setAllDevicesStatus(status) {
+    if (isProcessing) return;
+
+    if (allStudents.length === 0) {
+        showToast('لا يوجد طلاب', 'error');
+        return;
+    }
+
+    const statusText = status ? 'سماح' : 'غير سماح';
+    const actionText = status ? 'السماح' : 'منع';
+
+    showConfirm(
+        `هل أنت متأكد من ${actionText} إحضار الأجهزة لجميع الطلاب (${allStudents.length} طالب)؟`,
+        `تأكيد ${statusText} للكل (الأجهزة)`,
+        async () => {
+            await updateAllDevicesStatus(status);
+        }
+    );
+}
+
+async function updateAllDevicesStatus(status) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    try {
+        const now = new Date();
+        const localTime = new Date(now.getTime() + (3 * 3600000));
+
+        const timestamp = localTime.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+        });
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const student of allStudents) {
+            try {
+                const updateData = { permitted: status };
+                if (status === true) {
+                    updateData.last_permitted_at = localTime.toISOString();
+                }
+
+                const { error: updateError } = await supabaseClient
+                    .from('students')
+                    .update(updateData)
+                    .eq('id', student.id);
+
+                if (updateError) throw updateError;
+
+                const statusText = status ? 'Permitted' : 'Not Permitted';
+                const { error: historyError } = await supabaseClient
+                    .from('history')
+                    .insert([{
+                        student_name: student.name,
+                        status: statusText,
+                        timestamp: timestamp,
+                        teacher: currentTeacher
+                    }]);
+
+                if (historyError) {
+                    console.warn('History insert error:', historyError);
+                }
+
+                successCount++;
+
+            } catch (e) {
+                console.error(`Failed to update ${student.name}:`, e);
+                failCount++;
+            }
+        }
+
+        if (successCount > 0) {
+            showToast(
+                `✅ تم ${status ? 'السماح' : 'المنع'} لـ ${successCount} طالب${failCount > 0 ? ` (${failCount} فشل)` : ''}`,
+                status ? 'success' : 'error'
+            );
+        } else {
+            showToast('❌ فشل تحديث الطلاب', 'error');
+        }
+
+        await loadAllData();
+
+    } catch (error) {
+        console.error('Set all devices status error:', error);
+        showToast('خطأ: ' + error.message, 'error');
+    } finally {
+        isProcessing = false;
+    }
+}
+
 // ===== فتح نافذة خيارات الطالب =====
 function openStudentOptions(name) {
     if (isProcessing) return;
@@ -185,7 +280,7 @@ function openStudentOptions(name) {
     document.getElementById('optionsMainView').style.display = 'block';
     document.getElementById('optionsQrView').style.display = 'none';
 
-    // ضبط سويتش الأجهزة
+    // سويتش الأجهزة
     const devicesToggle = document.getElementById('devicesToggle');
     const devicesStatusText = document.getElementById('devicesStatusText');
     devicesToggle.checked = student.permitted === true;
@@ -197,7 +292,7 @@ function openStudentOptions(name) {
         devicesStatusText.className = 'toggle-status-text off';
     }
 
-    // ضبط سويتش الاستئذان
+    // سويتش الاستئذان
     const istiathanToggle = document.getElementById('istiathanToggle');
     const istiathanStatusText = document.getElementById('istiathanStatusText');
     istiathanToggle.checked = student.istiathan_permitted === true;
@@ -209,7 +304,7 @@ function openStudentOptions(name) {
         istiathanStatusText.className = 'toggle-status-text off';
     }
 
-    // مؤشرات وجود بيانات/ملاحظات
+    // مؤشرات
     const infoBtn = document.querySelector('.info-option');
     const notesBtn = document.querySelector('.notes-option');
 
@@ -240,7 +335,7 @@ function closeStudentOptions() {
     openedStudent = '';
 }
 
-// ===== عند تبديل سويتش الأجهزة =====
+// ===== تبديل سويتش الأجهزة =====
 async function onDevicesToggleChange(checked) {
     if (!openedStudent) return;
 
@@ -251,7 +346,7 @@ async function onDevicesToggleChange(checked) {
     await updateStudentStatus(openedStudent, checked);
 }
 
-// ===== عند تبديل سويتش الاستئذان =====
+// ===== تبديل سويتش الاستئذان =====
 async function onIstiathanToggleChange(checked) {
     if (!openedStudent) return;
 
@@ -344,7 +439,7 @@ function deleteStudentFromModal() {
     deleteStudent(name);
 }
 
-// ===== فتح نافذة تعديل الاسم =====
+// ===== تعديل الاسم =====
 function openEditNameModal() {
     if (!openedStudent) return;
     const name = openedStudent;
@@ -414,7 +509,7 @@ async function saveEditName() {
     }
 }
 
-// ===== نافذة بيانات الطالب =====
+// ===== بيانات الطالب =====
 function openStudentInfoModal() {
     if (!openedStudent) return;
 
@@ -464,7 +559,7 @@ async function saveStudentInfo() {
     }
 }
 
-// ===== نافذة الملاحظات =====
+// ===== الملاحظات =====
 function openNotesModal() {
     if (!openedStudent) return;
 
@@ -838,7 +933,7 @@ function downloadLogs() {
     showToast('✅ تم تحميل السجل', 'success');
 }
 
-// ===== عرض قائمة التحميل =====
+// ===== قائمة التحميل =====
 function renderDownloadList() {
     if (!allStudents || allStudents.length === 0) {
         downloadListEl.innerHTML = `<div class="loading-message">لا يوجد طلاب.</div>`;
@@ -972,7 +1067,7 @@ function generateQrCardImage(studentName, qrPixelSize = 500) {
     });
 }
 
-// ===== تحميل المحدد: PDF داخل ZIP =====
+// ===== تحميل PDF داخل ZIP =====
 async function downloadSelectedQr() {
     if (selectedDownloadIds.size === 0) {
         showToast('اختر طالباً واحداً على الأقل', 'error');
