@@ -10,14 +10,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        .login-overlay {
-            position: fixed; inset: 0; background: #ffffff;
+        .auth-overlay {
+            position: fixed; inset: 0;
+            background: #ffffff;
             display: flex; justify-content: center; align-items: center;
             z-index: 9999; padding: 1.5rem;
         }
-        .login-box {
+        .auth-box {
             background: white; border-radius: 32px; padding: 2.5rem 2rem;
-            max-width: 420px; width: 100%; text-align: center;
+            max-width: 440px; width: 100%; text-align: center;
             border: 2px solid #ede4ff;
             box-shadow: 0 20px 60px rgba(124, 58, 237, 0.12);
             animation: popIn 0.4s ease;
@@ -26,82 +27,259 @@
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
-        .login-box .lock-icon { font-size: 3rem; color: #7c3aed; margin-bottom: 1rem; }
-        .login-box h2 { color: #4c1d95; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem; }
-        .login-box .subtitle { color: #8b7db8; font-size: 0.85rem; margin-bottom: 1.8rem; }
-        .login-box input[type="password"] {
-            width: 100%; padding: 0.9rem 1.2rem;
-            border: 2px solid #ede4ff; border-radius: 16px;
-            font-size: 1rem; outline: none; text-align: center;
-            letter-spacing: 2px; transition: border 0.2s;
-            font-family: inherit; color: #2a1e4a;
+        .auth-box .lock-icon {
+            font-size: 3rem; color: #7c3aed; margin-bottom: 1rem;
         }
-        .login-box input[type="password"]:focus { border-color: #7c3aed; }
-        .login-box button {
-            width: 100%; margin-top: 1rem; padding: 0.9rem;
+        .auth-box h2 {
+            color: #4c1d95; font-size: 1.5rem; font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+        .auth-box .subtitle {
+            color: #8b7db8; font-size: 0.85rem;
+            margin-bottom: 1.8rem;
+        }
+        .auth-box input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border: 2px solid #ede4ff;
+            border-radius: 16px;
+            font-size: 1rem;
+            outline: none;
+            text-align: center;
+            transition: border 0.2s;
+            font-family: inherit;
+            color: #2a1e4a;
+            margin-bottom: 0.7rem;
+        }
+        .auth-box input:focus { border-color: #7c3aed; }
+        .auth-box button {
+            width: 100%; margin-top: 0.6rem; padding: 0.9rem;
             background: #7c3aed; color: white; border: none;
             border-radius: 16px; font-size: 1rem; font-weight: 700;
-            cursor: pointer; transition: background 0.2s; font-family: inherit;
+            cursor: pointer; transition: background 0.2s;
+            font-family: inherit;
         }
-        .login-box button:hover { background: #6d28d9; }
-        .login-error { color: #b13e3e; font-size: 0.85rem; margin-top: 0.8rem; min-height: 1.2rem; }
+        .auth-box button:hover { background: #6d28d9; }
+        .auth-error {
+            color: #b13e3e;
+            font-size: 0.85rem;
+            margin-top: 0.6rem;
+            min-height: 1.2rem;
+        }
+        .auth-toggle-text {
+            color: #8b7db8;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+        .auth-toggle-text a {
+            color: #7c3aed;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* ===== شاشة الترحيب ===== */
+        .welcome-banner {
+            background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+            color: white;
+            padding: 0.9rem 1.3rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+            animation: fadeIn 0.5s ease;
+        }
+        .welcome-banner .welcome-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .welcome-banner .welcome-text {
+            flex: 1;
+        }
+        .welcome-banner .welcome-text strong {
+            display: block;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .welcome-banner .welcome-text span {
+            display: block;
+            font-size: 0.72rem;
+            opacity: 0.85;
+            margin-top: 0.1rem;
+        }
+        .welcome-banner .welcome-date {
+            font-size: 0.72rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 40px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 600px) {
+            .welcome-banner {
+                padding: 0.7rem 0.9rem;
+                border-radius: 30px;
+                gap: 0.5rem;
+            }
+            .welcome-banner .welcome-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 0.95rem;
+            }
+            .welcome-banner .welcome-text strong {
+                font-size: 0.88rem;
+            }
+            .welcome-banner .welcome-text span {
+                font-size: 0.65rem;
+            }
+            .welcome-banner .welcome-date {
+                font-size: 0.62rem;
+                padding: 0.25rem 0.55rem;
+            }
+        }
+
+        /* Modal Styles */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(76, 29, 149, 0.35);
+            position: fixed; inset: 0;
+            background: rgba(76, 29, 149, 0.35);
             display: none; justify-content: center; align-items: center;
-            z-index: 1000; padding: 1.5rem; backdrop-filter: blur(6px);
+            z-index: 1000; padding: 1.5rem;
+            backdrop-filter: blur(6px);
         }
         .modal-overlay.active { display: flex; }
         .modal-box {
-            background: white; border-radius: 28px; padding: 2rem 1.8rem;
-            max-width: 440px; width: 100%; border: 2px solid #ede4ff;
+            background: white; border-radius: 28px;
+            padding: 2rem 1.8rem;
+            max-width: 440px; width: 100%;
+            border: 2px solid #ede4ff;
             box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
             animation: popIn 0.3s ease;
+            max-height: 92vh;
+            overflow-y: auto;
         }
         .modal-box h3 {
             color: #4c1d95; font-size: 1.2rem; font-weight: 700;
-            margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.4rem;
+            display: flex; align-items: center; gap: 0.5rem;
         }
         .modal-box h3 i { color: #7c3aed; }
-        .modal-box .modal-sub { color: #8b7db8; font-size: 0.8rem; margin-bottom: 1.5rem; }
+        .modal-box .modal-sub {
+            color: #8b7db8; font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
         .modal-box input[type="text"] {
-            width: 100%; padding: 0.85rem 1.2rem;
-            border: 2px solid #ede4ff; border-radius: 16px;
-            font-size: 1rem; outline: none; transition: border 0.2s;
-            font-family: inherit; color: #2a1e4a;
+            width: 100%;
+            padding: 0.85rem 1.2rem;
+            border: 2px solid #ede4ff;
+            border-radius: 16px;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+            font-family: inherit;
+            color: #2a1e4a;
         }
         .modal-box input[type="text"]:focus { border-color: #7c3aed; }
         .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; }
         .modal-actions button {
-            flex: 1; padding: 0.8rem; border: none; border-radius: 16px;
-            font-size: 0.9rem; font-weight: 700; cursor: pointer;
-            font-family: inherit; transition: all 0.15s;
+            flex: 1; padding: 0.8rem; border: none;
+            border-radius: 16px; font-size: 0.9rem;
+            font-weight: 700; cursor: pointer;
+            font-family: inherit;
         }
         .modal-actions .btn-save { background: #7c3aed; color: white; }
         .modal-actions .btn-save:hover { background: #6d28d9; }
         .modal-actions .btn-cancel-modal {
-            background: #f7f3ff; color: #5b21b6; border: 2px solid #ede4ff;
+            background: #f7f3ff; color: #5b21b6;
+            border: 2px solid #ede4ff;
         }
-        .modal-actions .btn-cancel-modal:hover { background: #ede4ff; }
         .add-btn {
-            background: #7c3aed !important; color: white !important;
+            background: #7c3aed !important;
+            color: white !important;
             border-color: #7c3aed !important;
-            padding: 0.45rem 1.2rem !important; font-size: 0.8rem !important;
+            padding: 0.45rem 1.2rem !important;
+            font-size: 0.8rem !important;
         }
         .add-btn:hover { background: #6d28d9 !important; }
     </style>
 </head>
 <body>
 
-    <!-- شاشة تسجيل الدخول -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-box">
+    <!-- ============================================
+         شاشة 1: كلمة المرور الرئيسية
+         ============================================ -->
+    <div class="auth-overlay" id="masterPasswordOverlay">
+        <div class="auth-box">
             <div class="lock-icon"><i class="fas fa-lock"></i></div>
             <h2>ثانوية هوزان</h2>
             <div class="subtitle">لوحة التحكم</div>
-            <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" autocomplete="off" />
-            <button onclick="checkPassword()"><i class="fas fa-sign-in-alt"></i> دخول</button>
-            <div class="login-error" id="loginError"></div>
+
+            <input type="password" id="masterPasswordInput" placeholder="أدخل كلمة المرور" autocomplete="off" />
+            <button onclick="checkMasterPassword()">
+                <i class="fas fa-sign-in-alt"></i> دخول
+            </button>
+            <div class="auth-error" id="masterPasswordError"></div>
         </div>
+    </div>
+
+    <!-- ============================================
+         شاشة 2: إنشاء الحساب / تسجيل الدخول
+         ============================================ -->
+    <div class="auth-overlay" id="authOverlay" style="display: none;">
+        <div class="auth-box">
+            <div class="lock-icon"><i class="fas fa-user-shield"></i></div>
+            <h2 id="authTitle">إنشاء حساب أداري</h2>
+            <div class="subtitle" id="authSubtitle">أول مرة تدخل — أنشئ حسابك</div>
+
+            <!-- نموذج إنشاء الحساب -->
+            <div id="signupForm">
+                <input type="text" id="signupUsername" placeholder="اسم الأداري" autocomplete="off" />
+                <input type="password" id="signupPassword" placeholder="كلمة المرور" autocomplete="new-password" />
+                <input type="password" id="signupPasswordConfirm" placeholder="تأكيد كلمة المرور" autocomplete="new-password" />
+                <button onclick="createAccount()">
+                    <i class="fas fa-user-plus"></i> إنشاء حساب
+                </button>
+                <div class="auth-error" id="signupError"></div>
+                <div class="auth-toggle-text">
+                    عندك حساب؟ <a onclick="showLoginForm()">تسجيل الدخول</a>
+                </div>
+            </div>
+
+            <!-- نموذج تسجيل الدخول -->
+            <div id="loginForm" style="display: none;">
+                <input type="text" id="loginUsername" placeholder="اسم الأداري" autocomplete="off" />
+                <input type="password" id="loginPassword" placeholder="كلمة المرور" autocomplete="current-password" />
+                <button onclick="loginAdmin()">
+                    <i class="fas fa-sign-in-alt"></i> دخول
+                </button>
+                <div class="auth-error" id="loginError"></div>
+                <div class="auth-toggle-text">
+                    ما عندك حساب؟ <a onclick="showSignupForm()">إنشاء حساب</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         الشريط الترحيبي (يظهر بعد الدخول)
+         ============================================ -->
+    <div class="welcome-banner" id="welcomeBanner" style="display: none;">
+        <div class="welcome-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="welcome-text">
+            <strong id="welcomeName">أهلاً بك</strong>
+            <span>لوحة تحكم ثانوية هوزان</span>
+        </div>
+        <div class="welcome-date" id="welcomeDate">—</div>
     </div>
 
     <!-- نافذة إضافة طالب -->
@@ -129,7 +307,6 @@
                 <div class="modal-sub">إدارة الطالب</div>
 
                 <div class="student-options">
-                    <!-- سويتش إحضار الأجهزة -->
                     <div class="toggle-option-card">
                         <div class="toggle-option-header">
                             <div class="toggle-option-icon devices">
@@ -147,7 +324,6 @@
                         <div class="toggle-status-text off" id="devicesStatusText">غير مسموح</div>
                     </div>
 
-                    <!-- المشاركات والمخالفات -->
                     <button class="option-btn behaviors-option" onclick="openBehaviorsModal()">
                         <div class="option-icon behaviors"><i class="fas fa-clipboard-check"></i></div>
                         <div class="option-text">
@@ -156,7 +332,6 @@
                         </div>
                     </button>
 
-                    <!-- عرض الباركود -->
                     <button class="option-btn qr-option" onclick="showQrInsideModal()">
                         <div class="option-icon qr"><i class="fas fa-qrcode"></i></div>
                         <div class="option-text">
@@ -165,7 +340,6 @@
                         </div>
                     </button>
 
-                    <!-- بيانات الطالب -->
                     <button class="option-btn info-option" onclick="openStudentInfoModal()">
                         <div class="option-icon info"><i class="fas fa-id-card"></i></div>
                         <div class="option-text">
@@ -174,7 +348,6 @@
                         </div>
                     </button>
 
-                    <!-- الملاحظات -->
                     <button class="option-btn notes-option" onclick="openNotesModal()">
                         <div class="option-icon notes"><i class="fas fa-sticky-note"></i></div>
                         <div class="option-text">
@@ -183,7 +356,6 @@
                         </div>
                     </button>
 
-                    <!-- تعديل الاسم -->
                     <button class="option-btn edit-option" onclick="openEditNameModal()">
                         <div class="option-icon edit"><i class="fas fa-pen"></i></div>
                         <div class="option-text">
@@ -192,7 +364,6 @@
                         </div>
                     </button>
 
-                    <!-- حذف -->
                     <button class="option-btn delete-option" onclick="deleteStudentFromModal()">
                         <div class="option-icon delete"><i class="fas fa-trash"></i></div>
                         <div class="option-text">
@@ -234,7 +405,6 @@
             <h3><i class="fas fa-clipboard-check"></i> السلوك والعقوبات</h3>
             <div class="modal-sub" id="behaviorsStudentName">—</div>
 
-            <!-- التبويبات -->
             <div class="behaviors-tabs">
                 <button class="behavior-tab active" data-tab="add" onclick="switchBehaviorTab('add')">
                     <i class="fas fa-plus-circle"></i> إضافة
@@ -247,7 +417,6 @@
                 </button>
             </div>
 
-            <!-- Tab: إضافة -->
             <div class="behavior-tab-content active" id="behaviorTabAdd">
                 <div class="behavior-type-selector">
                     <button class="type-btn positive active" data-type="positive" onclick="selectBehaviorType('positive')">
@@ -284,7 +453,6 @@
                 </div>
             </div>
 
-            <!-- Tab: السجل -->
             <div class="behavior-tab-content" id="behaviorTabLog">
                 <div class="behavior-stats" id="behaviorStats"></div>
                 <div class="behavior-log-list" id="behaviorLogList">
@@ -292,7 +460,6 @@
                 </div>
             </div>
 
-            <!-- Tab: العقوبة -->
             <div class="behavior-tab-content" id="behaviorTabPenalty">
                 <div id="currentPenaltyBox"></div>
 
@@ -430,6 +597,10 @@
                 <i class="fas fa-users"></i>
                 <span>كشف الطلاب</span>
             </button>
+            <button class="sidebar-item" id="navBehaviors" onclick="switchSection('behaviors')">
+                <i class="fas fa-clipboard-check"></i>
+                <span>المشاركات والعقوبات</span>
+            </button>
             <button class="sidebar-item" id="navLogs" onclick="switchSection('logs')">
                 <i class="fas fa-clipboard-list"></i>
                 <span>السجلات</span>
@@ -487,6 +658,43 @@
                     </div>
 
                     <div class="student-list" id="studentList">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم المشاركات والعقوبات -->
+            <div class="page-section" id="pageBehaviors">
+                <div class="page-title">
+                    <h1><i class="fas fa-clipboard-check"></i> المشاركات والعقوبات</h1>
+                </div>
+
+                <div class="card behaviors-page-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-star"></i> المشاركات</h2>
+                        <span class="count-badge positive" id="positiveCountBadge">0</span>
+                    </div>
+                    <div class="behaviors-page-list" id="positiveBehaviorsList">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                    </div>
+                </div>
+
+                <div class="card behaviors-page-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-exclamation-triangle"></i> المخالفات</h2>
+                        <span class="count-badge negative" id="negativeCountBadge">0</span>
+                    </div>
+                    <div class="behaviors-page-list" id="negativeBehaviorsList">
+                        <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                    </div>
+                </div>
+
+                <div class="card behaviors-page-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-gavel"></i> العقوبات السارية</h2>
+                        <span class="count-badge penalty" id="penaltyCountBadge">0</span>
+                    </div>
+                    <div class="behaviors-page-list" id="penaltiesList">
                         <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
                     </div>
                 </div>
