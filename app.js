@@ -15,6 +15,12 @@ let allHistory = [];
 let selectedDownloadIds = new Set();
 let currentSection = 'students';
 
+// المتغيرات الخاصة بالسلوك
+let currentBehaviorType = 'positive';
+let currentPenaltyDuration = null;
+let currentStudentBehaviors = [];
+let currentStudentPenalties = [];
+
 // ===== نافذة التأكيد =====
 let confirmCallback = null;
 
@@ -44,7 +50,7 @@ const downloadListEl = document.getElementById('downloadList');
 const searchInput = document.getElementById('searchInput');
 const toastContainer = document.getElementById('toastContainer');
 
-// ===== التنقل بين الأقسام =====
+// ===== التنقل =====
 function switchSection(section) {
     currentSection = section;
 
@@ -156,9 +162,7 @@ async function addNewStudent() {
             .insert([{
                 name: name,
                 permitted: false,
-                last_permitted_at: null,
-                istiathan_permitted: false,
-                last_istiathan_at: null
+                last_permitted_at: null
             }]);
 
         if (error) throw error;
@@ -172,9 +176,7 @@ async function addNewStudent() {
     }
 }
 
-// ============================================
-// ===== سماح / غير سماح للكل — الأجهزة فقط =====
-// ============================================
+// ===== سماح/غير سماح للكل =====
 function setAllDevicesStatus(status) {
     if (isProcessing) return;
 
@@ -188,7 +190,7 @@ function setAllDevicesStatus(status) {
 
     showConfirm(
         `هل أنت متأكد من ${actionText} إحضار الأجهزة لجميع الطلاب (${allStudents.length} طالب)؟`,
-        `تأكيد ${statusText} للكل (الأجهزة)`,
+        `تأكيد ${statusText} للكل`,
         async () => {
             await updateAllDevicesStatus(status);
         }
@@ -227,7 +229,7 @@ async function updateAllDevicesStatus(status) {
                 if (updateError) throw updateError;
 
                 const statusText = status ? 'Permitted' : 'Not Permitted';
-                const { error: historyError } = await supabaseClient
+                await supabaseClient
                     .from('history')
                     .insert([{
                         student_name: student.name,
@@ -235,10 +237,6 @@ async function updateAllDevicesStatus(status) {
                         timestamp: timestamp,
                         teacher: currentTeacher
                     }]);
-
-                if (historyError) {
-                    console.warn('History insert error:', historyError);
-                }
 
                 successCount++;
 
@@ -280,7 +278,6 @@ function openStudentOptions(name) {
     document.getElementById('optionsMainView').style.display = 'block';
     document.getElementById('optionsQrView').style.display = 'none';
 
-    // سويتش الأجهزة
     const devicesToggle = document.getElementById('devicesToggle');
     const devicesStatusText = document.getElementById('devicesStatusText');
     devicesToggle.checked = student.permitted === true;
@@ -292,19 +289,6 @@ function openStudentOptions(name) {
         devicesStatusText.className = 'toggle-status-text off';
     }
 
-    // سويتش الاستئذان
-    const istiathanToggle = document.getElementById('istiathanToggle');
-    const istiathanStatusText = document.getElementById('istiathanStatusText');
-    istiathanToggle.checked = student.istiathan_permitted === true;
-    if (student.istiathan_permitted) {
-        istiathanStatusText.textContent = 'مسموح';
-        istiathanStatusText.className = 'toggle-status-text on';
-    } else {
-        istiathanStatusText.textContent = 'غير مسموح';
-        istiathanStatusText.className = 'toggle-status-text off';
-    }
-
-    // مؤشرات
     const infoBtn = document.querySelector('.info-option');
     const notesBtn = document.querySelector('.notes-option');
 
@@ -335,7 +319,7 @@ function closeStudentOptions() {
     openedStudent = '';
 }
 
-// ===== تبديل سويتش الأجهزة =====
+// ===== سويتش الأجهزة =====
 async function onDevicesToggleChange(checked) {
     if (!openedStudent) return;
 
@@ -346,18 +330,7 @@ async function onDevicesToggleChange(checked) {
     await updateStudentStatus(openedStudent, checked);
 }
 
-// ===== تبديل سويتش الاستئذان =====
-async function onIstiathanToggleChange(checked) {
-    if (!openedStudent) return;
-
-    const statusText = document.getElementById('istiathanStatusText');
-    statusText.textContent = checked ? 'مسموح' : 'غير مسموح';
-    statusText.className = checked ? 'toggle-status-text on' : 'toggle-status-text off';
-
-    await updateIstiathanStatus(openedStudent, checked);
-}
-
-// ===== عرض الباركود داخل النافذة =====
+// ===== عرض الباركود =====
 function showQrInsideModal() {
     if (!openedStudent) return;
 
@@ -385,16 +358,9 @@ function showQrInsideModal() {
     document.getElementById('modalQrName').textContent = openedStudent;
 
     const statusEl = document.getElementById('modalQrStatus');
-    statusEl.className = 'modal-qr-status';
-    statusEl.innerHTML = '';
-
-    const statuses = [];
-    if (student.permitted) statuses.push('📱 مسموح بالأجهزة');
-    if (student.istiathan_permitted) statuses.push('🕐 مسموح بالاستئذان');
-
-    if (statuses.length > 0) {
+    if (student.permitted) {
         statusEl.className = 'modal-qr-status permitted';
-        statusEl.innerHTML = statuses.join(' · ');
+        statusEl.innerHTML = '🟢 مسموح بالأجهزة';
     } else {
         statusEl.className = 'modal-qr-status not-permitted';
         statusEl.innerHTML = '🔴 غير مسموح';
@@ -487,15 +453,23 @@ async function saveEditName() {
     }
 
     try {
-        const { error: updateError } = await supabaseClient
+        await supabaseClient
             .from('students')
             .update({ name: newName })
             .eq('name', oldName);
 
-        if (updateError) throw updateError;
-
         await supabaseClient
             .from('history')
+            .update({ student_name: newName })
+            .eq('student_name', oldName);
+
+        await supabaseClient
+            .from('behaviors')
+            .update({ student_name: newName })
+            .eq('student_name', oldName);
+
+        await supabaseClient
+            .from('penalties')
             .update({ student_name: newName })
             .eq('student_name', oldName);
 
@@ -504,7 +478,6 @@ async function saveEditName() {
         await loadAllData();
 
     } catch (error) {
-        console.error('Edit name error:', error);
         showToast('خطأ في التعديل: ' + error.message, 'error');
     }
 }
@@ -538,7 +511,7 @@ async function saveStudentInfo() {
     if (!name) return;
 
     try {
-        const { error } = await supabaseClient
+        await supabaseClient
             .from('students')
             .update({
                 full_name: fullName || null,
@@ -547,14 +520,11 @@ async function saveStudentInfo() {
             })
             .eq('name', name);
 
-        if (error) throw error;
-
         closeStudentInfoModal();
         showToast(`✅ تم حفظ بيانات ${name}`, 'success');
         await loadAllData();
 
     } catch (error) {
-        console.error('Save info error:', error);
         showToast('خطأ في الحفظ: ' + error.message, 'error');
     }
 }
@@ -584,19 +554,16 @@ async function saveStudentNotes() {
     if (!name) return;
 
     try {
-        const { error } = await supabaseClient
+        await supabaseClient
             .from('students')
             .update({ notes: notes || null })
             .eq('name', name);
-
-        if (error) throw error;
 
         closeNotesModal();
         showToast(`✅ تم حفظ الملاحظات`, 'success');
         await loadAllData();
 
     } catch (error) {
-        console.error('Save notes error:', error);
         showToast('خطأ في الحفظ: ' + error.message, 'error');
     }
 }
@@ -608,27 +575,513 @@ function deleteStudent(name) {
         'تأكيد حذف الطالب',
         async () => {
             try {
-                const { error: deleteError } = await supabaseClient
-                    .from('students')
-                    .delete()
-                    .eq('name', name);
-
-                if (deleteError) throw deleteError;
-
-                await supabaseClient
-                    .from('history')
-                    .delete()
-                    .eq('student_name', name);
+                await supabaseClient.from('students').delete().eq('name', name);
+                await supabaseClient.from('history').delete().eq('student_name', name);
+                await supabaseClient.from('behaviors').delete().eq('student_name', name);
+                await supabaseClient.from('penalties').delete().eq('student_name', name);
 
                 showToast(`🗑️ تم حذف ${name}`, 'error');
                 await loadAllData();
 
             } catch (error) {
-                console.error('Delete error:', error);
                 showToast('خطأ في الحذف: ' + error.message, 'error');
             }
         }
     );
+}
+
+// ============================================
+// ===== نظام المشاركات والمخالفات والعقوبات =====
+// ============================================
+
+async function openBehaviorsModal() {
+    if (!openedStudent) return;
+
+    document.getElementById('behaviorsStudentName').textContent = openedStudent;
+
+    currentBehaviorType = 'positive';
+    currentPenaltyDuration = null;
+
+    document.getElementById('behaviorCategory').value = '';
+    document.getElementById('behaviorDetails').value = '';
+    document.getElementById('penaltyReason').value = '';
+
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === 'positive');
+    });
+
+    document.querySelectorAll('.duration-btn').forEach(btn => btn.classList.remove('active'));
+
+    switchBehaviorTab('add');
+
+    document.getElementById('studentOptionsModal').classList.remove('active');
+    document.getElementById('behaviorsModal').classList.add('active');
+
+    await loadStudentBehaviors();
+}
+
+function closeBehaviorsModal() {
+    document.getElementById('behaviorsModal').classList.remove('active');
+    openedStudent = '';
+    currentBehaviorType = 'positive';
+    currentPenaltyDuration = null;
+}
+
+function switchBehaviorTab(tab) {
+    document.querySelectorAll('.behavior-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    document.querySelectorAll('.behavior-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    if (tab === 'add') document.getElementById('behaviorTabAdd').classList.add('active');
+    if (tab === 'log') document.getElementById('behaviorTabLog').classList.add('active');
+    if (tab === 'penalty') document.getElementById('behaviorTabPenalty').classList.add('active');
+}
+
+function selectBehaviorType(type) {
+    currentBehaviorType = type;
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+    });
+}
+
+async function saveBehavior() {
+    const category = document.getElementById('behaviorCategory').value.trim();
+    const details = document.getElementById('behaviorDetails').value.trim();
+
+    if (!details) {
+        showToast('الرجاء إدخال التفاصيل', 'error');
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('behaviors')
+            .insert([{
+                student_name: openedStudent,
+                type: currentBehaviorType,
+                category: category || null,
+                details: details,
+                teacher: currentTeacher
+            }]);
+
+        if (error) throw error;
+
+        showToast(`✅ تم حفظ ${currentBehaviorType === 'positive' ? 'المشاركة' : 'المخالفة'}`, 'success');
+
+        document.getElementById('behaviorCategory').value = '';
+        document.getElementById('behaviorDetails').value = '';
+
+        await loadStudentBehaviors();
+        switchBehaviorTab('log');
+
+    } catch (error) {
+        showToast('خطأ في الحفظ: ' + error.message, 'error');
+    }
+}
+
+function selectPenaltyDuration(duration) {
+    currentPenaltyDuration = duration;
+    document.querySelectorAll('.duration-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.duration === duration);
+    });
+}
+
+function savePenalty() {
+    if (!currentPenaltyDuration) {
+        showToast('الرجاء اختيار مدة العقوبة', 'error');
+        return;
+    }
+
+    const reason = document.getElementById('penaltyReason').value.trim();
+
+    if (!reason) {
+        showToast('الرجاء إدخال سبب العقوبة', 'error');
+        return;
+    }
+
+    showConfirm(
+        `سيتم فرض عقوبة على "${openedStudent}" لمدة ${getDurationText(currentPenaltyDuration)}، وسيتم منع إحضار الجهاز تلقائياً. هل أنت متأكد؟`,
+        'تأكيد فرض العقوبة',
+        async () => {
+            await applyPenalty(reason, currentPenaltyDuration);
+        }
+    );
+}
+
+async function applyPenalty(reason, durationType) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    try {
+        const now = new Date();
+        const localTime = new Date(now.getTime() + (3 * 3600000));
+
+        let durationMs = 0;
+        if (durationType === '2days') durationMs = 2 * 24 * 60 * 60 * 1000;
+        else if (durationType === 'week') durationMs = 7 * 24 * 60 * 60 * 1000;
+        else if (durationType === 'month') durationMs = 30 * 24 * 60 * 60 * 1000;
+        else if (durationType === '4months') durationMs = 120 * 24 * 60 * 60 * 1000;
+
+        const endsAt = new Date(localTime.getTime() + durationMs);
+
+        // إلغاء أي عقوبة سابقة
+        await supabaseClient
+            .from('penalties')
+            .update({
+                status: 'cancelled',
+                cancelled_at: localTime.toISOString()
+            })
+            .eq('student_name', openedStudent)
+            .eq('status', 'active');
+
+        // إضافة عقوبة جديدة
+        const { error: penaltyError } = await supabaseClient
+            .from('penalties')
+            .insert([{
+                student_name: openedStudent,
+                reason: reason,
+                duration_type: durationType,
+                started_at: localTime.toISOString(),
+                ends_at: endsAt.toISOString(),
+                status: 'active',
+                teacher: currentTeacher
+            }]);
+
+        if (penaltyError) throw penaltyError;
+
+        // منع إحضار الجهاز
+        await supabaseClient
+            .from('students')
+            .update({
+                permitted: false,
+                last_permitted_at: localTime.toISOString()
+            })
+            .eq('name', openedStudent);
+
+        // سجل
+        const timestamp = localTime.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+        });
+
+        await supabaseClient
+            .from('history')
+            .insert([{
+                student_name: openedStudent,
+                status: 'Penalty Applied',
+                timestamp: timestamp,
+                teacher: currentTeacher
+            }]);
+
+        showToast(`⚖️ تم فرض العقوبة لمدة ${getDurationText(durationType)}`, 'success');
+
+        await loadStudentBehaviors();
+        await loadAllData();
+        switchBehaviorTab('penalty');
+
+    } catch (error) {
+        showToast('خطأ: ' + error.message, 'error');
+    } finally {
+        isProcessing = false;
+    }
+}
+
+function cancelPenalty(penaltyId) {
+    showConfirm(
+        'هل تريد فك العقوبة وإعادة السماح بإحضار الجهاز؟',
+        'تأكيد فك العقوبة',
+        async () => {
+            try {
+                const now = new Date();
+                const localTime = new Date(now.getTime() + (3 * 3600000));
+
+                await supabaseClient
+                    .from('penalties')
+                    .update({
+                        status: 'cancelled',
+                        cancelled_at: localTime.toISOString()
+                    })
+                    .eq('id', penaltyId);
+
+                await supabaseClient
+                    .from('students')
+                    .update({
+                        permitted: true,
+                        last_permitted_at: localTime.toISOString()
+                    })
+                    .eq('name', openedStudent);
+
+                const timestamp = localTime.toLocaleString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                });
+
+                await supabaseClient
+                    .from('history')
+                    .insert([{
+                        student_name: openedStudent,
+                        status: 'Penalty Cancelled',
+                        timestamp: timestamp,
+                        teacher: currentTeacher
+                    }]);
+
+                showToast('✅ تم فك العقوبة', 'success');
+
+                await loadStudentBehaviors();
+                await loadAllData();
+
+            } catch (error) {
+                showToast('خطأ: ' + error.message, 'error');
+            }
+        }
+    );
+}
+
+function getDurationText(durationType) {
+    if (durationType === '2days') return 'يومين';
+    if (durationType === 'week') return 'أسبوع';
+    if (durationType === 'month') return 'شهر';
+    if (durationType === '4months') return '4 أشهر';
+    return '';
+}
+
+async function loadStudentBehaviors() {
+    if (!openedStudent) return;
+
+    try {
+        const { data: behaviors } = await supabaseClient
+            .from('behaviors')
+            .select('*')
+            .eq('student_name', openedStudent)
+            .order('created_at', { ascending: false });
+
+        currentStudentBehaviors = behaviors || [];
+
+        const { data: penalties } = await supabaseClient
+            .from('penalties')
+            .select('*')
+            .eq('student_name', openedStudent)
+            .order('started_at', { ascending: false });
+
+        currentStudentPenalties = penalties || [];
+
+        await checkAndExpirePenalties();
+
+        renderBehaviorsLog();
+        renderBehaviorStats();
+        renderCurrentPenalty();
+
+    } catch (error) {
+        console.error('Load behaviors error:', error);
+    }
+}
+
+async function checkAndExpirePenalties() {
+    const now = new Date();
+    const localNow = new Date(now.getTime() + (3 * 3600000));
+
+    const activePenalties = currentStudentPenalties.filter(p => p.status === 'active');
+
+    for (const penalty of activePenalties) {
+        const endsAt = new Date(penalty.ends_at);
+
+        if (endsAt <= localNow) {
+            try {
+                await supabaseClient
+                    .from('penalties')
+                    .update({ status: 'expired' })
+                    .eq('id', penalty.id);
+
+                // السماح بإحضار الجهاز تلقائياً
+                await supabaseClient
+                    .from('students')
+                    .update({
+                        permitted: true,
+                        last_permitted_at: localNow.toISOString()
+                    })
+                    .eq('name', openedStudent);
+
+                const timestamp = localNow.toLocaleString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                });
+
+                await supabaseClient
+                    .from('history')
+                    .insert([{
+                        student_name: openedStudent,
+                        status: 'Penalty Expired',
+                        timestamp: timestamp,
+                        teacher: 'النظام (تلقائي)'
+                    }]);
+
+                penalty.status = 'expired';
+
+            } catch (e) {
+                console.error('Auto expire error:', e);
+            }
+        }
+    }
+
+    const { data: refreshed } = await supabaseClient
+        .from('penalties')
+        .select('*')
+        .eq('student_name', openedStudent)
+        .order('started_at', { ascending: false });
+
+    currentStudentPenalties = refreshed || [];
+}
+
+function escapeHtmlBehavior(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\n/g, '<br>');
+}
+
+function renderBehaviorsLog() {
+    const list = document.getElementById('behaviorLogList');
+
+    if (!currentStudentBehaviors || currentStudentBehaviors.length === 0) {
+        list.innerHTML = `
+            <div class="empty-history">
+                <i class="fas fa-info-circle"></i>
+                لا يوجد سجل بعد
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    currentStudentBehaviors.forEach(item => {
+        const isPositive = item.type === 'positive';
+        const icon = isPositive ? '⭐' : '⚠️';
+        const label = isPositive ? 'مشاركة' : 'مخالفة';
+        const cls = isPositive ? 'positive' : 'negative';
+
+        const dateStr = new Date(item.created_at).toLocaleString('ar-SA', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        html += `
+            <div class="behavior-log-item ${cls}">
+                <div class="behavior-log-icon">
+                    <i class="fas ${isPositive ? 'fa-star' : 'fa-exclamation-triangle'}"></i>
+                </div>
+                <div class="behavior-log-content">
+                    <div class="behavior-log-header">
+                        <span class="behavior-log-type">${icon} ${label}</span>
+                        <span class="behavior-log-date">${dateStr}</span>
+                    </div>
+                    ${item.category ? `<div class="behavior-log-category"><i class="fas fa-tag"></i> ${escapeHtmlBehavior(item.category)}</div>` : ''}
+                    <div class="behavior-log-details">${escapeHtmlBehavior(item.details)}</div>
+                    <div class="behavior-log-teacher">
+                        <i class="fas fa-chalkboard-teacher"></i> ${escapeHtmlBehavior(item.teacher || '')}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    list.innerHTML = html;
+}
+
+function renderBehaviorStats() {
+    const statsBox = document.getElementById('behaviorStats');
+    if (!statsBox) return;
+
+    const positiveCount = currentStudentBehaviors.filter(b => b.type === 'positive').length;
+    const negativeCount = currentStudentBehaviors.filter(b => b.type === 'negative').length;
+
+    statsBox.innerHTML = `
+        <div class="behavior-stat-box positive">
+            <div class="behavior-stat-value">${positiveCount}</div>
+            <div class="behavior-stat-label">⭐ مشاركات</div>
+        </div>
+        <div class="behavior-stat-box negative">
+            <div class="behavior-stat-value">${negativeCount}</div>
+            <div class="behavior-stat-label">⚠️ مخالفات</div>
+        </div>
+    `;
+}
+
+function renderCurrentPenalty() {
+    const box = document.getElementById('currentPenaltyBox');
+
+    const activePenalty = currentStudentPenalties.find(p => p.status === 'active');
+
+    if (!activePenalty) {
+        box.innerHTML = `
+            <div class="no-penalty-box">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <strong>لا توجد عقوبة سارية</strong>
+                    <span>الطالب غير معاقب حالياً</span>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const endsAt = new Date(activePenalty.ends_at);
+    const now = new Date();
+    const localNow = new Date(now.getTime() + (3 * 3600000));
+    const remainingMs = endsAt.getTime() - localNow.getTime();
+
+    const days = Math.floor(remainingMs / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const minutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+
+    let remainingText = '';
+    if (days > 0) remainingText = `${days} يوم و ${hours} ساعة`;
+    else if (hours > 0) remainingText = `${hours} ساعة و ${minutes} دقيقة`;
+    else remainingText = `${minutes} دقيقة`;
+
+    const endDate = endsAt.toLocaleString('ar-SA', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+
+    box.innerHTML = `
+        <div class="active-penalty-box">
+            <div class="penalty-header">
+                <i class="fas fa-gavel"></i>
+                <div>
+                    <strong>عقوبة سارية</strong>
+                    <span>مدة: ${getDurationText(activePenalty.duration_type)}</span>
+                </div>
+            </div>
+            <div class="penalty-info">
+                <div class="penalty-row">
+                    <span class="penalty-label"><i class="fas fa-info-circle"></i> السبب</span>
+                    <span class="penalty-value">${escapeHtmlBehavior(activePenalty.reason)}</span>
+                </div>
+                <div class="penalty-row">
+                    <span class="penalty-label"><i class="fas fa-hourglass-half"></i> المتبقي</span>
+                    <span class="penalty-value highlight">${remainingText}</span>
+                </div>
+                <div class="penalty-row">
+                    <span class="penalty-label"><i class="fas fa-calendar-times"></i> ينتهي في</span>
+                    <span class="penalty-value">${endDate}</span>
+                </div>
+            </div>
+            <button class="cancel-penalty-btn" onclick="cancelPenalty(${activePenalty.id})">
+                <i class="fas fa-unlock"></i> فك العقوبة يدوياً
+            </button>
+        </div>
+    `;
 }
 
 // ===== Toast =====
@@ -659,7 +1112,6 @@ async function fetchStudents() {
     }
 }
 
-// ===== جلب السجل =====
 async function fetchHistory() {
     try {
         const { data, error } = await supabaseClient
@@ -676,7 +1128,7 @@ async function fetchHistory() {
     }
 }
 
-// ===== تحديث حالة طالب — الأجهزة =====
+// ===== تحديث حالة طالب =====
 async function updateStudentStatus(name, status) {
     if (isProcessing) return;
     isProcessing = true;
@@ -696,16 +1148,14 @@ async function updateStudentStatus(name, status) {
             updateData.last_permitted_at = localTime.toISOString();
         }
 
-        const { error: updateError } = await supabaseClient
+        await supabaseClient
             .from('students')
             .update(updateData)
             .eq('name', name);
-
-        if (updateError) throw updateError;
 
         const statusText = status ? 'Permitted' : 'Not Permitted';
 
-        const { error: historyError } = await supabaseClient
+        await supabaseClient
             .from('history')
             .insert([{
                 student_name: name,
@@ -714,60 +1164,7 @@ async function updateStudentStatus(name, status) {
                 teacher: currentTeacher
             }]);
 
-        if (historyError) throw historyError;
-
-        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'} (الأجهزة)`, status ? 'success' : 'error');
-
-        await loadAllData();
-
-    } catch (error) {
-        showToast('خطأ في التحديث: ' + error.message, 'error');
-    } finally {
-        setTimeout(() => { isProcessing = false; }, 300);
-    }
-}
-
-// ===== تحديث حالة طالب — الاستئذان =====
-async function updateIstiathanStatus(name, status) {
-    if (isProcessing) return;
-    isProcessing = true;
-
-    try {
-        const now = new Date();
-        const localTime = new Date(now.getTime() + (3 * 3600000));
-
-        const timestamp = localTime.toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
-        });
-
-        const updateData = { istiathan_permitted: status };
-        if (status === true) {
-            updateData.last_istiathan_at = localTime.toISOString();
-        }
-
-        const { error: updateError } = await supabaseClient
-            .from('students')
-            .update(updateData)
-            .eq('name', name);
-
-        if (updateError) throw updateError;
-
-        const statusText = status ? 'Istiathan Permitted' : 'Istiathan Not Permitted';
-
-        const { error: historyError } = await supabaseClient
-            .from('history')
-            .insert([{
-                student_name: name,
-                status: statusText,
-                timestamp: timestamp,
-                teacher: currentTeacher
-            }]);
-
-        if (historyError) throw historyError;
-
-        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'} (الاستئذان)`, status ? 'success' : 'error');
+        showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
 
         await loadAllData();
 
@@ -809,9 +1206,7 @@ function renderStudents(students, filter = '') {
         const safeName = s.name.replace(/'/g, "\\'");
         const hasInfo = s.full_name || s.hijri_birth_date || s.student_id;
         const hasNotes = s.notes && s.notes.trim();
-
         const devicesStatus = s.permitted === true;
-        const istiathanStatus = s.istiathan_permitted === true;
 
         html += `
             <div class="student-item">
@@ -827,9 +1222,6 @@ function renderStudents(students, filter = '') {
                 <div class="student-status-icons">
                     <span class="mini-status ${devicesStatus ? 'on' : 'off'}" title="إحضار الأجهزة">
                         <i class="fas fa-mobile-alt"></i>
-                    </span>
-                    <span class="mini-status ${istiathanStatus ? 'on' : 'off'}" title="الاستئذان">
-                        <i class="fas fa-user-clock"></i>
                     </span>
                 </div>
             </div>
@@ -854,20 +1246,24 @@ function renderLogs() {
 
         if (status === 'Permitted') {
             isPermitted = true;
-            statusText = 'مسموح (أجهزة)';
+            statusText = 'مسموح';
             icon = '📱';
         } else if (status === 'Not Permitted') {
             isPermitted = false;
-            statusText = 'غير مسموح (أجهزة)';
+            statusText = 'غير مسموح';
             icon = '📱';
-        } else if (status === 'Istiathan Permitted') {
-            isPermitted = true;
-            statusText = 'مسموح (استئذان)';
-            icon = '🕐';
-        } else if (status === 'Istiathan Not Permitted') {
+        } else if (status === 'Penalty Applied') {
             isPermitted = false;
-            statusText = 'غير مسموح (استئذان)';
-            icon = '🕐';
+            statusText = 'فرض عقوبة';
+            icon = '⚖️';
+        } else if (status === 'Penalty Cancelled') {
+            isPermitted = true;
+            statusText = 'فك عقوبة';
+            icon = '🔓';
+        } else if (status === 'Penalty Expired') {
+            isPermitted = true;
+            statusText = 'انتهت العقوبة';
+            icon = '⏰';
         } else {
             statusText = status;
             icon = '📋';
@@ -913,15 +1309,9 @@ function downloadLogs() {
     csv += 'الطالب,الحالة,التاريخ والوقت,المعلم\n';
 
     allHistory.forEach(entry => {
-        let status = entry.status;
-        if (status === 'Permitted') status = 'مسموح (أجهزة)';
-        else if (status === 'Not Permitted') status = 'غير مسموح (أجهزة)';
-        else if (status === 'Istiathan Permitted') status = 'مسموح (استئذان)';
-        else if (status === 'Istiathan Not Permitted') status = 'غير مسموح (استئذان)';
-
         const student = entry.student_name.replace(/,/g, ' ');
         const teacher = entry.teacher.replace(/,/g, ' ');
-        csv += `${student},${status},${entry.timestamp},${teacher}\n`;
+        csv += `${student},${entry.status},${entry.timestamp},${teacher}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1054,14 +1444,12 @@ function generateQrCardImage(studentName, qrPixelSize = 500) {
                     resolve(dataUrl);
 
                 } catch (err) {
-                    console.error('Canvas draw error:', err);
                     if (tempDiv.parentNode) document.body.removeChild(tempDiv);
                     resolve(null);
                 }
             }, 250);
 
         } catch (err) {
-            console.error('QR generation error:', err);
             resolve(null);
         }
     });
