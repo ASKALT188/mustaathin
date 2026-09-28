@@ -898,7 +898,6 @@ async function checkAndExpirePenalties() {
                     .update({ status: 'expired' })
                     .eq('id', penalty.id);
 
-                // السماح بإحضار الجهاز تلقائياً
                 await supabaseClient
                     .from('students')
                     .update({
@@ -950,6 +949,7 @@ function escapeHtmlBehavior(text) {
         .replace(/\n/g, '<br>');
 }
 
+// ===== عرض السجل — مع زر الحذف =====
 function renderBehaviorsLog() {
     const list = document.getElementById('behaviorLogList');
 
@@ -983,7 +983,12 @@ function renderBehaviorsLog() {
                 <div class="behavior-log-content">
                     <div class="behavior-log-header">
                         <span class="behavior-log-type">${icon} ${label}</span>
-                        <span class="behavior-log-date">${dateStr}</span>
+                        <div class="behavior-log-header-actions">
+                            <span class="behavior-log-date">${dateStr}</span>
+                            <button class="behavior-delete-btn" onclick="deleteBehavior(${item.id})" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     ${item.category ? `<div class="behavior-log-category"><i class="fas fa-tag"></i> ${escapeHtmlBehavior(item.category)}</div>` : ''}
                     <div class="behavior-log-details">${escapeHtmlBehavior(item.details)}</div>
@@ -996,6 +1001,33 @@ function renderBehaviorsLog() {
     });
 
     list.innerHTML = html;
+}
+
+// ===== حذف سلوك (مشاركة/مخالفة) =====
+function deleteBehavior(behaviorId) {
+    showConfirm(
+        'هل أنت متأكد من حذف هذه المشاركة/المخالفة نهائياً؟',
+        'تأكيد الحذف',
+        async () => {
+            try {
+                const { error } = await supabaseClient
+                    .from('behaviors')
+                    .delete()
+                    .eq('id', behaviorId);
+
+                if (error) throw error;
+
+                showToast('🗑️ تم حذف السجل', 'success');
+
+                await loadStudentBehaviors();
+                switchBehaviorTab('log');
+
+            } catch (error) {
+                console.error('Delete behavior error:', error);
+                showToast('خطأ في الحذف: ' + error.message, 'error');
+            }
+        }
+    );
 }
 
 function renderBehaviorStats() {
