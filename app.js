@@ -3,19 +3,21 @@ const SUPABASE_URL = 'https://qnxiyrfdvqskwfcmnptw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_NV8m1fyVZq29VKBD6hQnsw_euvyzRsH';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== كلمة المرور =====
-const DASHBOARD_PASSWORD = 'HA20ZN30';
+// ===== كلمة المرور الرئيسية للموقع =====
+const MASTER_PASSWORD = 'HA20ZN30';
 
 // ===== المتغيرات =====
+let currentAdmin = null;
 let openedStudent = '';
 let isProcessing = false;
-const currentTeacher = 'محمد ماهر او عبدالله العوض';
 let allStudents = [];
 let allHistory = [];
+let allBehaviors = [];
+let allPenalties = [];
 let selectedDownloadIds = new Set();
 let currentSection = 'students';
 
-// المتغيرات الخاصة بالسلوك
+// متغيرات السلوك
 let currentBehaviorType = 'positive';
 let currentPenaltyDuration = null;
 let currentStudentBehaviors = [];
@@ -43,6 +45,245 @@ function confirmNo() {
     confirmCallback = null;
 }
 
+// ============================================
+// ===== نظام الحسابات (كلمة المرور الرئيسية + تسجيل/دخول) =====
+// ============================================
+
+// ===== الشاشة 1: التحقق من كلمة المرور الرئيسية =====
+function checkMasterPassword() {
+    const input = document.getElementById('masterPasswordInput');
+    const errorEl = document.getElementById('masterPasswordError');
+
+    if (input.value === MASTER_PASSWORD) {
+        document.getElementById('masterPasswordOverlay').style.display = 'none';
+        document.getElementById('authOverlay').style.display = 'flex';
+        errorEl.textContent = '';
+        input.value = '';
+
+        checkIfAdminsExist();
+
+    } else {
+        errorEl.textContent = '❌ كلمة المرور غير صحيحة';
+        input.value = '';
+        input.focus();
+        input.style.borderColor = '#b13e3e';
+        setTimeout(() => input.style.borderColor = '#ede4ff', 800);
+    }
+}
+
+document.getElementById('masterPasswordInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkMasterPassword();
+});
+
+// ===== الشاشة 2: إظهار نموذج التسجيل =====
+function showSignupForm() {
+    document.getElementById('signupForm').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('authTitle').textContent = 'إنشاء حساب أداري';
+    document.getElementById('authSubtitle').textContent = 'أول مرة تدخل — أنشئ حسابك';
+    document.getElementById('signupError').textContent = '';
+    document.getElementById('loginError').textContent = '';
+}
+
+// ===== إظهار نموذج تسجيل الدخول =====
+function showLoginForm() {
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'تسجيل الدخول';
+    document.getElementById('authSubtitle').textContent = 'أدخل بياناتك للدخول';
+    document.getElementById('signupError').textContent = '';
+    document.getElementById('loginError').textContent = '';
+}
+
+// ===== إنشاء حساب =====
+async function createAccount() {
+    const username = document.getElementById('signupUsername').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupPasswordConfirm').value;
+    const errorEl = document.getElementById('signupError');
+
+    errorEl.textContent = '';
+
+    if (!username || username.length < 2) {
+        errorEl.textContent = '❌ اسم الأداري قصير جداً';
+        return;
+    }
+
+    if (!password || password.length < 4) {
+        errorEl.textContent = '❌ كلمة المرور قصيرة (4 أحرف على الأقل)';
+        return;
+    }
+
+    if (password !== confirm) {
+        errorEl.textContent = '❌ كلمتا المرور غير متطابقتين';
+        return;
+    }
+
+    try {
+        const { data: existing } = await supabaseClient
+            .from('admins')
+            .select('id')
+            .eq('username', username)
+            .single();
+
+        if (existing) {
+            errorEl.textContent = '❌ هذا الاسم مستخدم مسبقاً';
+            return;
+        }
+
+        const { error } = await supabaseClient
+            .from('admins')
+            .insert([{
+                username: username,
+                password: password
+            }]);
+
+        if (error) throw error;
+
+        sessionStorage.setItem('mustaathin_admin', JSON.stringify({
+            username: username,
+            loginTime: Date.now()
+        }));
+
+        currentAdmin = { username: username };
+
+        enterDashboard();
+
+    } catch (error) {
+        console.error('Signup error:', error);
+        errorEl.textContent = '❌ خطأ: ' + error.message;
+    }
+}
+
+// ===== تسجيل الدخول =====
+async function loginAdmin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+
+    errorEl.textContent = '';
+
+    if (!username || !password) {
+        errorEl.textContent = '❌ املأ جميع الحقول';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('admins')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+
+        if (error || !data) {
+            errorEl.textContent = '❌ اسم المستخدم أو كلمة المرور غير صحيحة';
+            return;
+        }
+
+        sessionStorage.setItem('mustaathin_admin', JSON.stringify({
+            username: data.username,
+            loginTime: Date.now()
+        }));
+
+        currentAdmin = { username: data.username };
+
+        enterDashboard();
+
+    } catch (error) {
+        console.error('Login error:', error);
+        errorEl.textContent = '❌ خطأ في الاتصال';
+    }
+}
+
+// ===== الدخول للوحة =====
+function enterDashboard() {
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('masterPasswordOverlay').style.display = 'none';
+
+    document.getElementById('welcomeBanner').style.display = 'flex';
+    document.getElementById('welcomeName').textContent = `أهلاً بك ${currentAdmin.username}`;
+
+    const now = new Date();
+    const localNow = new Date(now.getTime() + (3 * 3600000));
+    const dateStr = localNow.toLocaleDateString('ar-SA', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short'
+    });
+    document.getElementById('welcomeDate').textContent = dateStr;
+
+    init();
+}
+
+// ===== تسجيل الخروج =====
+function logout() {
+    showConfirm(
+        'هل تريد تسجيل الخروج من الحساب؟',
+        'تأكيد الخروج',
+        () => {
+            sessionStorage.removeItem('mustaathin_admin');
+            sessionStorage.removeItem('currentSection');
+            location.reload();
+        }
+    );
+}
+
+// Enter في الحقول
+document.getElementById('signupPasswordConfirm').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') createAccount();
+});
+
+document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') loginAdmin();
+});
+
+// ===== فحص الجلسة أولاً =====
+(function checkSession() {
+    const session = sessionStorage.getItem('mustaathin_admin');
+    if (session) {
+        try {
+            const admin = JSON.parse(session);
+            currentAdmin = admin;
+            document.getElementById('masterPasswordOverlay').style.display = 'none';
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('welcomeBanner').style.display = 'flex';
+            document.getElementById('welcomeName').textContent = `أهلاً بك ${admin.username}`;
+
+            const now = new Date();
+            const localNow = new Date(now.getTime() + (3 * 3600000));
+            const dateStr = localNow.toLocaleDateString('ar-SA', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'short'
+            });
+            document.getElementById('welcomeDate').textContent = dateStr;
+
+            init();
+        } catch (e) {
+            document.getElementById('masterPasswordOverlay').style.display = 'flex';
+        }
+    }
+})();
+
+// ===== التحقق من وجود أداريين =====
+async function checkIfAdminsExist() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('admins')
+            .select('id')
+            .limit(1);
+
+        if (!error && data && data.length > 0) {
+            showLoginForm();
+        } else {
+            showSignupForm();
+        }
+    } catch (e) {
+        showSignupForm();
+    }
+}
+
 // DOM refs
 const studentListEl = document.getElementById('studentList');
 const logsListEl = document.getElementById('logsList');
@@ -55,15 +296,18 @@ function switchSection(section) {
     currentSection = section;
 
     document.getElementById('navStudents').classList.toggle('active', section === 'students');
+    document.getElementById('navBehaviors').classList.toggle('active', section === 'behaviors');
     document.getElementById('navLogs').classList.toggle('active', section === 'logs');
     document.getElementById('navDownload').classList.toggle('active', section === 'download');
 
     document.getElementById('pageStudents').classList.toggle('active', section === 'students');
+    document.getElementById('pageBehaviors').classList.toggle('active', section === 'behaviors');
     document.getElementById('pageLogs').classList.toggle('active', section === 'logs');
     document.getElementById('pageDownload').classList.toggle('active', section === 'download');
 
     if (section === 'logs') renderLogs();
     if (section === 'download') renderDownloadList();
+    if (section === 'behaviors') renderBehaviorsPage();
 
     sessionStorage.setItem('currentSection', section);
     closeSidebarOnMobile();
@@ -87,44 +331,6 @@ window.addEventListener('resize', () => {
         document.getElementById('sidebarBackdrop').classList.remove('open');
     }
 });
-
-// ===== كلمة المرور =====
-function checkPassword() {
-    const input = document.getElementById('passwordInput');
-    const errorEl = document.getElementById('loginError');
-    const overlay = document.getElementById('loginOverlay');
-
-    if (input.value === DASHBOARD_PASSWORD) {
-        sessionStorage.setItem('mustaathin_auth', 'true');
-        overlay.style.display = 'none';
-        errorEl.textContent = '';
-        input.value = '';
-        init();
-    } else {
-        errorEl.textContent = '❌ كلمة المرور غير صحيحة';
-        input.value = '';
-        input.focus();
-        input.style.borderColor = '#b13e3e';
-        setTimeout(() => input.style.borderColor = '#ede4ff', 800);
-    }
-}
-
-document.getElementById('passwordInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkPassword();
-});
-
-// ===== تسجيل الخروج =====
-function logout() {
-    showConfirm(
-        'هل تريد تسجيل الخروج من الحساب؟',
-        'تأكيد الخروج',
-        () => {
-            sessionStorage.removeItem('mustaathin_auth');
-            sessionStorage.removeItem('currentSection');
-            location.reload();
-        }
-    );
-}
 
 // ===== نافذة إضافة طالب =====
 function openAddModal() {
@@ -235,20 +441,19 @@ async function updateAllDevicesStatus(status) {
                         student_name: student.name,
                         status: statusText,
                         timestamp: timestamp,
-                        teacher: currentTeacher
+                        teacher: currentAdmin ? currentAdmin.username : 'أداري'
                     }]);
 
                 successCount++;
 
             } catch (e) {
-                console.error(`Failed to update ${student.name}:`, e);
                 failCount++;
             }
         }
 
         if (successCount > 0) {
             showToast(
-                `✅ تم ${status ? 'السماح' : 'المنع'} لـ ${successCount} طالب${failCount > 0 ? ` (${failCount} فشل)` : ''}`,
+                `✅ تم ${status ? 'السماح' : 'المنع'} لـ ${successCount} طالب`,
                 status ? 'success' : 'error'
             );
         } else {
@@ -258,7 +463,6 @@ async function updateAllDevicesStatus(status) {
         await loadAllData();
 
     } catch (error) {
-        console.error('Set all devices status error:', error);
         showToast('خطأ: ' + error.message, 'error');
     } finally {
         isProcessing = false;
@@ -453,25 +657,10 @@ async function saveEditName() {
     }
 
     try {
-        await supabaseClient
-            .from('students')
-            .update({ name: newName })
-            .eq('name', oldName);
-
-        await supabaseClient
-            .from('history')
-            .update({ student_name: newName })
-            .eq('student_name', oldName);
-
-        await supabaseClient
-            .from('behaviors')
-            .update({ student_name: newName })
-            .eq('student_name', oldName);
-
-        await supabaseClient
-            .from('penalties')
-            .update({ student_name: newName })
-            .eq('student_name', oldName);
+        await supabaseClient.from('students').update({ name: newName }).eq('name', oldName);
+        await supabaseClient.from('history').update({ student_name: newName }).eq('student_name', oldName);
+        await supabaseClient.from('behaviors').update({ student_name: newName }).eq('student_name', oldName);
+        await supabaseClient.from('penalties').update({ student_name: newName }).eq('student_name', oldName);
 
         closeEditNameModal();
         showToast(`✅ تم تغيير الاسم إلى ${newName}`, 'success');
@@ -591,7 +780,232 @@ function deleteStudent(name) {
 }
 
 // ============================================
-// ===== نظام المشاركات والمخالفات والعقوبات =====
+// ===== صفحة المشاركات والعقوبات =====
+// ============================================
+
+async function renderBehaviorsPage() {
+    await fetchAllBehaviorsAndPenalties();
+
+    // المشاركات
+    const positiveList = document.getElementById('positiveBehaviorsList');
+    const positives = allBehaviors.filter(b => b.type === 'positive');
+    document.getElementById('positiveCountBadge').textContent = positives.length;
+
+    if (positives.length === 0) {
+        positiveList.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد مشاركات</div>`;
+    } else {
+        let html = '';
+        positives.forEach(b => {
+            const dateStr = new Date(b.created_at).toLocaleString('ar-SA', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            html += `
+                <div class="behavior-page-item positive">
+                    <div class="behavior-page-icon positive">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="behavior-page-info">
+                        <div class="behavior-page-name">
+                            <i class="fas fa-user-graduate"></i> ${escapeHtmlBehavior(b.student_name)}
+                        </div>
+                        ${b.category ? `<div class="behavior-page-category"><i class="fas fa-tag"></i> ${escapeHtmlBehavior(b.category)}</div>` : ''}
+                        <div class="behavior-page-details">${escapeHtmlBehavior(b.details)}</div>
+                        <div class="behavior-page-meta">
+                            <span><i class="fas fa-clock"></i> ${dateStr}</span>
+                            <span><i class="fas fa-chalkboard-teacher"></i> ${escapeHtmlBehavior(b.teacher || '')}</span>
+                        </div>
+                    </div>
+                    <button class="behavior-page-delete" onclick="deleteBehaviorFromPage(${b.id}, 'positive')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+        positiveList.innerHTML = html;
+    }
+
+    // المخالفات
+    const negativeList = document.getElementById('negativeBehaviorsList');
+    const negatives = allBehaviors.filter(b => b.type === 'negative');
+    document.getElementById('negativeCountBadge').textContent = negatives.length;
+
+    if (negatives.length === 0) {
+        negativeList.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد مخالفات</div>`;
+    } else {
+        let html = '';
+        negatives.forEach(b => {
+            const dateStr = new Date(b.created_at).toLocaleString('ar-SA', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            html += `
+                <div class="behavior-page-item negative">
+                    <div class="behavior-page-icon negative">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="behavior-page-info">
+                        <div class="behavior-page-name">
+                            <i class="fas fa-user-graduate"></i> ${escapeHtmlBehavior(b.student_name)}
+                        </div>
+                        ${b.category ? `<div class="behavior-page-category"><i class="fas fa-tag"></i> ${escapeHtmlBehavior(b.category)}</div>` : ''}
+                        <div class="behavior-page-details">${escapeHtmlBehavior(b.details)}</div>
+                        <div class="behavior-page-meta">
+                            <span><i class="fas fa-clock"></i> ${dateStr}</span>
+                            <span><i class="fas fa-chalkboard-teacher"></i> ${escapeHtmlBehavior(b.teacher || '')}</span>
+                        </div>
+                    </div>
+                    <button class="behavior-page-delete" onclick="deleteBehaviorFromPage(${b.id}, 'negative')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+        negativeList.innerHTML = html;
+    }
+
+    // العقوبات
+    const penaltiesList = document.getElementById('penaltiesList');
+    const activePenalties = allPenalties.filter(p => p.status === 'active');
+    document.getElementById('penaltyCountBadge').textContent = activePenalties.length;
+
+    if (activePenalties.length === 0) {
+        penaltiesList.innerHTML = `<div class="empty-history"><i class="fas fa-info-circle"></i> لا توجد عقوبات سارية</div>`;
+    } else {
+        let html = '';
+        activePenalties.forEach(p => {
+            const endsAt = new Date(p.ends_at);
+            const endDate = endsAt.toLocaleString('ar-SA', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            html += `
+                <div class="behavior-page-item penalty">
+                    <div class="behavior-page-icon penalty">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                    <div class="behavior-page-info">
+                        <div class="behavior-page-name">
+                            <i class="fas fa-user-graduate"></i> ${escapeHtmlBehavior(p.student_name)}
+                        </div>
+                        <div class="behavior-page-category"><i class="fas fa-clock"></i> المدة: ${getDurationText(p.duration_type)}</div>
+                        <div class="behavior-page-details">${escapeHtmlBehavior(p.reason)}</div>
+                        <div class="behavior-page-meta">
+                            <span><i class="fas fa-calendar-times"></i> ينتهي: ${endDate}</span>
+                            <span><i class="fas fa-chalkboard-teacher"></i> ${escapeHtmlBehavior(p.teacher || '')}</span>
+                        </div>
+                    </div>
+                    <button class="behavior-page-delete" onclick="deletePenaltyFromPage(${p.id})" title="فك العقوبة">
+                        <i class="fas fa-unlock"></i>
+                    </button>
+                </div>
+            `;
+        });
+        penaltiesList.innerHTML = html;
+    }
+}
+
+// ===== حذف سلوك من الصفحة =====
+function deleteBehaviorFromPage(behaviorId, type) {
+    const typeText = type === 'positive' ? 'المشاركة' : 'المخالفة';
+    showConfirm(
+        `هل أنت متأكد من حذف هذه ${typeText} نهائياً؟`,
+        `تأكيد حذف ${typeText}`,
+        async () => {
+            try {
+                const { error } = await supabaseClient
+                    .from('behaviors')
+                    .delete()
+                    .eq('id', behaviorId);
+
+                if (error) throw error;
+
+                showToast(`🗑️ تم حذف ${typeText}`, 'success');
+                await renderBehaviorsPage();
+
+            } catch (error) {
+                showToast('خطأ في الحذف: ' + error.message, 'error');
+            }
+        }
+    );
+}
+
+// ===== حذف/فك عقوبة من الصفحة =====
+function deletePenaltyFromPage(penaltyId) {
+    showConfirm(
+        'هل تريد فك العقوبة وإعادة السماح بإحضار الجهاز؟',
+        'تأكيد فك العقوبة',
+        async () => {
+            try {
+                const now = new Date();
+                const localTime = new Date(now.getTime() + (3 * 3600000));
+
+                const penalty = allPenalties.find(p => p.id === penaltyId);
+                if (!penalty) throw new Error('العقوبة غير موجودة');
+
+                await supabaseClient
+                    .from('penalties')
+                    .update({
+                        status: 'cancelled',
+                        cancelled_at: localTime.toISOString()
+                    })
+                    .eq('id', penaltyId);
+
+                await supabaseClient
+                    .from('students')
+                    .update({
+                        permitted: true,
+                        last_permitted_at: localTime.toISOString()
+                    })
+                    .eq('name', penalty.student_name);
+
+                const timestamp = localTime.toLocaleString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                });
+
+                await supabaseClient
+                    .from('history')
+                    .insert([{
+                        student_name: penalty.student_name,
+                        status: 'Penalty Cancelled',
+                        timestamp: timestamp,
+                        teacher: currentAdmin ? currentAdmin.username : 'أداري'
+                    }]);
+
+                showToast('✅ تم فك العقوبة', 'success');
+                await renderBehaviorsPage();
+                await loadAllData();
+
+            } catch (error) {
+                showToast('خطأ: ' + error.message, 'error');
+            }
+        }
+    );
+}
+
+async function fetchAllBehaviorsAndPenalties() {
+    try {
+        const { data: behaviors } = await supabaseClient
+            .from('behaviors')
+            .select('*')
+            .order('created_at', { ascending: false });
+        allBehaviors = behaviors || [];
+
+        const { data: penalties } = await supabaseClient
+            .from('penalties')
+            .select('*')
+            .order('started_at', { ascending: false });
+        allPenalties = penalties || [];
+
+    } catch (e) {
+        console.error('Fetch behaviors page error:', e);
+    }
+}
+
+// ============================================
+// ===== نافذة المشاركات والمخالفات (لطالب) =====
 // ============================================
 
 async function openBehaviorsModal() {
@@ -665,7 +1079,7 @@ async function saveBehavior() {
                 type: currentBehaviorType,
                 category: category || null,
                 details: details,
-                teacher: currentTeacher
+                teacher: currentAdmin ? currentAdmin.username : 'أداري'
             }]);
 
         if (error) throw error;
@@ -728,7 +1142,6 @@ async function applyPenalty(reason, durationType) {
 
         const endsAt = new Date(localTime.getTime() + durationMs);
 
-        // إلغاء أي عقوبة سابقة
         await supabaseClient
             .from('penalties')
             .update({
@@ -738,7 +1151,6 @@ async function applyPenalty(reason, durationType) {
             .eq('student_name', openedStudent)
             .eq('status', 'active');
 
-        // إضافة عقوبة جديدة
         const { error: penaltyError } = await supabaseClient
             .from('penalties')
             .insert([{
@@ -748,12 +1160,11 @@ async function applyPenalty(reason, durationType) {
                 started_at: localTime.toISOString(),
                 ends_at: endsAt.toISOString(),
                 status: 'active',
-                teacher: currentTeacher
+                teacher: currentAdmin ? currentAdmin.username : 'أداري'
             }]);
 
         if (penaltyError) throw penaltyError;
 
-        // منع إحضار الجهاز
         await supabaseClient
             .from('students')
             .update({
@@ -762,7 +1173,6 @@ async function applyPenalty(reason, durationType) {
             })
             .eq('name', openedStudent);
 
-        // سجل
         const timestamp = localTime.toLocaleString('en-US', {
             month: 'short', day: 'numeric', year: 'numeric',
             hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -775,7 +1185,7 @@ async function applyPenalty(reason, durationType) {
                 student_name: openedStudent,
                 status: 'Penalty Applied',
                 timestamp: timestamp,
-                teacher: currentTeacher
+                teacher: currentAdmin ? currentAdmin.username : 'أداري'
             }]);
 
         showToast(`⚖️ تم فرض العقوبة لمدة ${getDurationText(durationType)}`, 'success');
@@ -828,7 +1238,7 @@ function cancelPenalty(penaltyId) {
                         student_name: openedStudent,
                         status: 'Penalty Cancelled',
                         timestamp: timestamp,
-                        teacher: currentTeacher
+                        teacher: currentAdmin ? currentAdmin.username : 'أداري'
                     }]);
 
                 showToast('✅ تم فك العقوبة', 'success');
@@ -949,7 +1359,6 @@ function escapeHtmlBehavior(text) {
         .replace(/\n/g, '<br>');
 }
 
-// ===== عرض السجل — مع زر الحذف =====
 function renderBehaviorsLog() {
     const list = document.getElementById('behaviorLogList');
 
@@ -1003,7 +1412,6 @@ function renderBehaviorsLog() {
     list.innerHTML = html;
 }
 
-// ===== حذف سلوك (مشاركة/مخالفة) =====
 function deleteBehavior(behaviorId) {
     showConfirm(
         'هل أنت متأكد من حذف هذه المشاركة/المخالفة نهائياً؟',
@@ -1023,7 +1431,6 @@ function deleteBehavior(behaviorId) {
                 switchBehaviorTab('log');
 
             } catch (error) {
-                console.error('Delete behavior error:', error);
                 showToast('خطأ في الحذف: ' + error.message, 'error');
             }
         }
@@ -1193,7 +1600,7 @@ async function updateStudentStatus(name, status) {
                 student_name: name,
                 status: statusText,
                 timestamp: timestamp,
-                teacher: currentTeacher
+                teacher: currentAdmin ? currentAdmin.username : 'أداري'
             }]);
 
         showToast(`${name} ${status ? 'مسموح ✓' : 'غير مسموح ✗'}`, status ? 'success' : 'error');
@@ -1211,9 +1618,11 @@ async function updateStudentStatus(name, status) {
 async function loadAllData() {
     const students = await fetchStudents();
     await fetchHistory();
+    await fetchAllBehaviorsAndPenalties();
     renderStudents(students, searchInput.value);
     renderLogs();
     renderDownloadList();
+    if (currentSection === 'behaviors') renderBehaviorsPage();
 }
 
 // ===== عرض الطلاب =====
@@ -1277,28 +1686,17 @@ function renderLogs() {
         let icon = '';
 
         if (status === 'Permitted') {
-            isPermitted = true;
-            statusText = 'مسموح';
-            icon = '📱';
+            isPermitted = true; statusText = 'مسموح'; icon = '📱';
         } else if (status === 'Not Permitted') {
-            isPermitted = false;
-            statusText = 'غير مسموح';
-            icon = '📱';
+            isPermitted = false; statusText = 'غير مسموح'; icon = '📱';
         } else if (status === 'Penalty Applied') {
-            isPermitted = false;
-            statusText = 'فرض عقوبة';
-            icon = '⚖️';
+            isPermitted = false; statusText = 'فرض عقوبة'; icon = '⚖️';
         } else if (status === 'Penalty Cancelled') {
-            isPermitted = true;
-            statusText = 'فك عقوبة';
-            icon = '🔓';
+            isPermitted = true; statusText = 'فك عقوبة'; icon = '🔓';
         } else if (status === 'Penalty Expired') {
-            isPermitted = true;
-            statusText = 'انتهت العقوبة';
-            icon = '⏰';
+            isPermitted = true; statusText = 'انتهت العقوبة'; icon = '⏰';
         } else {
-            statusText = status;
-            icon = '📋';
+            statusText = status; icon = '📋';
         }
 
         const statusClass = isPermitted ? 'permitted' : 'not-permitted';
@@ -1629,7 +2027,7 @@ function subscribeToChanges() {
 
 // ===== التهيئة =====
 async function init() {
-    console.log('🚀 ثانوية هوزان');
+    console.log('🚀 ثانوية هوزان — الأداري:', currentAdmin ? currentAdmin.username : 'غير معروف');
     await loadAllData();
 
     const savedSection = sessionStorage.getItem('currentSection') || 'students';
@@ -1637,10 +2035,4 @@ async function init() {
 
     subscribeToChanges();
     console.log('✅ جاهز');
-}
-
-// ===== بدء التطبيق =====
-if (sessionStorage.getItem('mustaathin_auth') === 'true') {
-    document.getElementById('loginOverlay').style.display = 'none';
-    init();
 }
