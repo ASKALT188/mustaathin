@@ -126,27 +126,9 @@
 
             <div id="optionsMainView">
                 <h3><i class="fas fa-user-graduate"></i> <span id="optionsStudentName">—</span></h3>
-                <div class="modal-sub">إدارة صلاحيات الطالب</div>
+                <div class="modal-sub">إدارة الطالب</div>
 
                 <div class="student-options">
-                    <!-- سويتش الاستئذان -->
-                    <div class="toggle-option-card">
-                        <div class="toggle-option-header">
-                            <div class="toggle-option-icon istiathan">
-                                <i class="fas fa-user-clock"></i>
-                            </div>
-                            <div class="toggle-option-text">
-                                <strong>الاستئذان</strong>
-                                <span>السماح للطالب بالاستئذان</span>
-                            </div>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="istiathanToggle" onchange="onIstiathanToggleChange(this.checked)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-status-text off" id="istiathanStatusText">غير مسموح</div>
-                    </div>
-
                     <!-- سويتش إحضار الأجهزة -->
                     <div class="toggle-option-card">
                         <div class="toggle-option-header">
@@ -164,6 +146,15 @@
                         </div>
                         <div class="toggle-status-text off" id="devicesStatusText">غير مسموح</div>
                     </div>
+
+                    <!-- المشاركات والمخالفات -->
+                    <button class="option-btn behaviors-option" onclick="openBehaviorsModal()">
+                        <div class="option-icon behaviors"><i class="fas fa-clipboard-check"></i></div>
+                        <div class="option-text">
+                            <strong>المشاركات والمخالفات</strong>
+                            <span>تسجيل السلوك والعقوبات</span>
+                        </div>
+                    </button>
 
                     <!-- عرض الباركود -->
                     <button class="option-btn qr-option" onclick="showQrInsideModal()">
@@ -233,6 +224,125 @@
         </div>
     </div>
 
+    <!-- نافذة المشاركات والمخالفات والعقوبات -->
+    <div class="modal-overlay" id="behaviorsModal">
+        <div class="modal-box behaviors-box">
+            <button class="modal-top-close" onclick="closeBehaviorsModal()" title="إغلاق">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h3><i class="fas fa-clipboard-check"></i> السلوك والعقوبات</h3>
+            <div class="modal-sub" id="behaviorsStudentName">—</div>
+
+            <!-- التبويبات -->
+            <div class="behaviors-tabs">
+                <button class="behavior-tab active" data-tab="add" onclick="switchBehaviorTab('add')">
+                    <i class="fas fa-plus-circle"></i> إضافة
+                </button>
+                <button class="behavior-tab" data-tab="log" onclick="switchBehaviorTab('log')">
+                    <i class="fas fa-list"></i> السجل
+                </button>
+                <button class="behavior-tab" data-tab="penalty" onclick="switchBehaviorTab('penalty')">
+                    <i class="fas fa-gavel"></i> العقوبة
+                </button>
+            </div>
+
+            <!-- Tab: إضافة -->
+            <div class="behavior-tab-content active" id="behaviorTabAdd">
+                <div class="behavior-type-selector">
+                    <button class="type-btn positive active" data-type="positive" onclick="selectBehaviorType('positive')">
+                        <i class="fas fa-star"></i>
+                        <div>
+                            <strong>مشاركة</strong>
+                            <span>سلوك إيجابي</span>
+                        </div>
+                    </button>
+                    <button class="type-btn negative" data-type="negative" onclick="selectBehaviorType('negative')">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>مخالفة</strong>
+                            <span>سلوك سلبي</span>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-tag"></i> التصنيف (اختياري)</label>
+                    <input type="text" id="behaviorCategory" placeholder="مثال: تفوق دراسي، إخلال بالنظام..." />
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-align-right"></i> التفاصيل <span style="color:#b13e3e;">*</span></label>
+                    <textarea id="behaviorDetails" placeholder="اكتب تفاصيل المشاركة أو المخالفة..." rows="4"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-save" onclick="saveBehavior()">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                    <button class="btn-cancel-modal" onclick="closeBehaviorsModal()">إلغاء</button>
+                </div>
+            </div>
+
+            <!-- Tab: السجل -->
+            <div class="behavior-tab-content" id="behaviorTabLog">
+                <div class="behavior-stats" id="behaviorStats"></div>
+                <div class="behavior-log-list" id="behaviorLogList">
+                    <div class="loading-message"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>
+                </div>
+            </div>
+
+            <!-- Tab: العقوبة -->
+            <div class="behavior-tab-content" id="behaviorTabPenalty">
+                <div id="currentPenaltyBox"></div>
+
+                <div class="penalty-section-title">
+                    <i class="fas fa-gavel"></i>
+                    فرض عقوبة جديدة
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-align-right"></i> سبب العقوبة *</label>
+                    <textarea id="penaltyReason" placeholder="اكتب سبب العقوبة..." rows="3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-clock"></i> مدة العقوبة *</label>
+                    <div class="penalty-duration-grid">
+                        <button class="duration-btn" data-duration="2days" onclick="selectPenaltyDuration('2days')">
+                            <i class="fas fa-calendar-day"></i>
+                            <strong>يومين</strong>
+                        </button>
+                        <button class="duration-btn" data-duration="week" onclick="selectPenaltyDuration('week')">
+                            <i class="fas fa-calendar-week"></i>
+                            <strong>أسبوع</strong>
+                        </button>
+                        <button class="duration-btn" data-duration="month" onclick="selectPenaltyDuration('month')">
+                            <i class="fas fa-calendar-alt"></i>
+                            <strong>شهر</strong>
+                        </button>
+                        <button class="duration-btn" data-duration="4months" onclick="selectPenaltyDuration('4months')">
+                            <i class="fas fa-calendar"></i>
+                            <strong>4 أشهر</strong>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="penalty-warning">
+                    <i class="fas fa-info-circle"></i>
+                    عند فرض العقوبة، سيتم <strong>منع الطالب من إحضار الجهاز</strong> تلقائياً حتى انتهاء المدة.
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-penalty-save" onclick="savePenalty()">
+                        <i class="fas fa-gavel"></i> فرض العقوبة
+                    </button>
+                    <button class="btn-cancel-modal" onclick="closeBehaviorsModal()">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة تعديل اسم الطالب -->
     <div class="modal-overlay" id="editNameModal">
         <div class="modal-box">
@@ -274,7 +384,7 @@
         </div>
     </div>
 
-    <!-- نافذة إضافة ملاحظات -->
+    <!-- نافذة الملاحظات -->
     <div class="modal-overlay" id="notesModal">
         <div class="modal-box">
             <h3><i class="fas fa-sticky-note"></i> ملاحظات الطالب</h3>
@@ -431,7 +541,6 @@
         </div>
     </main>
 
-    <!-- حقوق الطبع -->
     <footer class="footer">
         <i class="fas fa-copyright"></i>
         حقوق طبع ونشر محفوظة لشعبة 208 موهبة
