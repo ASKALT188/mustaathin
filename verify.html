@@ -7,11 +7,7 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Tajawal', 'Inter', -apple-system, system-ui, sans-serif;
@@ -32,24 +28,15 @@
             background: white;
             border-radius: 32px;
             padding: 2.5rem 2rem;
-            max-width: 540px;
+            max-width: 560px;
             width: 100%;
             text-align: center;
             border: 2px solid #ede4ff;
             box-shadow: 0 4px 20px rgba(124, 58, 237, 0.06);
         }
 
-        .school-icon {
-            font-size: 2.5rem;
-            color: #7c3aed;
-            margin-bottom: 0.5rem;
-        }
-
-        .school-title {
-            color: #4c1d95;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
+        .school-icon { font-size: 2.5rem; color: #7c3aed; margin-bottom: 0.5rem; }
+        .school-title { color: #4c1d95; font-weight: 700; font-size: 1.1rem; }
 
         .verify-student-name {
             font-size: 2.2rem;
@@ -59,6 +46,106 @@
             word-break: break-word;
         }
 
+        /* ===== عقوبة سارية ===== */
+        .penalty-alert {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 3px solid #dc2626;
+            border-radius: 20px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            text-align: right;
+            position: relative;
+            overflow: hidden;
+            animation: penaltyPulse 2s ease infinite;
+        }
+
+        @keyframes penaltyPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+        }
+
+        .penalty-alert-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .penalty-alert-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+        }
+
+        .penalty-alert-title strong {
+            display: block;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #b13e3e;
+        }
+
+        .penalty-alert-title span {
+            display: block;
+            font-size: 0.72rem;
+            color: #8b7db8;
+            margin-top: 0.15rem;
+        }
+
+        .penalty-alert-info {
+            background: white;
+            border-radius: 14px;
+            padding: 0.8rem;
+        }
+
+        .penalty-alert-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            font-size: 0.82rem;
+            border-bottom: 1px dashed #fee2e2;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .penalty-alert-row:last-child { border-bottom: none; }
+
+        .penalty-alert-label {
+            color: #6b5b95;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .penalty-alert-label i { color: #dc2626; font-size: 0.8rem; }
+
+        .penalty-alert-value {
+            color: #3b1e6b;
+            font-weight: 700;
+            text-align: left;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .penalty-alert-value.highlight {
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 0.2rem 0.7rem;
+            border-radius: 40px;
+            text-align: center;
+            flex: 0 0 auto;
+        }
+
+        /* ===== حالات عادية ===== */
         .verify-section {
             margin: 1rem 0;
             padding: 1rem;
@@ -87,15 +174,8 @@
             margin: 0.3rem 0;
         }
 
-        .verify-status-large.permitted {
-            background: #d3f0e5;
-            color: #006b4e;
-        }
-
-        .verify-status-large.not-permitted {
-            background: #fce8e8;
-            color: #b13e3e;
-        }
+        .verify-status-large.permitted { background: #d3f0e5; color: #006b4e; }
+        .verify-status-large.not-permitted { background: #fce8e8; color: #b13e3e; }
 
         .verify-time {
             color: #3b1e6b;
@@ -109,26 +189,15 @@
             display: inline-block;
         }
 
-        .verify-time i {
-            color: #7c3aed;
-            margin-left: 0.4rem;
-            font-size: 0.8rem;
-        }
+        .verify-time i { color: #7c3aed; margin-left: 0.4rem; font-size: 0.8rem; }
 
+        /* ===== بيانات الطالب ===== */
         .verify-info-section {
             background: #f7f3ff;
             border: 2px solid #ede4ff;
             border-radius: 20px;
             padding: 1rem;
             margin: 1rem 0;
-        }
-
-        .verify-info-section .verify-section-title {
-            color: #5b21b6;
-        }
-
-        .verify-info-section .verify-section-title i {
-            color: #7c3aed;
         }
 
         .info-item {
@@ -144,9 +213,7 @@
             border: 1px solid #f3ecff;
         }
 
-        .info-item:last-child {
-            margin-bottom: 0;
-        }
+        .info-item:last-child { margin-bottom: 0; }
 
         .info-item-label {
             color: #6b5b95;
@@ -157,12 +224,7 @@
             flex-shrink: 0;
         }
 
-        .info-item-label i {
-            color: #7c3aed;
-            font-size: 0.85rem;
-            width: 18px;
-            text-align: center;
-        }
+        .info-item-label i { color: #7c3aed; font-size: 0.85rem; }
 
         .info-item-value {
             color: #3b1e6b;
@@ -177,6 +239,7 @@
             max-width: 60%;
         }
 
+        /* ===== الملاحظات ===== */
         .verify-notes-section {
             background: #fffbeb;
             border: 2px solid #fde68a;
@@ -197,10 +260,6 @@
             gap: 0.4rem;
         }
 
-        .verify-notes-title i {
-            color: #d97706;
-        }
-
         .verify-notes-content {
             background: white;
             border-radius: 12px;
@@ -213,16 +272,153 @@
             border: 1px solid #fef3c7;
         }
 
+        /* ===== سجل السلوكيات ===== */
+        .verify-behaviors-section {
+            background: #fbf9ff;
+            border: 2px solid #f3ecff;
+            border-radius: 20px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: right;
+        }
+
+        .verify-behaviors-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .verify-behaviors-header-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #4c1d95;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .verify-behaviors-stats {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .verify-stat-mini {
+            padding: 0.25rem 0.7rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .verify-stat-mini.positive { background: #d3f0e5; color: #006b4e; }
+        .verify-stat-mini.negative { background: #fce8e8; color: #b13e3e; }
+
+        .verify-behaviors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.3rem;
+        }
+
+        .verify-behavior-item {
+            display: flex;
+            gap: 0.6rem;
+            padding: 0.7rem;
+            border-radius: 12px;
+            border: 2px solid;
+        }
+
+        .verify-behavior-item.positive {
+            background: linear-gradient(135deg, #f0fdf4 0%, #f7fdf9 100%);
+            border-color: #bbf7d0;
+        }
+
+        .verify-behavior-item.negative {
+            background: linear-gradient(135deg, #fef2f2 0%, #fff7f7 100%);
+            border-color: #fecaca;
+        }
+
+        .verify-behavior-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            color: white;
+        }
+
+        .verify-behavior-item.positive .verify-behavior-icon {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        }
+
+        .verify-behavior-item.negative .verify-behavior-icon {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+        }
+
+        .verify-behavior-content { flex: 1; min-width: 0; }
+
+        .verify-behavior-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .verify-behavior-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .verify-behavior-item.positive .verify-behavior-type { color: #006b4e; }
+        .verify-behavior-item.negative .verify-behavior-type { color: #b13e3e; }
+
+        .verify-behavior-date {
+            font-size: 0.6rem;
+            color: #8b7db8;
+        }
+
+        .verify-behavior-category {
+            font-size: 0.65rem;
+            color: #7c3aed;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .verify-behavior-details {
+            font-size: 0.78rem;
+            color: #3b1e6b;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .verify-no-data {
+            text-align: center;
+            color: #a78bfa;
+            font-style: italic;
+            font-size: 0.82rem;
+            padding: 1rem 0;
+        }
+
+        /* ===== Footer ===== */
         .verify-timestamp {
             color: #8b7db8;
             font-size: 0.75rem;
             margin-top: 1.5rem;
         }
 
-        .verify-timestamp i {
-            color: #7c3aed;
-            margin-left: 0.3rem;
-        }
+        .verify-timestamp i { color: #7c3aed; margin-left: 0.3rem; }
 
         .refresh-indicator {
             color: #a78bfa;
@@ -231,6 +427,7 @@
             opacity: 0.8;
         }
 
+        /* ===== Loading ===== */
         .loading-spinner {
             font-size: 2rem;
             color: #7c3aed;
@@ -242,19 +439,15 @@
             100% { transform: rotate(360deg); }
         }
 
-        .loading-text {
-            color: #8b7db8;
-            font-size: 0.9rem;
-            margin-top: 1rem;
-        }
+        .loading-text { color: #8b7db8; font-size: 0.9rem; margin-top: 1rem; }
 
+        /* ===== Error ===== */
         .error-message {
             color: #b13e3e;
             font-size: 1rem;
             padding: 1rem;
             background: #fce8e8;
             border-radius: 16px;
-            border: 1px solid #f5d0d0;
         }
 
         .error-details {
@@ -268,12 +461,6 @@
             border: 1px solid #ede4ff;
         }
 
-        .error-details strong {
-            color: #4c1d95;
-            display: block;
-            margin-bottom: 0.4rem;
-        }
-
         .error-details code {
             direction: ltr;
             display: inline-block;
@@ -281,7 +468,6 @@
             padding: 0.3rem 0.7rem;
             border-radius: 8px;
             word-break: break-all;
-            border: 1px solid #ede4ff;
             color: #b13e3e;
             font-weight: 600;
         }
@@ -292,49 +478,26 @@
             padding: 0.2rem 0.6rem;
             border-radius: 8px;
             margin: 0.15rem;
-            border: 1px solid #ede4ff;
             color: #3b1e6b;
             font-weight: 600;
         }
 
         @media (max-width: 500px) {
-            .verify-card {
-                padding: 2rem 1.4rem;
-                border-radius: 28px;
-            }
-            .verify-student-name {
-                font-size: 1.7rem;
-            }
-            .verify-status-large {
-                font-size: 1.05rem;
-                padding: 0.4rem 1.5rem;
-            }
-            .verify-time {
-                font-size: 0.82rem;
-            }
-            .info-item {
-                font-size: 0.78rem;
-                padding: 0.5rem 0.7rem;
-                flex-wrap: wrap;
-            }
-            .info-item-value {
-                font-size: 0.85rem;
-                padding: 0.2rem 0.7rem;
-                max-width: 100%;
-            }
-            .info-item-label {
-                font-size: 0.78rem;
-            }
-            .verify-notes-content {
-                font-size: 0.85rem;
-            }
+            .verify-card { padding: 2rem 1.4rem; }
+            .verify-student-name { font-size: 1.7rem; }
+            .verify-status-large { font-size: 1.05rem; padding: 0.4rem 1.5rem; }
+            .verify-time { font-size: 0.82rem; }
+            .info-item { font-size: 0.78rem; padding: 0.5rem 0.7rem; flex-wrap: wrap; }
+            .info-item-value { font-size: 0.85rem; max-width: 100%; }
+            .verify-notes-content { font-size: 0.85rem; }
+            .penalty-alert-value { font-size: 0.78rem; }
+            .verify-behavior-details { font-size: 0.72rem; }
         }
     </style>
 </head>
 <body>
     <div class="verify-page">
-        <div class="verify-card" id="verifyCard">
-
+        <div class="verify-card">
             <div class="school-icon"><i class="fas fa-graduation-cap"></i></div>
             <h2 class="school-title">ثانوية هوزان</h2>
 
@@ -344,7 +507,6 @@
                     <div class="loading-text">جاري تحميل حالة الطالب...</div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -382,23 +544,28 @@
                 .toLowerCase();
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/\n/g, '<br>');
+        }
+
         function getTimeSince(lastTime) {
             if (!lastTime) return null;
-
             const thenTime = new Date(lastTime).getTime();
             if (isNaN(thenTime)) return null;
 
             const nowTime = Date.now();
             let diffMs = nowTime - thenTime;
-
             if (diffMs < 0) {
-                if (diffMs > -10800000) {
-                    diffMs = Math.abs(diffMs + 10800000);
-                } else {
-                    diffMs = 0;
-                }
+                if (diffMs > -10800000) diffMs = Math.abs(diffMs + 10800000);
+                else diffMs = 0;
             }
-
             const totalSec = Math.floor(diffMs / 1000);
             const days = Math.floor(totalSec / 86400);
             const hours = Math.floor(totalSec / 3600);
@@ -428,37 +595,97 @@
             return `${totalSec} ثانية`;
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;')
-                .replace(/\n/g, '<br>');
-        }
+        function getRemainingTime(endsAt) {
+            const endsTime = new Date(endsAt).getTime();
+            if (isNaN(endsTime)) return null;
+            const nowTime = Date.now();
+            const diffMs = endsTime - nowTime;
+            if (diffMs <= 0) return null;
 
-        let timeIntervalDevices = null;
-        let timeIntervalIstiathan = null;
-        let lastDevicesTime = null;
-        let lastIstiathanTime = null;
+            const totalSec = Math.floor(diffMs / 1000);
+            const days = Math.floor(totalSec / 86400);
+            const hours = Math.floor(totalSec / 3600);
+            const minutes = Math.floor(totalSec / 60);
 
-        function updateTimerDevices() {
-            const timeEl = document.getElementById('timeDisplayDevices');
-            if (!timeEl || !lastDevicesTime) return;
-            const timeStr = getTimeSince(lastDevicesTime);
-            if (timeStr) {
-                timeEl.innerHTML = `<i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}`;
+            if (days > 0) {
+                if (days === 1) return 'يوم واحد';
+                if (days === 2) return 'يومين';
+                if (days >= 3 && days <= 10) return `${days} أيام`;
+                return `${days} يوماً`;
             }
+            if (hours > 0) {
+                if (hours === 1) return 'ساعة واحدة';
+                if (hours === 2) return 'ساعتين';
+                if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
+                return `${hours} ساعة`;
+            }
+            if (minutes > 0) {
+                if (minutes === 1) return 'دقيقة واحدة';
+                if (minutes === 2) return 'دقيقتين';
+                if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
+                return `${minutes} دقيقة`;
+            }
+            return `${totalSec} ثانية`;
         }
 
-        function updateTimerIstiathan() {
-            const timeEl = document.getElementById('timeDisplayIstiathan');
-            if (!timeEl || !lastIstiathanTime) return;
-            const timeStr = getTimeSince(lastIstiathanTime);
-            if (timeStr) {
-                timeEl.innerHTML = `<i class="fas fa-clock"></i> مستأذن منذ ${timeStr}`;
+        function getDurationText(durationType) {
+            if (durationType === '2days') return 'يومين';
+            if (durationType === 'week') return 'أسبوع';
+            if (durationType === 'month') return 'شهر';
+            if (durationType === '4months') return '4 أشهر';
+            return '';
+        }
+
+        // ===== فحص انتهاء العقوبات تلقائياً =====
+        async function autoExpirePenalties(studentName) {
+            try {
+                const { data: activePenalties } = await supabaseClient
+                    .from('penalties')
+                    .select('*')
+                    .eq('student_name', studentName)
+                    .eq('status', 'active');
+
+                if (!activePenalties || activePenalties.length === 0) return;
+
+                const now = new Date();
+                const localNow = new Date(now.getTime() + (3 * 3600000));
+
+                for (const penalty of activePenalties) {
+                    const endsAt = new Date(penalty.ends_at);
+
+                    if (endsAt <= localNow) {
+                        // انتهت العقوبة → فك تلقائي
+                        await supabaseClient
+                            .from('penalties')
+                            .update({ status: 'expired' })
+                            .eq('id', penalty.id);
+
+                        await supabaseClient
+                            .from('students')
+                            .update({
+                                permitted: true,
+                                last_permitted_at: localNow.toISOString()
+                            })
+                            .eq('name', studentName);
+
+                        const timestamp = localNow.toLocaleString('en-US', {
+                            month: 'short', day: 'numeric', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit',
+                            hour12: false
+                        });
+
+                        await supabaseClient
+                            .from('history')
+                            .insert([{
+                                student_name: studentName,
+                                status: 'Penalty Expired',
+                                timestamp: timestamp,
+                                teacher: 'النظام (تلقائي)'
+                            }]);
+                    }
+                }
+            } catch (e) {
+                console.error('Auto expire error:', e);
             }
         }
 
@@ -475,9 +702,13 @@
             }
 
             try {
+                // فحص العقوبات المنتهية أولاً
+                await autoExpirePenalties(studentName);
+
+                // جلب كل الطلاب
                 const { data: allData, error: fetchErr } = await supabaseClient
                     .from('students')
-                    .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, full_name, student_id, hijri_birth_date, notes');
+                    .select('name, permitted, last_permitted_at, full_name, student_id, hijri_birth_date, notes');
 
                 if (fetchErr) throw fetchErr;
 
@@ -535,24 +766,48 @@
                     return;
                 }
 
-                renderStatus(data);
+                // جلب السلوكيات والعقوبات
+                const [behaviorsRes, penaltiesRes] = await Promise.all([
+                    supabaseClient
+                        .from('behaviors')
+                        .select('*')
+                        .eq('student_name', data.name)
+                        .order('created_at', { ascending: false }),
+                    supabaseClient
+                        .from('penalties')
+                        .select('*')
+                        .eq('student_name', data.name)
+                        .order('started_at', { ascending: false })
+                ]);
 
+                const behaviors = behaviorsRes.data || [];
+                const penalties = penaltiesRes.data || [];
+
+                renderStatus(data, behaviors, penalties);
+
+                // التحديث التلقائي كل 5 ثواني
                 const refreshInterval = setInterval(async () => {
                     try {
+                        await autoExpirePenalties(data.name);
+
                         const { data: refreshAll } = await supabaseClient
                             .from('students')
-                            .select('name, permitted, last_permitted_at, istiathan_permitted, last_istiathan_at, full_name, student_id, hijri_birth_date, notes');
+                            .select('name, permitted, last_permitted_at, full_name, student_id, hijri_birth_date, notes');
 
                         if (!refreshAll) return;
                         const refreshData = refreshAll.find(s => s.name === data.name);
-                        if (refreshData) renderStatus(refreshData);
+                        if (refreshData) {
+                            const [bR, pR] = await Promise.all([
+                                supabaseClient.from('behaviors').select('*').eq('student_name', data.name).order('created_at', { ascending: false }),
+                                supabaseClient.from('penalties').select('*').eq('student_name', data.name).order('started_at', { ascending: false })
+                            ]);
+                            renderStatus(refreshData, bR.data || [], pR.data || []);
+                        }
                     } catch (e) {}
                 }, 5000);
 
                 window.addEventListener('beforeunload', () => {
                     clearInterval(refreshInterval);
-                    if (timeIntervalDevices) clearInterval(timeIntervalDevices);
-                    if (timeIntervalIstiathan) clearInterval(timeIntervalIstiathan);
                 });
 
             } catch (error) {
@@ -565,132 +820,191 @@
             }
         }
 
-        function renderStatus(data) {
+        function renderStatus(data, behaviors, penalties) {
             const content = document.getElementById('verificationContent');
 
+            // البحث عن عقوبة سارية
+            const activePenalty = penalties.find(p => p.status === 'active');
+
+            let penaltyHtml = '';
+
+            if (activePenalty) {
+                const remaining = getRemainingTime(activePenalty.ends_at);
+                const endsAt = new Date(activePenalty.ends_at);
+                const endDate = endsAt.toLocaleString('ar-SA', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                penaltyHtml = `
+                    <div class="penalty-alert">
+                        <div class="penalty-alert-header">
+                            <div class="penalty-alert-icon">
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <div class="penalty-alert-title">
+                                <strong>⚠️ الطالب معاقب حالياً</strong>
+                                <span>مدة العقوبة: ${getDurationText(activePenalty.duration_type)}</span>
+                            </div>
+                        </div>
+                        <div class="penalty-alert-info">
+                            <div class="penalty-alert-row">
+                                <span class="penalty-alert-label"><i class="fas fa-info-circle"></i> السبب</span>
+                                <span class="penalty-alert-value">${escapeHtml(activePenalty.reason)}</span>
+                            </div>
+                            <div class="penalty-alert-row">
+                                <span class="penalty-alert-label"><i class="fas fa-hourglass-half"></i> المتبقي</span>
+                                <span class="penalty-alert-value highlight">${remaining || 'انتهت'}</span>
+                            </div>
+                            <div class="penalty-alert-row">
+                                <span class="penalty-alert-label"><i class="fas fa-calendar-times"></i> ينتهي في</span>
+                                <span class="penalty-alert-value">${endDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // حالة الأجهزة
             const devicesStatus = data.permitted;
             const devicesText = devicesStatus ? 'مسموح' : 'غير مسموح';
             const devicesClass = devicesStatus ? 'permitted' : 'not-permitted';
             const devicesIcon = devicesStatus ? '🟢' : '🔴';
             const devicesTime = data.last_permitted_at;
 
-            const istiathanStatus = data.istiathan_permitted;
-            const istiathanText = istiathanStatus ? 'مسموح' : 'غير مسموح';
-            const istiathanClass = istiathanStatus ? 'permitted' : 'not-permitted';
-            const istiathanIcon = istiathanStatus ? '🟢' : '🔴';
-            const istiathanTime = data.last_istiathan_at;
-
             let devicesTimeHtml = '';
             if (devicesStatus && devicesTime) {
                 const timeStr = getTimeSince(devicesTime);
                 if (timeStr) {
                     devicesTimeHtml = `
-                        <div class="verify-time" id="timeDisplayDevices">
+                        <div class="verify-time">
                             <i class="fas fa-clock"></i> مسموح بإحضار جهازه منذ ${timeStr}
                         </div>
                     `;
                 }
             }
 
-            let istiathanTimeHtml = '';
-            if (istiathanStatus && istiathanTime) {
-                const timeStr = getTimeSince(istiathanTime);
-                if (timeStr) {
-                    istiathanTimeHtml = `
-                        <div class="verify-time" id="timeDisplayIstiathan">
-                            <i class="fas fa-clock"></i> مستأذن منذ ${timeStr}
-                        </div>
-                    `;
-                }
-            }
-
+            // بيانات الطالب
             let infoHtml = '';
             if (data.full_name || data.hijri_birth_date || data.student_id) {
                 let infoItems = '';
-
                 if (data.full_name) {
                     infoItems += `
                         <div class="info-item">
-                            <span class="info-item-label">
-                                <i class="fas fa-user"></i>
-                                الاسم الكامل
-                            </span>
+                            <span class="info-item-label"><i class="fas fa-user"></i> الاسم الكامل</span>
                             <span class="info-item-value">${escapeHtml(data.full_name)}</span>
                         </div>
                     `;
                 }
-
                 if (data.student_id) {
                     infoItems += `
                         <div class="info-item">
-                            <span class="info-item-label">
-                                <i class="fas fa-id-card"></i>
-                                رقم الهوية
-                            </span>
+                            <span class="info-item-label"><i class="fas fa-id-card"></i> رقم الهوية</span>
                             <span class="info-item-value">${escapeHtml(data.student_id)}</span>
                         </div>
                     `;
                 }
-
                 if (data.hijri_birth_date) {
                     infoItems += `
                         <div class="info-item">
-                            <span class="info-item-label">
-                                <i class="fas fa-calendar-alt"></i>
-                                الميلاد الهجري
-                            </span>
+                            <span class="info-item-label"><i class="fas fa-calendar-alt"></i> الميلاد الهجري</span>
                             <span class="info-item-value">${escapeHtml(data.hijri_birth_date)}</span>
                         </div>
                     `;
                 }
-
                 infoHtml = `
                     <div class="verify-info-section">
                         <div class="verify-section-title">
-                            <i class="fas fa-id-card"></i>
-                            بيانات الطالب
+                            <i class="fas fa-id-card"></i> بيانات الطالب
                         </div>
                         ${infoItems}
                     </div>
                 `;
             }
 
+            // الملاحظات
             let notesHtml = '';
             if (data.notes && data.notes.trim()) {
                 notesHtml = `
                     <div class="verify-notes-section">
                         <div class="verify-notes-title">
-                            <i class="fas fa-sticky-note"></i>
-                            ملاحظات
+                            <i class="fas fa-sticky-note"></i> ملاحظات
                         </div>
                         <div class="verify-notes-content">${escapeHtml(data.notes)}</div>
                     </div>
                 `;
             }
 
+            // سجل السلوكيات
+            let behaviorsHtml = '';
+            if (behaviors && behaviors.length > 0) {
+                const positiveCount = behaviors.filter(b => b.type === 'positive').length;
+                const negativeCount = behaviors.filter(b => b.type === 'negative').length;
+
+                let behaviorItems = '';
+                behaviors.slice(0, 20).forEach(item => {
+                    const isPositive = item.type === 'positive';
+                    const icon = isPositive ? '⭐' : '⚠️';
+                    const label = isPositive ? 'مشاركة' : 'مخالفة';
+                    const cls = isPositive ? 'positive' : 'negative';
+
+                    const dateStr = new Date(item.created_at).toLocaleString('ar-SA', {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+
+                    behaviorItems += `
+                        <div class="verify-behavior-item ${cls}">
+                            <div class="verify-behavior-icon">
+                                <i class="fas ${isPositive ? 'fa-star' : 'fa-exclamation-triangle'}"></i>
+                            </div>
+                            <div class="verify-behavior-content">
+                                <div class="verify-behavior-header">
+                                    <span class="verify-behavior-type">${icon} ${label}</span>
+                                    <span class="verify-behavior-date">${dateStr}</span>
+                                </div>
+                                ${item.category ? `<div class="verify-behavior-category"><i class="fas fa-tag"></i> ${escapeHtml(item.category)}</div>` : ''}
+                                <div class="verify-behavior-details">${escapeHtml(item.details)}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                behaviorsHtml = `
+                    <div class="verify-behaviors-section">
+                        <div class="verify-behaviors-header">
+                            <div class="verify-behaviors-header-title">
+                                <i class="fas fa-clipboard-check"></i>
+                                السجل السلوكي
+                            </div>
+                            <div class="verify-behaviors-stats">
+                                <span class="verify-stat-mini positive">⭐ ${positiveCount}</span>
+                                <span class="verify-stat-mini negative">⚠️ ${negativeCount}</span>
+                            </div>
+                        </div>
+                        <div class="verify-behaviors-list">
+                            ${behaviorItems}
+                        </div>
+                    </div>
+                `;
+            }
+
             content.innerHTML = `
+                ${penaltyHtml}
+
                 <div class="verify-student-name">${escapeHtml(data.name)}</div>
 
                 <div class="verify-section">
                     <div class="verify-section-title">
-                        <i class="fas fa-mobile-alt"></i>
-                        إحضار الأجهزة
+                        <i class="fas fa-mobile-alt"></i> إحضار الأجهزة
                     </div>
                     <div class="verify-status-large ${devicesClass}">${devicesIcon} ${devicesText}</div>
                     ${devicesTimeHtml}
                 </div>
 
-                <div class="verify-section">
-                    <div class="verify-section-title">
-                        <i class="fas fa-user-clock"></i>
-                        الاستئذان
-                    </div>
-                    <div class="verify-status-large ${istiathanClass}">${istiathanIcon} ${istiathanText}</div>
-                    ${istiathanTimeHtml}
-                </div>
-
                 ${infoHtml}
                 ${notesHtml}
+                ${behaviorsHtml}
 
                 <div class="verify-timestamp">
                     <i class="fas fa-check-circle"></i>
@@ -701,19 +1015,6 @@
                     يتم التحديث تلقائياً
                 </div>
             `;
-
-            lastDevicesTime = devicesTime;
-            lastIstiathanTime = istiathanTime;
-
-            if (timeIntervalDevices) clearInterval(timeIntervalDevices);
-            if (timeIntervalIstiathan) clearInterval(timeIntervalIstiathan);
-
-            if (devicesStatus && devicesTime) {
-                timeIntervalDevices = setInterval(updateTimerDevices, 1000);
-            }
-            if (istiathanStatus && istiathanTime) {
-                timeIntervalIstiathan = setInterval(updateTimerIstiathan, 1000);
-            }
         }
 
         loadStudentStatus();
